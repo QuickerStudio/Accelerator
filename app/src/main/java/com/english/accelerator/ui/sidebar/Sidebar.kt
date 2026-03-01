@@ -10,13 +10,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +36,7 @@ fun Sidebar(
 ) {
     // 侧边栏偏移动画
     val offsetX by animateDpAsState(
-        targetValue = if (isOpen) 0.dp else (-320).dp,
+        targetValue = if (isOpen) 0.dp else (-300).dp,
         animationSpec = tween(durationMillis = 300),
         label = "sidebarOffset"
     )
@@ -51,10 +56,11 @@ fun Sidebar(
         Box(
             modifier = Modifier
                 .offset(x = offsetX)
-                .width(320.dp)
+                .width(300.dp)
                 .fillMaxHeight()
                 .shadow(16.dp)
                 .background(Color.White)
+                .statusBarsPadding()
         ) {
             Column(
                 modifier = Modifier
@@ -325,6 +331,10 @@ private fun AddGroupCard() {
 
 @Composable
 private fun LearningLogsSection() {
+    var pinnedExpanded by remember { mutableStateOf(true) }
+    var todayExpanded by remember { mutableStateOf(true) }
+    var thisWeekExpanded by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "单词",
@@ -340,25 +350,38 @@ private fun LearningLogsSection() {
         LogCategorySection(
             icon = "📌",
             title = "置顶",
-            logs = listOf("重要单词复习")
+            logs = listOf("重要单词复习"),
+            isExpanded = pinnedExpanded,
+            onToggle = { pinnedExpanded = !pinnedExpanded },
+            hasBackground = true
         )
 
         LogCategorySection(
             icon = "📅",
             title = "今天",
-            logs = listOf("学习了 20 个新单词", "复习了 15 个单词")
+            logs = listOf("学习了 20 个新单词", "复习了 15 个单词"),
+            isExpanded = todayExpanded,
+            onToggle = { todayExpanded = !todayExpanded },
+            hasBackground = false
         )
 
         LogCategorySection(
             icon = "📅",
             title = "本周",
-            logs = listOf("完成 3 次学习", "掌握 50 个单词")
+            logs = listOf("完成 3 次学习", "掌握 50 个单词"),
+            isExpanded = thisWeekExpanded,
+            onToggle = { thisWeekExpanded = !thisWeekExpanded },
+            hasBackground = false
         )
 
         LogCategorySection(
             icon = "📅",
             title = "更早",
-            logs = listOf("上周学习记录", "上月学习记录")
+            logs = listOf("上周学习记录", "上月学习记录"),
+            isExpanded = true,
+            onToggle = {},
+            hasBackground = true,
+            showToggle = false
         )
     }
 }
@@ -367,7 +390,11 @@ private fun LearningLogsSection() {
 private fun LogCategorySection(
     icon: String,
     title: String,
-    logs: List<String>
+    logs: List<String>,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    hasBackground: Boolean,
+    showToggle: Boolean = true
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         // 分组标题
@@ -375,26 +402,43 @@ private fun LogCategorySection(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .background(Color(0xFFF8FAFC))
+                .background(if (hasBackground) Color(0xFFF8FAFC) else Color.Transparent)
+                .clickable(enabled = showToggle) { onToggle() }
                 .padding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = icon,
-                fontSize = 16.sp
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = icon,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+            }
+
+            if (showToggle) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowRight,
+                    contentDescription = if (isExpanded) "收起" else "展开",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier
+                        .size(20.dp)
+                        .rotate(if (isExpanded) 90f else 0f)
+                )
+            }
         }
 
-        // 日志项
-        logs.forEach { log ->
-            LogItem(content = log)
+        // 日志项（可折叠）
+        if (isExpanded) {
+            logs.forEach { log ->
+                LogItem(content = log)
+            }
         }
     }
 }
