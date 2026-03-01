@@ -72,10 +72,15 @@ fun AcceleratorApp() {
         when (currentRoute) {
             Screen.Vocabulary.route -> VocabularyScreen(
                 showInputArea = showInputArea,
-                onToggleInputArea = { showInputArea = !showInputArea }
+                onToggleInputArea = { showInputArea = !showInputArea },
+                onNavigateToSettings = { currentRoute = Screen.Settings.route }
             )
-            Screen.Writing.route -> WritingScreen()
-            Screen.Speaking.route -> SpeakingScreen()
+            Screen.Writing.route -> WritingScreen(
+                onNavigateToSettings = { currentRoute = Screen.Settings.route }
+            )
+            Screen.Speaking.route -> SpeakingScreen(
+                onNavigateToSettings = { currentRoute = Screen.Settings.route }
+            )
             Screen.Settings.route -> SettingsScreen()
         }
     }

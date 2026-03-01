@@ -15,7 +15,9 @@ import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
 
 @Composable
-fun SpeakingScreen() {
+fun SpeakingScreen(
+    onNavigateToSettings: () -> Unit = {}
+) {
     var showSidebar by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -48,7 +50,8 @@ fun SpeakingScreen() {
         if (showSidebar) {
             Sidebar(
                 isOpen = showSidebar,
-                onClose = { showSidebar = false }
+                onClose = { showSidebar = false },
+                onNavigateToSettings = onNavigateToSettings
             )
         }
     }

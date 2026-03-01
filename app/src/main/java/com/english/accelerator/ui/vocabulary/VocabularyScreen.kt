@@ -29,7 +29,8 @@ import com.english.accelerator.ui.vocabulary.components.WordCardStack
 @Composable
 fun VocabularyScreen(
     showInputArea: Boolean = false,
-    onToggleInputArea: () -> Unit = {}
+    onToggleInputArea: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {}
 ) {
     var currentIndex by remember { mutableIntStateOf(0) }
     var showBookmarkScreen by remember { mutableStateOf(false) }
@@ -128,7 +129,8 @@ fun VocabularyScreen(
         if (showSidebar) {
             Sidebar(
                 isOpen = showSidebar,
-                onClose = { showSidebar = false }
+                onClose = { showSidebar = false },
+                onNavigateToSettings = onNavigateToSettings
             )
         }
     }
