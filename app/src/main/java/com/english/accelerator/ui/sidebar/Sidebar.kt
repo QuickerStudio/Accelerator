@@ -38,6 +38,12 @@ fun Sidebar(
     onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // 视图状态：正常视图 vs 编辑器视图
+    var isEditorMode by remember { mutableStateOf(false) }
+    var editingNoteId by remember { mutableStateOf<Int?>(null) }
+    var editorTitle by remember { mutableStateOf("") }
+    var editorContent by remember { mutableStateOf("") }
+
     // 侧边栏偏移动画
     val offsetX by animateDpAsState(
         targetValue = if (isOpen) 0.dp else (-300).dp,
@@ -66,34 +72,70 @@ fun Sidebar(
                 .background(Color.White)
                 .statusBarsPadding()
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // 顶部品牌区域
-                SidebarHeader(
-                    onSearchClick = { /* TODO: 搜索功能 */ },
-                    onSettingsClick = {
-                        onNavigateToSettings()
-                        onClose()
+            if (isEditorMode) {
+                // 编辑器视图
+                NoteEditor(
+                    noteId = editingNoteId,
+                    initialTitle = editorTitle,
+                    initialContent = editorContent,
+                    onSave = { title, content ->
+                        if (title.isNotEmpty() || content.isNotEmpty()) {
+                            if (editingNoteId != null) {
+                                com.english.accelerator.data.NoteManager.updateNote(editingNoteId!!, title, content)
+                            } else {
+                                com.english.accelerator.data.NoteManager.addNote(title, content)
+                            }
+                        }
+                        // 返回正常视图
+                        isEditorMode = false
+                        editingNoteId = null
+                        editorTitle = ""
+                        editorContent = ""
+                    },
+                    onBack = {
+                        // 返回正常视图
+                        isEditorMode = false
                     }
                 )
+            } else {
+                // 正常视图
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // 顶部品牌区域
+                    SidebarHeader(
+                        onSearchClick = { /* TODO: 搜索功能 */ },
+                        onSettingsClick = {
+                            onNavigateToSettings()
+                            onClose()
+                        }
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // 全部笔记区域
-                AllNotesSection()
+                    // 全部笔记区域
+                    AllNotesSection(
+                        onNewNoteClick = {
+                            // 切换到编辑器视图
+                            isEditorMode = true
+                            editingNoteId = null
+                            editorTitle = ""
+                            editorContent = ""
+                        }
+                    )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                // 笔记分组区域
-                NoteGroupsSection()
+                    // 笔记分组区域
+                    NoteGroupsSection()
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                // 单词学习日志
-                LearningLogsSection()
+                    // 单词学习日志
+                    LearningLogsSection()
+                }
             }
         }
     }
@@ -231,7 +273,11 @@ private fun SidebarHeader(
 }
 
 @Composable
-private fun AllNotesSection() {
+private fun AllNotesSection(
+    onNewNoteClick: () -> Unit = {}
+) {
+    val notes = com.english.accelerator.data.NoteManager.getAllNotes()
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -249,7 +295,7 @@ private fun AllNotesSection() {
 
             // 新建笔记按钮
             Button(
-                onClick = { /* TODO: 新建笔记 */ },
+                onClick = onNewNoteClick,
                 modifier = Modifier
                     .size(32.dp),
                 shape = RoundedCornerShape(8.dp),
@@ -277,11 +323,11 @@ private fun AllNotesSection() {
                 .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 10个示例笔记卡片
-            repeat(10) { index ->
+            // 显示实际笔记
+            notes.forEach { note ->
                 NoteCard(
-                    title = "笔记 ${index + 1}",
-                    preview = "这是笔记 ${index + 1} 的预览内容..."
+                    title = note.title.ifEmpty { "无标题" },
+                    preview = note.content
                 )
             }
         }
