@@ -1,10 +1,9 @@
 package com.english.accelerator.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -36,81 +35,99 @@ fun BottomInputArea(
 ) {
     var inputText by remember { mutableStateOf("") }
 
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(Color(0xFFE2E8F0))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        // 相机按钮
-        IconButton(
-            onClick = { /* TODO: 打开相机 */ },
-            modifier = Modifier.size(36.dp)
+        // 背景容器和输入框
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(28.dp))
+                .background(Color(0xFFE2E8F0))
+                .padding(
+                    start = 52.dp,
+                    end = 100.dp,
+                    top = 12.dp,
+                    bottom = 12.dp
+                )
         ) {
-            Icon(
-                imageVector = Icons.Default.CameraAlt,
-                contentDescription = "相机",
-                tint = Color(0xFF64748B),
-                modifier = Modifier.size(20.dp)
+            TextField(
+                value = inputText,
+                onValueChange = { inputText = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
+                    Text(
+                        text = "发消息或按住说话...",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 14.sp
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp)
             )
         }
 
-        // 文本输入框
-        TextField(
-            value = inputText,
-            onValueChange = { inputText = it },
+        // 悬浮按钮层
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .height(40.dp),
-            placeholder = {
-                Text(
-                    text = "发消息或按住说话...",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 14.sp
-                )
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp)
-        )
-
-        // 上传按钮
-        IconButton(
-            onClick = { /* TODO: 上传文件 */ },
-            modifier = Modifier.size(36.dp)
+                .fillMaxWidth()
+                .align(Alignment.CenterStart)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "上传",
-                tint = Color(0xFF64748B),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        // 发送按钮
-        IconButton(
-            onClick = { /* TODO: 发送消息 */ },
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(
-                    if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFE2E8F0)
+            // 相机按钮（左侧悬浮）
+            IconButton(
+                onClick = { /* TODO: 打开相机 */ },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "相机",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier.size(20.dp)
                 )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Send,
-                contentDescription = "发送",
-                tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
-                modifier = Modifier.size(18.dp)
-            )
+            }
+
+            // 占位空间
+            Box(modifier = Modifier.weight(1f))
+
+            // 上传按钮（右侧悬浮）
+            IconButton(
+                onClick = { /* TODO: 上传文件 */ },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "上传",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // 发送按钮（右侧悬浮）
+            IconButton(
+                onClick = { /* TODO: 发送消息 */ },
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "发送",
+                    tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
