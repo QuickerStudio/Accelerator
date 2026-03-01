@@ -184,16 +184,18 @@ private fun SidebarHeader(
         // 搜索框（从右向左滑入）
         val searchBoxOffset by animateDpAsState(
             targetValue = if (isSearchMode) 0.dp else 300.dp,
-            animationSpec = tween(durationMillis = 300),
+            animationSpec = tween(durationMillis = 600),
             label = "searchBoxOffset"
         )
 
         if (isSearchMode || searchBoxOffset < 300.dp) {
             TextField(
                 value = searchText,
-                onValueChange = { searchText = it },
+                onValueChange = { newValue -> searchText = newValue },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(40.dp)
+                    .align(Alignment.Center)
                     .offset(x = searchBoxOffset)
                     .padding(end = 96.dp),
                 placeholder = {
@@ -209,7 +211,7 @@ private fun SidebarHeader(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
                 ),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(20.dp),
                 singleLine = true,
                 textStyle = androidx.compose.ui.text.TextStyle(
                     fontSize = 14.sp,
