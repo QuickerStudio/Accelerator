@@ -20,6 +20,12 @@ fun WritingScreen(
 ) {
     var showSidebar by remember { mutableStateOf(false) }
 
+    // 编辑器状态持久化
+    var isEditorMode by remember { mutableStateOf(false) }
+    var editingNoteId by remember { mutableStateOf<Int?>(null) }
+    var editorTitle by remember { mutableStateOf("") }
+    var editorContent by remember { mutableStateOf("") }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -51,7 +57,15 @@ fun WritingScreen(
             Sidebar(
                 isOpen = showSidebar,
                 onClose = { showSidebar = false },
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
+                isEditorMode = isEditorMode,
+                onEditorModeChange = { isEditorMode = it },
+                editingNoteId = editingNoteId,
+                onEditingNoteIdChange = { editingNoteId = it },
+                editorTitle = editorTitle,
+                onEditorTitleChange = { editorTitle = it },
+                editorContent = editorContent,
+                onEditorContentChange = { editorContent = it }
             )
         }
     }

@@ -35,6 +35,13 @@ fun VocabularyScreen(
     var currentIndex by remember { mutableIntStateOf(0) }
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
+
+    // 编辑器状态持久化
+    var isEditorMode by remember { mutableStateOf(false) }
+    var editingNoteId by remember { mutableStateOf<Int?>(null) }
+    var editorTitle by remember { mutableStateOf("") }
+    var editorContent by remember { mutableStateOf("") }
+
     var toastMessage by remember { mutableStateOf("") }
     var toastBackgroundColor by remember { mutableStateOf(Color.White) }
     var showToast by remember { mutableStateOf(false) }
@@ -130,7 +137,15 @@ fun VocabularyScreen(
             Sidebar(
                 isOpen = showSidebar,
                 onClose = { showSidebar = false },
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
+                isEditorMode = isEditorMode,
+                onEditorModeChange = { isEditorMode = it },
+                editingNoteId = editingNoteId,
+                onEditingNoteIdChange = { editingNoteId = it },
+                editorTitle = editorTitle,
+                onEditorTitleChange = { editorTitle = it },
+                editorContent = editorContent,
+                onEditorContentChange = { editorContent = it }
             )
         }
     }

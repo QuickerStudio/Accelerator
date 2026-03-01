@@ -36,14 +36,16 @@ fun Sidebar(
     isOpen: Boolean,
     onClose: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
+    isEditorMode: Boolean = false,
+    onEditorModeChange: (Boolean) -> Unit = {},
+    editingNoteId: Int? = null,
+    onEditingNoteIdChange: (Int?) -> Unit = {},
+    editorTitle: String = "",
+    onEditorTitleChange: (String) -> Unit = {},
+    editorContent: String = "",
+    onEditorContentChange: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // 视图状态：正常视图 vs 编辑器视图
-    var isEditorMode by remember { mutableStateOf(false) }
-    var editingNoteId by remember { mutableStateOf<Int?>(null) }
-    var editorTitle by remember { mutableStateOf("") }
-    var editorContent by remember { mutableStateOf("") }
-
     // 侧边栏偏移动画
     val offsetX by animateDpAsState(
         targetValue = if (isOpen) 0.dp else (-300).dp,
@@ -87,14 +89,14 @@ fun Sidebar(
                             }
                         }
                         // 返回正常视图
-                        isEditorMode = false
-                        editingNoteId = null
-                        editorTitle = ""
-                        editorContent = ""
+                        onEditorModeChange(false)
+                        onEditingNoteIdChange(null)
+                        onEditorTitleChange("")
+                        onEditorContentChange("")
                     },
                     onBack = {
                         // 返回正常视图
-                        isEditorMode = false
+                        onEditorModeChange(false)
                     }
                 )
             } else {
@@ -119,10 +121,10 @@ fun Sidebar(
                     AllNotesSection(
                         onNewNoteClick = {
                             // 切换到编辑器视图
-                            isEditorMode = true
-                            editingNoteId = null
-                            editorTitle = ""
-                            editorContent = ""
+                            onEditorModeChange(true)
+                            onEditingNoteIdChange(null)
+                            onEditorTitleChange("")
+                            onEditorContentChange("")
                         }
                     )
 
