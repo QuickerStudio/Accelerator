@@ -1,12 +1,7 @@
 package com.english.accelerator.ui.vocabulary
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,15 +18,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.data.BookmarkManager
 import com.english.accelerator.data.sampleWords
-import com.english.accelerator.ui.components.BottomInputArea
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.vocabulary.components.WordCardStack
 
 @Composable
-fun VocabularyScreen() {
+fun VocabularyScreen(
+    showInputArea: Boolean = false,
+    onToggleInputArea: () -> Unit = {}
+) {
     var currentIndex by remember { mutableIntStateOf(0) }
     var showBookmarkScreen by remember { mutableStateOf(false) }
-    var showInputArea by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // 动画：卡片底部内边距
@@ -53,9 +49,7 @@ fun VocabularyScreen() {
                 onMenuClick = {
                     // TODO: 打开侧边栏
                 },
-                onConversationClick = {
-                    showInputArea = !showInputArea
-                },
+                onConversationClick = onToggleInputArea,
                 onBookmarkClick = {
                     showBookmarkScreen = true
                 },
@@ -90,15 +84,6 @@ fun VocabularyScreen() {
                         Toast.makeText(context, "已收藏", Toast.LENGTH_SHORT).show()
                     }
                 )
-            }
-
-            // 底部输入区域
-            AnimatedVisibility(
-                visible = showInputArea,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-            ) {
-                BottomInputArea()
             }
         }
     }

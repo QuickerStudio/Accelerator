@@ -28,6 +28,7 @@ fun VocabularyTopBar(
     onMenuClick: () -> Unit,
     onConversationClick: () -> Unit,
     onBookmarkClick: () -> Unit,
+    isConversationMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -63,11 +64,18 @@ fun VocabularyTopBar(
             horizontalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             // 对话按钮
-            IconButton(onClick = onConversationClick) {
+            IconButton(
+                onClick = onConversationClick,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(
+                        if (isConversationMode) Color(0xFF3B82F6) else Color.Transparent
+                    )
+            ) {
                 Icon(
                     imageVector = Icons.Default.Phone,
                     contentDescription = "对话模式",
-                    tint = Color(0xFF1E293B)
+                    tint = if (isConversationMode) Color.White else Color(0xFF1E293B)
                 )
             }
 
