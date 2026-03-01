@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -152,13 +153,22 @@ private fun SidebarHeader(
                 // 搜索按钮
                 IconButton(
                     onClick = {
-                        isSearchMode = !isSearchMode
-                        if (!isSearchMode) {
+                        if (searchText.isNotEmpty()) {
+                            // 有内容时：执行搜索并清空
+                            // TODO: 实现搜索功能
                             searchText = ""
+                        } else {
+                            // 无内容时：切换搜索模式
+                            isSearchMode = !isSearchMode
                         }
                         onSearchClick()
                     },
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = if (searchText.isNotEmpty()) Color(0xFFDCFCE7) else Color.Transparent,
+                            shape = CircleShape
+                        )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
