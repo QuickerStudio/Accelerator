@@ -7,16 +7,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.data.sampleWords
-import com.english.accelerator.ui.vocabulary.components.WordCard
+import com.english.accelerator.ui.vocabulary.components.WordCardStack
 
 @Composable
 fun VocabularyScreen() {
-    val currentIndex by remember { mutableIntStateOf(0) }
-    val currentWord = sampleWords[currentIndex]
+    var currentIndex by remember { mutableIntStateOf(0) }
 
     Box(
         modifier = Modifier
@@ -24,6 +24,21 @@ fun VocabularyScreen() {
             .padding(vertical = 48.dp),
         contentAlignment = Alignment.Center
     ) {
-        WordCard(word = currentWord)
+        WordCardStack(
+            words = sampleWords,
+            currentIndex = currentIndex,
+            onSwipeLeft = {
+                // 标记为"未记住"
+                if (currentIndex < sampleWords.size - 1) {
+                    currentIndex++
+                }
+            },
+            onSwipeRight = {
+                // 标记为"已记住"
+                if (currentIndex < sampleWords.size - 1) {
+                    currentIndex++
+                }
+            }
+        )
     }
 }
