@@ -1,6 +1,5 @@
 package com.english.accelerator.ui.vocabulary
 
-import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,11 +15,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.data.BookmarkManager
 import com.english.accelerator.data.sampleWords
+import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.vocabulary.components.WordCardStack
 
@@ -31,6 +32,9 @@ fun VocabularyScreen(
 ) {
     var currentIndex by remember { mutableIntStateOf(0) }
     var showBookmarkScreen by remember { mutableStateOf(false) }
+    var toastMessage by remember { mutableStateOf("") }
+    var toastBackgroundColor by remember { mutableStateOf(Color.White) }
+    var showToast by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
@@ -81,18 +85,37 @@ fun VocabularyScreen(
                         // 标记为"未记住"
                         if (currentIndex < sampleWords.size - 1) {
                             currentIndex++
+                            toastMessage = "未记住"
+                            toastBackgroundColor = Color(0xFFFEE2E2) // 浅红色
+                            showToast = true
                         }
                     },
                     onSwipeRight = {
                         // 标记为"已记住"
                         if (currentIndex < sampleWords.size - 1) {
                             currentIndex++
+                            toastMessage = "已记住"
+                            toastBackgroundColor = Color(0xFFDCFCE7) // 浅绿色
+                            showToast = true
                         }
                     },
                     onLongPress = { word ->
                         BookmarkManager.addBookmark(word)
-                        Toast.makeText(context, "已收藏", Toast.LENGTH_SHORT).show()
+                        toastMessage = "已收藏"
+                        toastBackgroundColor = Color(0xFFDEEDFF) // 浅蓝色
+                        showToast = true
                     }
+                )
+
+                // Toast 提示（位于卡片上方）
+                CustomToast(
+                    message = toastMessage,
+                    visible = showToast,
+                    onDismiss = { showToast = false },
+                    backgroundColor = toastBackgroundColor,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 20.dp)
                 )
             }
         }
