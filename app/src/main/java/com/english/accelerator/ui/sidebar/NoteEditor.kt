@@ -27,6 +27,7 @@ fun NoteEditor(
 ) {
     var title by remember { mutableStateOf(initialTitle) }
     var content by remember { mutableStateOf(initialContent) }
+    var showEmptyWarning by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -54,10 +55,22 @@ fun NoteEditor(
                 )
             }
 
+            // 空内容警告
+            if (showEmptyWarning) {
+                Text(
+                    text = "内容为空无法保存",
+                    fontSize = 12.sp,
+                    color = Color(0xFFEF4444)
+                )
+            }
+
             // 保存按钮
             IconButton(
                 onClick = {
-                    if (title.isNotEmpty() || content.isNotEmpty()) {
+                    if (title.isEmpty() && content.isEmpty()) {
+                        showEmptyWarning = true
+                    } else {
+                        showEmptyWarning = false
                         onSave(title, content)
                     }
                 },

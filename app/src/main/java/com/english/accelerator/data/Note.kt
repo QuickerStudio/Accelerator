@@ -13,6 +13,7 @@ object NoteManager {
 
     fun getAllNotes(): List<Note> {
         return notes.filter { it.title.isNotEmpty() || it.content.isNotEmpty() }
+            .sortedByDescending { it.timestamp }
     }
 
     fun addNote(title: String, content: String): Note {

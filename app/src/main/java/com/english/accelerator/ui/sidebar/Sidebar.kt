@@ -125,6 +125,13 @@ fun Sidebar(
                             onEditingNoteIdChange(null)
                             onEditorTitleChange("")
                             onEditorContentChange("")
+                        },
+                        onNoteClick = { note ->
+                            // 打开笔记编辑器
+                            onEditorModeChange(true)
+                            onEditingNoteIdChange(note.id)
+                            onEditorTitleChange(note.title)
+                            onEditorContentChange(note.content)
                         }
                     )
 
@@ -276,7 +283,8 @@ private fun SidebarHeader(
 
 @Composable
 private fun AllNotesSection(
-    onNewNoteClick: () -> Unit = {}
+    onNewNoteClick: () -> Unit = {},
+    onNoteClick: (com.english.accelerator.data.Note) -> Unit = {}
 ) {
     val notes = com.english.accelerator.data.NoteManager.getAllNotes()
 
@@ -329,7 +337,8 @@ private fun AllNotesSection(
             notes.forEach { note ->
                 NoteCard(
                     title = note.title.ifEmpty { "无标题" },
-                    preview = note.content
+                    preview = note.content,
+                    onClick = { onNoteClick(note) }
                 )
             }
         }
@@ -337,11 +346,16 @@ private fun AllNotesSection(
 }
 
 @Composable
-private fun NoteCard(title: String, preview: String) {
+private fun NoteCard(
+    title: String,
+    preview: String,
+    onClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .width(100.dp)
-            .height(120.dp),
+            .height(120.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFF1F5F9)
