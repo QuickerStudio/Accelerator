@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.sp
 fun Sidebar(
     isOpen: Boolean,
     onClose: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // 侧边栏偏移动画
@@ -72,17 +74,13 @@ fun Sidebar(
                 // 顶部品牌区域
                 SidebarHeader(
                     onSearchClick = { /* TODO: 搜索功能 */ },
-                    onSettingsClick = { /* TODO: 设置功能 */ }
+                    onSettingsClick = {
+                        onNavigateToSettings()
+                        onClose()
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // 新建笔记按钮
-                NewNoteButton(
-                    onClick = { /* TODO: 新建笔记 */ }
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
 
                 // 全部笔记区域
                 AllNotesSection()
@@ -233,43 +231,41 @@ private fun SidebarHeader(
 }
 
 @Composable
-private fun NewNoteButton(onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = 20.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF6366F1)
-        )
-    ) {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = Color.White
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "新建笔记",
-            color = Color.White,
-            fontSize = 16.sp
-        )
-    }
-}
-
-@Composable
 private fun AllNotesSection() {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "全部笔记",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E293B),
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "全部笔记",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+
+            // 新建笔记按钮
+            Button(
+                onClick = { /* TODO: 新建笔记 */ },
+                modifier = Modifier
+                    .size(32.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981)
+                ),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "新建笔记",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -277,14 +273,15 @@ private fun AllNotesSection() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 示例笔记卡片
-            repeat(3) { index ->
+            // 10个示例笔记卡片
+            repeat(10) { index ->
                 NoteCard(
                     title = "笔记 ${index + 1}",
-                    preview = "这是笔记预览内容..."
+                    preview = "这是笔记 ${index + 1} 的预览内容..."
                 )
             }
         }
@@ -295,8 +292,8 @@ private fun AllNotesSection() {
 private fun NoteCard(title: String, preview: String) {
     Card(
         modifier = Modifier
-            .width(120.dp)
-            .height(80.dp),
+            .width(100.dp)
+            .height(120.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFF1F5F9)
@@ -309,7 +306,7 @@ private fun NoteCard(title: String, preview: String) {
         ) {
             Text(
                 text = title,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF1E293B),
                 maxLines = 2
@@ -317,9 +314,9 @@ private fun NoteCard(title: String, preview: String) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = preview,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 color = Color(0xFF64748B),
-                maxLines = 1
+                maxLines = 3
             )
         }
     }
@@ -328,29 +325,48 @@ private fun NoteCard(title: String, preview: String) {
 @Composable
 private fun NoteGroupsSection() {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "笔记分组",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E293B),
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // 分组网格
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "笔记分组",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+
+            // 添加分组按钮
+            IconButton(
+                onClick = { /* TODO: 添加分组 */ },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "添加分组",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 分组网格（水平滚动）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 示例分组
-            repeat(2) { index ->
+            // 10个示例分组
+            repeat(10) { index ->
                 NoteGroupCard(name = "分组 ${index + 1}")
             }
-            // 添加分组按钮
-            AddGroupCard()
         }
     }
 }
@@ -378,36 +394,6 @@ private fun NoteGroupCard(name: String) {
                 text = name,
                 fontSize = 10.sp,
                 color = Color(0xFF64748B)
-            )
-        }
-    }
-}
-
-@Composable
-private fun AddGroupCard() {
-    Card(
-        modifier = Modifier.size(64.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF1F5F9)
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "添加分组",
-                tint = Color(0xFF94A3B8),
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "添加",
-                fontSize = 10.sp,
-                color = Color(0xFF94A3B8)
             )
         }
     }
