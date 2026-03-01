@@ -1,6 +1,7 @@
 package com.english.accelerator.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -84,7 +85,8 @@ fun BottomInputArea(
                 .fillMaxWidth()
                 .align(Alignment.CenterStart)
                 .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(15.dp)
         ) {
             // 相机按钮（左侧悬浮）
             IconButton(
