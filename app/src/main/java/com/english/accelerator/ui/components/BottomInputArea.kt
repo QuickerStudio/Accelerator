@@ -39,11 +39,11 @@ fun BottomInputArea(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 24.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(Color(0xFFF1F5F9))
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .background(Color(0xFFE2E8F0))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 相机按钮
