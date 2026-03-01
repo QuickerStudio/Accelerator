@@ -1,6 +1,7 @@
 package com.english.accelerator.ui.sidebar
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -104,46 +105,117 @@ private fun SidebarHeader(
     onSearchClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
-    Row(
+    var isSearchMode by remember { mutableStateOf(false) }
+    var searchText by remember { mutableStateOf("") }
+
+    val brandText = "Accelerator"
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .padding(horizontal = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = 20.dp)
     ) {
-        // 品牌名称
-        Text(
-            text = "Accelerator",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E293B)
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // 品牌名称（逐字消失动画）
+            Row(modifier = Modifier.weight(1f)) {
+                brandText.forEachIndexed { index, char ->
+                    val delay = if (isSearchMode) {
+                        (brandText.length - 1 - index) * 50
+                    } else {
+                        index * 50
+                    }
+
+                    val alpha by animateFloatAsState(
+                        targetValue = if (isSearchMode) 0f else 1f,
+                        animationSpec = tween(
+                            durationMillis = 200,
+                            delayMillis = delay
+                        ),
+                        label = "charAlpha_$index"
+                    )
+
+                    Text(
+                        text = char.toString(),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B).copy(alpha = alpha)
+                    )
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // 搜索按钮
+                IconButton(
+                    onClick = {
+                        isSearchMode = !isSearchMode
+                        if (!isSearchMode) {
+                            searchText = ""
+                        }
+                        onSearchClick()
+                    },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "搜索",
+                        tint = Color(0xFF64748B)
+                    )
+                }
+
+                // 设置按钮
+                IconButton(
+                    onClick = onSettingsClick,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "设置",
+                        tint = Color(0xFF64748B)
+                    )
+                }
+            }
+        }
+
+        // 搜索框（从右向左滑入）
+        val searchBoxOffset by animateDpAsState(
+            targetValue = if (isSearchMode) 0.dp else 300.dp,
+            animationSpec = tween(durationMillis = 300),
+            label = "searchBoxOffset"
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            // 搜索按钮
-            IconButton(
-                onClick = onSearchClick,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "搜索",
-                    tint = Color(0xFF64748B)
+        if (isSearchMode || searchBoxOffset < 300.dp) {
+            TextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(x = searchBoxOffset)
+                    .padding(end = 96.dp),
+                placeholder = {
+                    Text(
+                        text = "搜索笔记...",
+                        fontSize = 14.sp,
+                        color = Color(0xFF94A3B8)
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF1F5F9),
+                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                shape = RoundedCornerShape(8.dp),
+                singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    fontSize = 14.sp,
+                    color = Color(0xFF1E293B)
                 )
-            }
-
-            // 设置按钮
-            IconButton(
-                onClick = onSettingsClick,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "设置",
-                    tint = Color(0xFF64748B)
-                )
-            }
+            )
         }
     }
 }
