@@ -46,6 +46,9 @@ fun Sidebar(
     onEditorContentChange: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // 选中的分组 ID（null 表示显示全部笔记）
+    var selectedGroupId by remember { mutableStateOf<Int?>(null) }
+
     // 侧边栏偏移动画
     val offsetX by animateDpAsState(
         targetValue = if (isOpen) 0.dp else (-300).dp,
@@ -119,6 +122,7 @@ fun Sidebar(
 
                     // 全部笔记区域
                     AllNotesSection(
+                        selectedGroupId = selectedGroupId,
                         onNewNoteClick = {
                             // 切换到编辑器视图
                             onEditorModeChange(true)
@@ -138,7 +142,13 @@ fun Sidebar(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // 笔记分组区域
-                    NoteGroupsSection()
+                    NoteGroupsSection(
+                        selectedGroupId = selectedGroupId,
+                        onGroupClick = { groupId ->
+                            // Toggle 分组筛选
+                            selectedGroupId = if (selectedGroupId == groupId) null else groupId
+                        }
+                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -283,11 +293,19 @@ private fun SidebarHeader(
 
 @Composable
 private fun AllNotesSection(
+    selectedGroupId: Int? = null,
     onNewNoteClick: () -> Unit = {},
     onNoteClick: (com.english.accelerator.data.Note) -> Unit = {}
 ) {
     var isReversed by remember { mutableStateOf(false) }
-    val allNotes = com.english.accelerator.data.NoteManager.getAllNotes()
+
+    // 根据选中的分组筛选笔记
+    val allNotes = if (selectedGroupId != null) {
+        com.english.accelerator.data.NoteManager.getNotesByGroup(selectedGroupId)
+    } else {
+        com.english.accelerator.data.NoteManager.getAllNotes()
+    }
+
     val notes = if (isReversed) allNotes.reversed() else allNotes
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -407,8 +425,13 @@ private fun NoteCard(
 }
 
 @Composable
-private fun NoteGroupsSection() {
+private fun NoteGroupsSection(
+    selectedGroupId: Int? = null,
+    onGroupClick: (Int) -> Unit = {}
+) {
     var isReversed by remember { mutableStateOf(false) }
+    val allGroups = com.english.accelerator.data.NoteGroupManager.getAllGroups()
+    val groups = if (isReversed) allGroups.reversed() else allGroups
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -469,22 +492,31 @@ private fun NoteGroupsSection() {
                 .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 10个示例分组，根据排序状态显示
-            val indices = if (isReversed) (9 downTo 0) else (0..9)
-            indices.forEach { index ->
-                NoteGroupCard(name = "分组 ${index + 1}")
+            // 显示实际分组
+            groups.forEach { group ->
+                NoteGroupCard(
+                    name = group.name,
+                    isSelected = selectedGroupId == group.id,
+                    onClick = { onGroupClick(group.id) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun NoteGroupCard(name: String) {
+private fun NoteGroupCard(
+    name: String,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
     Card(
-        modifier = Modifier.size(64.dp),
+        modifier = Modifier
+            .size(64.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF1F5F9)
+            containerColor = if (isSelected) Color(0xFF3B82F6) else Color(0xFFF1F5F9)
         )
     ) {
         Column(
@@ -500,7 +532,7 @@ private fun NoteGroupCard(name: String) {
             Text(
                 text = name,
                 fontSize = 10.sp,
-                color = Color(0xFF64748B)
+                color = if (isSelected) Color.White else Color(0xFF64748B)
             )
         }
     }
