@@ -1,6 +1,9 @@
 package com.english.accelerator.ui.vocabulary.components
 
+import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,22 +20,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.data.Word
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WordCard(
     word: Word,
+    onLongPress: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val view = LocalView.current
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .height(560.dp)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 24.dp)
+            .combinedClickable(
+                onClick = {},
+                onLongClick = {
+                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    onLongPress()
+                }
+            ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White

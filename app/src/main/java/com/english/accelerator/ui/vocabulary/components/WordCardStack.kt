@@ -30,6 +30,7 @@ fun WordCardStack(
     currentIndex: Int,
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit,
+    onLongPress: (Word) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -114,7 +115,10 @@ fun WordCardStack(
                         )
                     }
             ) {
-                WordCard(word = words[currentIndex])
+                WordCard(
+                    word = words[currentIndex],
+                    onLongPress = { onLongPress(words[currentIndex]) }
+                )
             }
         }
     }
