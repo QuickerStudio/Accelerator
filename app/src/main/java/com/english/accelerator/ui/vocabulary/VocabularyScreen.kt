@@ -23,6 +23,7 @@ import com.english.accelerator.data.BookmarkManager
 import com.english.accelerator.data.sampleWords
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
+import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.vocabulary.components.WordCardStack
 
 @Composable
@@ -32,6 +33,7 @@ fun VocabularyScreen(
 ) {
     var currentIndex by remember { mutableIntStateOf(0) }
     var showBookmarkScreen by remember { mutableStateOf(false) }
+    var showSidebar by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf("") }
     var toastBackgroundColor by remember { mutableStateOf(Color.White) }
     var showToast by remember { mutableStateOf(false) }
@@ -44,25 +46,26 @@ fun VocabularyScreen(
         label = "cardBottomPadding"
     )
 
-    if (showBookmarkScreen) {
-        BookmarkScreen(
-            onBackClick = { showBookmarkScreen = false }
-        )
-    } else {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 顶部栏
-            VocabularyTopBar(
-                onMenuClick = {
-                    // TODO: 打开侧边栏
-                },
-                onConversationClick = onToggleInputArea,
-                onBookmarkClick = {
-                    showBookmarkScreen = true
-                },
-                isConversationMode = showInputArea
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (showBookmarkScreen) {
+            BookmarkScreen(
+                onBackClick = { showBookmarkScreen = false }
             )
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // 顶部栏
+                VocabularyTopBar(
+                    onMenuClick = {
+                        showSidebar = true
+                    },
+                    onConversationClick = onToggleInputArea,
+                    onBookmarkClick = {
+                        showBookmarkScreen = true
+                    },
+                    isConversationMode = showInputArea
+                )
 
             // 卡片区域
             Box(
@@ -118,6 +121,15 @@ fun VocabularyScreen(
                         .padding(top = 20.dp)
                 )
             }
+            }
+        }
+
+        // 侧边栏
+        if (showSidebar) {
+            Sidebar(
+                isOpen = showSidebar,
+                onClose = { showSidebar = false }
+            )
         }
     }
 }

@@ -1,0 +1,427 @@
+package com.english.accelerator.ui.sidebar
+
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+@Composable
+fun Sidebar(
+    isOpen: Boolean,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 侧边栏偏移动画
+    val offsetX by animateDpAsState(
+        targetValue = if (isOpen) 0.dp else (-320).dp,
+        animationSpec = tween(durationMillis = 300),
+        label = "sidebarOffset"
+    )
+
+    Box(modifier = modifier.fillMaxSize()) {
+        // 遮罩层
+        if (isOpen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(onClick = onClose)
+            )
+        }
+
+        // 侧边栏内容
+        Box(
+            modifier = Modifier
+                .offset(x = offsetX)
+                .width(320.dp)
+                .fillMaxHeight()
+                .shadow(16.dp)
+                .background(Color.White)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // 顶部品牌区域
+                SidebarHeader(
+                    onSearchClick = { /* TODO: 搜索功能 */ },
+                    onSettingsClick = { /* TODO: 设置功能 */ }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 新建笔记按钮
+                NewNoteButton(
+                    onClick = { /* TODO: 新建笔记 */ }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 全部笔记区域
+                AllNotesSection()
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 笔记分组区域
+                NoteGroupsSection()
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 单词学习日志
+                LearningLogsSection()
+            }
+        }
+    }
+}
+
+@Composable
+private fun SidebarHeader(
+    onSearchClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        // 品牌名称
+        Text(
+            text = "Accelerator",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E293B)
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // 搜索按钮
+            IconButton(
+                onClick = onSearchClick,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "搜索",
+                    tint = Color(0xFF64748B)
+                )
+            }
+
+            // 设置按钮
+            IconButton(
+                onClick = onSettingsClick,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "设置",
+                    tint = Color(0xFF64748B)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NewNoteButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF6366F1)
+        )
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = Color.White
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "新建笔记",
+            color = Color.White,
+            fontSize = 16.sp
+        )
+    }
+}
+
+@Composable
+private fun AllNotesSection() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "全部笔记",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E293B),
+            modifier = Modifier.padding(horizontal = 20.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 笔记列表（水平滚动）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 示例笔记卡片
+            repeat(3) { index ->
+                NoteCard(
+                    title = "笔记 ${index + 1}",
+                    preview = "这是笔记预览内容..."
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoteCard(title: String, preview: String) {
+    Card(
+        modifier = Modifier
+            .width(120.dp)
+            .height(80.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF1F5F9)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp)
+        ) {
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF1E293B),
+                maxLines = 2
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = preview,
+                fontSize = 12.sp,
+                color = Color(0xFF64748B),
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun NoteGroupsSection() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "笔记分组",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E293B),
+            modifier = Modifier.padding(horizontal = 20.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 分组网格
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 示例分组
+            repeat(2) { index ->
+                NoteGroupCard(name = "分组 ${index + 1}")
+            }
+            // 添加分组按钮
+            AddGroupCard()
+        }
+    }
+}
+
+@Composable
+private fun NoteGroupCard(name: String) {
+    Card(
+        modifier = Modifier.size(64.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF1F5F9)
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "📁",
+                fontSize = 24.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = name,
+                fontSize = 10.sp,
+                color = Color(0xFF64748B)
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddGroupCard() {
+    Card(
+        modifier = Modifier.size(64.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF1F5F9)
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "添加分组",
+                tint = Color(0xFF94A3B8),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "添加",
+                fontSize = 10.sp,
+                color = Color(0xFF94A3B8)
+            )
+        }
+    }
+}
+
+@Composable
+private fun LearningLogsSection() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "单词",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E293B),
+            modifier = Modifier.padding(horizontal = 20.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 学习日志列表
+        LogCategorySection(
+            icon = "📌",
+            title = "置顶",
+            logs = listOf("重要单词复习")
+        )
+
+        LogCategorySection(
+            icon = "📅",
+            title = "今天",
+            logs = listOf("学习了 20 个新单词", "复习了 15 个单词")
+        )
+
+        LogCategorySection(
+            icon = "📅",
+            title = "本周",
+            logs = listOf("完成 3 次学习", "掌握 50 个单词")
+        )
+
+        LogCategorySection(
+            icon = "📅",
+            title = "更早",
+            logs = listOf("上周学习记录", "上月学习记录")
+        )
+    }
+}
+
+@Composable
+private fun LogCategorySection(
+    icon: String,
+    title: String,
+    logs: List<String>
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // 分组标题
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .background(Color(0xFFF8FAFC))
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = icon,
+                fontSize = 16.sp
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+        }
+
+        // 日志项
+        logs.forEach { log ->
+            LogItem(content = log)
+        }
+    }
+}
+
+@Composable
+private fun LogItem(content: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = content,
+            fontSize = 14.sp,
+            color = Color(0xFF1E293B)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "2 小时前",
+            fontSize = 12.sp,
+            color = Color(0xFF94A3B8)
+        )
+    }
+    Divider(
+        color = Color(0xFFE2E8F0),
+        thickness = 1.dp,
+        modifier = Modifier.padding(horizontal = 20.dp)
+    )
+}
