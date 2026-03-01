@@ -286,7 +286,9 @@ private fun AllNotesSection(
     onNewNoteClick: () -> Unit = {},
     onNoteClick: (com.english.accelerator.data.Note) -> Unit = {}
 ) {
-    val notes = com.english.accelerator.data.NoteManager.getAllNotes()
+    var isReversed by remember { mutableStateOf(false) }
+    val allNotes = com.english.accelerator.data.NoteManager.getAllNotes()
+    val notes = if (isReversed) allNotes.reversed() else allNotes
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -296,12 +298,32 @@ private fun AllNotesSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "全部笔记",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "全部笔记",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+
+                // 排序切换按钮
+                IconButton(
+                    onClick = { isReversed = !isReversed },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = if (isReversed) "倒序" else "正序",
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier
+                            .size(20.dp)
+                            .rotate(if (isReversed) 180f else 0f)
+                    )
+                }
+            }
 
             // 新建笔记按钮
             Button(
@@ -386,6 +408,8 @@ private fun NoteCard(
 
 @Composable
 private fun NoteGroupsSection() {
+    var isReversed by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -394,12 +418,32 @@ private fun NoteGroupsSection() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "笔记分组",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "笔记分组",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+
+                // 排序切换按钮
+                IconButton(
+                    onClick = { isReversed = !isReversed },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = if (isReversed) "倒序" else "正序",
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier
+                            .size(20.dp)
+                            .rotate(if (isReversed) 180f else 0f)
+                    )
+                }
+            }
 
             // 添加分组按钮
             IconButton(
@@ -425,8 +469,9 @@ private fun NoteGroupsSection() {
                 .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 10个示例分组
-            repeat(10) { index ->
+            // 10个示例分组，根据排序状态显示
+            val indices = if (isReversed) (9 downTo 0) else (0..9)
+            indices.forEach { index ->
                 NoteGroupCard(name = "分组 ${index + 1}")
             }
         }
