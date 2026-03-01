@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -49,14 +50,16 @@ fun BottomInputArea(
                 .padding(
                     start = 52.dp,
                     end = 100.dp,
-                    top = 12.dp,
-                    bottom = 12.dp
+                    top = 8.dp,
+                    bottom = 8.dp
                 )
         ) {
             TextField(
                 value = inputText,
                 onValueChange = { inputText = it },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
                 placeholder = {
                     Text(
                         text = "发消息或按住说话...",
@@ -70,7 +73,8 @@ fun BottomInputArea(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
                 ),
-                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp)
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                maxLines = 2
             )
         }
 
