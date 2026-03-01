@@ -69,7 +69,7 @@ fun VocabularyTopBar(
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(
-                        if (isConversationMode) Color(0xFF3B82F6) else Color.Transparent
+                        if (isConversationMode) Color(0xFF64748B) else Color.Transparent
                     )
             ) {
                 Icon(

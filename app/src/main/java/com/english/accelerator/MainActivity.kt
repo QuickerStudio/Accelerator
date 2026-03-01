@@ -11,6 +11,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.english.accelerator.ui.components.BottomInputArea
 import com.english.accelerator.ui.navigation.BottomNavigationBar
 import com.english.accelerator.ui.navigation.Screen
@@ -54,7 +56,9 @@ fun AcceleratorApp() {
                     enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
-                    BottomInputArea()
+                    BottomInputArea(
+                        modifier = Modifier.padding(bottom = 15.dp)
+                    )
                 }
 
                 // 底部导航栏

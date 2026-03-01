@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun BottomInputArea(
@@ -38,19 +39,17 @@ fun BottomInputArea(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(72.dp)
-            .background(Color.White)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color(0xFFF1F5F9))
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 相机按钮
         IconButton(
             onClick = { /* TODO: 打开相机 */ },
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFF1F5F9))
+            modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.CameraAlt,
@@ -66,29 +65,27 @@ fun BottomInputArea(
             onValueChange = { inputText = it },
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp),
+                .height(40.dp),
             placeholder = {
                 Text(
                     text = "发消息或按住说话...",
-                    color = Color(0xFF94A3B8)
+                    color = Color(0xFF94A3B8),
+                    fontSize = 14.sp
                 )
             },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFFF1F5F9),
-                unfocusedContainerColor = Color(0xFFF1F5F9),
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            shape = RoundedCornerShape(24.dp)
+            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp)
         )
 
         // 上传按钮
         IconButton(
             onClick = { /* TODO: 上传文件 */ },
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFF1F5F9))
+            modifier = Modifier.size(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -102,17 +99,17 @@ fun BottomInputArea(
         IconButton(
             onClick = { /* TODO: 发送消息 */ },
             modifier = Modifier
-                .size(40.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(
-                    if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFF1F5F9)
+                    if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFE2E8F0)
                 )
         ) {
             Icon(
                 imageVector = Icons.Default.Send,
                 contentDescription = "发送",
-                tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF64748B),
-                modifier = Modifier.size(20.dp)
+                tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
+                modifier = Modifier.size(18.dp)
             )
         }
     }
