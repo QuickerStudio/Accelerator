@@ -3,8 +3,10 @@ package com.english.accelerator.ui.sidebar
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -48,6 +50,10 @@ fun Sidebar(
 ) {
     // 选中的分组 ID（null 表示显示全部笔记）
     var selectedGroupId by remember { mutableStateOf<Int?>(null) }
+
+    // 长按笔记后显示分组选择器
+    var showGroupSelector by remember { mutableStateOf(false) }
+    var selectedNoteForMove by remember { mutableStateOf<com.english.accelerator.data.Note?>(null) }
 
     // 侧边栏偏移动画
     val offsetX by animateDpAsState(
@@ -136,6 +142,11 @@ fun Sidebar(
                             onEditingNoteIdChange(note.id)
                             onEditorTitleChange(note.title)
                             onEditorContentChange(note.content)
+                        },
+                        onNoteLongPress = { note ->
+                            // 长按笔记，显示分组选择器
+                            selectedNoteForMove = note
+                            showGroupSelector = true
                         }
                     )
 
@@ -156,6 +167,22 @@ fun Sidebar(
                     LearningLogsSection()
                 }
             }
+        }
+
+        // 分组选择器弹窗
+        if (showGroupSelector && selectedNoteForMove != null) {
+            GroupSelectorDialog(
+                note = selectedNoteForMove!!,
+                onDismiss = { showGroupSelector = false },
+                onGroupSelected = { groupId ->
+                    com.english.accelerator.data.NoteManager.updateNoteGroup(
+                        selectedNoteForMove!!.id,
+                        groupId
+                    )
+                    showGroupSelector = false
+                    selectedNoteForMove = null
+                }
+            )
         }
     }
 }
@@ -291,11 +318,13 @@ private fun SidebarHeader(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AllNotesSection(
     selectedGroupId: Int? = null,
     onNewNoteClick: () -> Unit = {},
-    onNoteClick: (com.english.accelerator.data.Note) -> Unit = {}
+    onNoteClick: (com.english.accelerator.data.Note) -> Unit = {},
+    onNoteLongPress: (com.english.accelerator.data.Note) -> Unit = {}
 ) {
     var isReversed by remember { mutableStateOf(false) }
 
@@ -378,24 +407,30 @@ private fun AllNotesSection(
                 NoteCard(
                     title = note.title.ifEmpty { "无标题" },
                     preview = note.content,
-                    onClick = { onNoteClick(note) }
+                    onClick = { onNoteClick(note) },
+                    onLongPress = { onNoteLongPress(note) }
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NoteCard(
     title: String,
     preview: String,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onLongPress: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .width(100.dp)
             .height(120.dp)
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFF1F5F9)
@@ -678,3 +713,108 @@ private fun LogItem(content: String) {
         modifier = Modifier.padding(horizontal = 20.dp)
     )
 }
+
+// 分组选择器弹窗
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupSelectorDialog(
+    note: com.english.accelerator.data.Note,
+    onDismiss: () -> Unit,
+    onGroupSelected: (Int?) -> Unit
+) {
+    val groups = com.english.accelerator.data.NoteGroupManager.getAllGroups()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "移动笔记到分组",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "选择要移动到的分组：",
+                    fontSize = 14.sp,
+                    color = Color(0xFF64748B),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                // 移除分组选项
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onGroupSelected(null) },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (note.groupId == null) Color(0xFFDCFCE7) else Color(0xFFF1F5F9)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📋",
+                            fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "全部笔记（无分组）",
+                            fontSize = 14.sp,
+                            color = Color(0xFF1E293B)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 分组列表
+                groups.forEach { group ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onGroupSelected(group.id) },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (note.groupId == group.id) Color(0xFFDCFCE7) else Color(0xFFF1F5F9)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "📁",
+                                fontSize = 20.sp
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = group.name,
+                                fontSize = 14.sp,
+                                color = Color(0xFF1E293B)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
+
