@@ -51,7 +51,7 @@ fun VocabularyScreen() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(vertical = 48.dp),
+                    .padding(bottom = 100.dp),
                 contentAlignment = Alignment.Center
             ) {
                 WordCardStack(
