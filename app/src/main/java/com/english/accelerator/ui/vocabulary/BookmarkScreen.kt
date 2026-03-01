@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -96,34 +98,53 @@ fun BookmarkWordItem(word: Word) {
             defaultElevation = 2.dp
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Box(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = word.word,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
-            )
-            Text(
-                text = word.phonetic,
-                fontSize = 14.sp,
-                color = Color(0xFF64748B)
-            )
-            Text(
-                text = word.translation,
-                fontSize = 16.sp,
-                color = Color(0xFF1E293B)
-            )
-            Text(
-                text = word.example,
-                fontSize = 14.sp,
-                color = Color(0xFF64748B),
-                lineHeight = 20.sp
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = word.word,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+                Text(
+                    text = word.phonetic,
+                    fontSize = 14.sp,
+                    color = Color(0xFF64748B)
+                )
+                Text(
+                    text = word.translation,
+                    fontSize = 16.sp,
+                    color = Color(0xFF1E293B)
+                )
+                Text(
+                    text = word.example,
+                    fontSize = 14.sp,
+                    color = Color(0xFF64748B),
+                    lineHeight = 20.sp
+                )
+            }
+
+            // 删除按钮
+            IconButton(
+                onClick = { BookmarkManager.removeBookmark(word) },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "删除收藏",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
