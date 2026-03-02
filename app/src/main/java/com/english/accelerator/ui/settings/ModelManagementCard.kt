@@ -114,73 +114,119 @@ fun ModelManagementCard(
     ) {
         // 主行：标题 + 状态 + 图标
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    enabled = modelState is GemmaInferenceManager.ModelState.NotDownloaded,
-                    onClick = onDownload
-                ),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 左侧：标题 + 状态
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "AI 模型",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = when (modelState) {
-                        is GemmaInferenceManager.ModelState.NotDownloaded -> "点击下载"
-                        is GemmaInferenceManager.ModelState.Downloading -> {
-                            val percent = (modelState.progress * 100).toInt()
-                            val speedText = formatSpeed(modelState.speed)
-                            "下载中 $percent% ($speedText)"
+            // 左侧：云朵图标（下载中时显示）+ 标题 + 状态
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 云朵图标（仅在下载中时显示）
+                if (modelState is GemmaInferenceManager.ModelState.Downloading) {
+                    Icon(
+                        imageVector = Icons.Default.CloudDownload,
+                        contentDescription = "下载中",
+                        tint = Color(0xFF8B5CF6),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f, fill = false)) {
+                    Text(
+                        text = "AI 模型",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = when (modelState) {
+                            is GemmaInferenceManager.ModelState.NotDownloaded -> "点击下载"
+                            is GemmaInferenceManager.ModelState.Downloading -> {
+                                val percent = (modelState.progress * 100).toInt()
+                                val speedText = formatSpeed(modelState.speed)
+                                "下载中 $percent% ($speedText)"
+                            }
+                            is GemmaInferenceManager.ModelState.Ready -> "Gemma 3n E2B"
+                            is GemmaInferenceManager.ModelState.Error -> "下载失败"
+                        },
+                        fontSize = 14.sp,
+                        color = when (modelState) {
+                            is GemmaInferenceManager.ModelState.Ready -> Color(0xFF10B981)
+                            is GemmaInferenceManager.ModelState.Error -> Color(0xFFEF4444)
+                            else -> Color(0xFF64748B)
                         }
-                        is GemmaInferenceManager.ModelState.Ready -> "Gemma 3n E2B"
-                        is GemmaInferenceManager.ModelState.Error -> "下载失败"
-                    },
-                    fontSize = 14.sp,
-                    color = when (modelState) {
-                        is GemmaInferenceManager.ModelState.Ready -> Color(0xFF10B981)
-                        is GemmaInferenceManager.ModelState.Error -> Color(0xFFEF4444)
-                        else -> Color(0xFF64748B)
-                    }
-                )
+                    )
+                }
             }
 
-            // 右侧：状态图标
-            Box(
-                modifier = Modifier.size(40.dp),
-                contentAlignment = Alignment.Center
+            // 右侧：按钮区域
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 when (modelState) {
                     is GemmaInferenceManager.ModelState.NotDownloaded -> {
-                        // 云朵图标（未下载）
-                        Icon(
-                            imageVector = Icons.Default.CloudDownload,
-                            contentDescription = "下载模型",
-                            tint = Color(0xFF8B5CF6),
-                            modifier = Modifier.size(32.dp)
-                        )
+                        // 切换线路按钮
+                        IconButton(
+                            onClick = onSwitchRoute,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SwapHoriz,
+                                contentDescription = "切换线路",
+                                tint = Color(0xFF8B5CF6),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        // 云朵下载按钮
+                        IconButton(
+                            onClick = onDownload,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudDownload,
+                                contentDescription = "下载模型",
+                                tint = Color(0xFF8B5CF6),
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
                     }
                     is GemmaInferenceManager.ModelState.Downloading -> {
-                        // 下载进度圆环
-                        CircularProgressIndicator(
-                            progress = modelState.progress,
-                            modifier = Modifier.size(32.dp),
-                            color = Color(0xFF8B5CF6),
-                            strokeWidth = 3.dp
-                        )
+                        // 暂停/恢复按钮（替换云朵位置）
+                        IconButton(
+                            onClick = {
+                                if (isPaused) {
+                                    onResume()
+                                    isPaused = false
+                                } else {
+                                    onPause()
+                                    isPaused = true
+                                }
+                            },
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    if (isPaused) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                                contentDescription = if (isPaused) "恢复" else "暂停",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                     is GemmaInferenceManager.ModelState.Ready -> {
                         // 绿色圆形背景 + 对号（支持长按删除）
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(40.dp)
                                 .combinedClickable(
                                     onClick = { /* 短按无操作 */ },
                                     onLongClick = { isLongPressing = true },
@@ -192,8 +238,8 @@ fun ModelManagementCard(
                             // 长按进度环
                             if (longPressProgress > 0f) {
                                 CircularProgressIndicator(
-                                    progress = longPressProgress,
-                                    modifier = Modifier.size(32.dp),
+                                    progress = { longPressProgress },
+                                    modifier = Modifier.size(40.dp),
                                     color = Color(0xFFEF4444),
                                     strokeWidth = 3.dp
                                 )
@@ -246,56 +292,6 @@ fun ModelManagementCard(
                     color = Color(0xFF64748B),
                     fontWeight = FontWeight.Medium
                 )
-            }
-
-            // 下载控制按钮
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // 暂停/恢复按钮
-                Button(
-                    onClick = {
-                        if (isPaused) {
-                            onResume()
-                            isPaused = false
-                        } else {
-                            onPause()
-                            isPaused = true
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isPaused) Color(0xFF10B981) else Color(0xFFF59E0B)
-                    )
-                ) {
-                    Icon(
-                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                        contentDescription = if (isPaused) "恢复" else "暂停",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (isPaused) "恢复" else "暂停")
-                }
-
-                // 切换线路按钮
-                Button(
-                    onClick = onSwitchRoute,
-                    modifier = Modifier.weight(1f),
-                    enabled = false,  // 下载中锁定线路切换
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF8B5CF6),
-                        disabledContainerColor = Color(0xFFCBD5E1)
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SwapHoriz,
-                        contentDescription = "切换线路",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("切换线路")
-                }
             }
         }
     }
