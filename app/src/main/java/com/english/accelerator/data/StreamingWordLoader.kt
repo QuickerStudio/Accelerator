@@ -107,7 +107,7 @@ object StreamingWordLoader {
     private fun getWordFromChunk(wordId: Int): Word? {
         if (wordId < 1 || wordId > 5000) return null
 
-        val chunkIndex = (wordId - 1) / 500
+        val chunkIndex = (wordId - 1) / 200  // 每个分块 200 个单词
         val chunk = when (chunkIndex) {
             0 -> ecdictWordsChunk0
             1 -> ecdictWordsChunk1
@@ -119,10 +119,25 @@ object StreamingWordLoader {
             7 -> ecdictWordsChunk7
             8 -> ecdictWordsChunk8
             9 -> ecdictWordsChunk9
+            10 -> ecdictWordsChunk10
+            11 -> ecdictWordsChunk11
+            12 -> ecdictWordsChunk12
+            13 -> ecdictWordsChunk13
+            14 -> ecdictWordsChunk14
+            15 -> ecdictWordsChunk15
+            16 -> ecdictWordsChunk16
+            17 -> ecdictWordsChunk17
+            18 -> ecdictWordsChunk18
+            19 -> ecdictWordsChunk19
+            20 -> ecdictWordsChunk20
+            21 -> ecdictWordsChunk21
+            22 -> ecdictWordsChunk22
+            23 -> ecdictWordsChunk23
+            24 -> ecdictWordsChunk24
             else -> return null
         }
 
-        val indexInChunk = (wordId - 1) % 500
+        val indexInChunk = (wordId - 1) % 200
         return chunk.getOrNull(indexInChunk)
     }
 

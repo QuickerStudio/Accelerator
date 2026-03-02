@@ -206,7 +206,10 @@ internal val ecdictWordsChunk0 = listOf(
     Word(197, "desk", "/desk/", "书桌, 办公桌, 工作台", "Example sentence for desk.", 1659, "CET4", ""),
     Word(198, "diet", "/'daiәt/", "日常饮食, 议会\nvt. 照规定饮食\nvi. 忌食", "Example sentence for diet.", 2139, "CET4", ""),
     Word(199, "drop", "/drɒp/", "滴, 微量, 落下, 空投\nvi. 放下, 掉下, 下降\nvt. 使滴下, 放下, 丢失, 遗漏\n[计] 投入, 投入点, 接入点, 分接点", "Example sentence for drop.", 690, "CET4", ""),
-    Word(200, "duty", "/'dju:ti/", "责任, 关税, 职务, 尊敬\n[化] 职责", "Example sentence for duty.", 1752, "CET4", ""),
+    Word(200, "duty", "/'dju:ti/", "责任, 关税, 职务, 尊敬\n[化] 职责", "Example sentence for duty.", 1752, "CET4", "")
+)
+
+internal val ecdictWordsChunk1 = listOf(
     Word(201, "earn", "/ә:n/", "赚得, 获得, 博得\n[计] 欧州科学研究网", "Example sentence for earn.", 1305, "CET4", ""),
     Word(202, "edge", "/edʒ/", "边缘, 尖锐, 刀刃, 优势\nvt. 使锐利, 挤进, 镶边\nvi. 缓缓移动", "Example sentence for edge.", 977, "CET4", ""),
     Word(203, "above", "/ә'bʌv/", "在上方, 超出\nadv. 在上面\na. 上述的, 上面的", "Example sentence for above.", 893, "CET4", ""),
@@ -406,7 +409,10 @@ internal val ecdictWordsChunk0 = listOf(
     Word(397, "difference", "/'difәrәns/", "不同, 差异\n[计] 差分", "Example sentence for difference.", 496, "CET4", ""),
     Word(398, "difficulty", "/'difikәlti/", "困难, 难点", "Example sentence for difficulty.", 1686, "CET4", ""),
     Word(399, "direction", "/di'rekʃәn/", "方向, 指导, 趋势\n[计] 方向", "Example sentence for direction.", 928, "CET4", ""),
-    Word(400, "discussion", "/dis'kʌʃәn/", "讨论", "Example sentence for discussion.", 1041, "CET4", ""),
+    Word(400, "discussion", "/dis'kʌʃәn/", "讨论", "Example sentence for discussion.", 1041, "CET4", "")
+)
+
+internal val ecdictWordsChunk2 = listOf(
     Word(401, "bond", "/bɒnd/", "捆绑物, 结合, 债券, 契约, 粘合剂, 保证人, 键, 关栈保留\nvt. 存入关栈, 使黏合\nvi. 结合", "Example sentence for bond.", 1880, "CET4", ""),
     Word(402, "born", "/bɒ:n/", "天生的\nbear的过去分词", "Example sentence for born.", 1088, "CET4", ""),
     Word(403, "album", "/'ælbәm/", "粘贴簿, 唱片套\n[医] 白色物", "Example sentence for album.", 2215, "CET4", ""),
@@ -506,10 +512,7 @@ internal val ecdictWordsChunk0 = listOf(
     Word(497, "cease", "/si:s/", "停止\nv. 停止, 终了", "Example sentence for cease.", 4470, "CET4", ""),
     Word(498, "chain", "/tʃein/", "链, 枷锁, 束缚\nvt. 用铁练锁住, 束缚, 囚禁", "Example sentence for chain.", 1805, "CET4", ""),
     Word(499, "chart", "/tʃɑ:t/", "图表, 海图\nvt. 制成图表\n[计] 图表", "Example sentence for chart.", 2743, "CET4", ""),
-    Word(500, "chase", "/tʃeis/", "追求, 狩猎, 追逐\nvt. 追捕, 追逐, 雕刻, 在...上镶嵌宝石\nvi. 追赶, 奔跑", "Example sentence for chase.", 3312, "CET4", "")
-)
-
-internal val ecdictWordsChunk1 = listOf(
+    Word(500, "chase", "/tʃeis/", "追求, 狩猎, 追逐\nvt. 追捕, 追逐, 雕刻, 在...上镶嵌宝石\nvi. 追赶, 奔跑", "Example sentence for chase.", 3312, "CET4", ""),
     Word(501, "chest", "/tʃest/", "胸, 胸部, 衣柜, 箱子\n[医] 胸, 胸廓", "Example sentence for chest.", 1717, "CET4", ""),
     Word(502, "climb", "/klaim/", "攀登, 上升, 爬\nn. 攀登, 爬升", "Example sentence for climb.", 1566, "CET4", ""),
     Word(503, "clock", "/klɒk/", "时钟, 计时器, (袜子上的)绣花边花\nvt. 绣花样, 记时, 记录\nvi. 记录时间\n[计] 时钟", "Example sentence for clock.", 2635, "CET4", ""),
@@ -609,7 +612,10 @@ internal val ecdictWordsChunk1 = listOf(
     Word(597, "delight", "/di'lait/", "高兴, 愉快\nvt. 使高兴, 乐于\nvi. 感到高兴(或愉快、快乐)", "Example sentence for delight.", 4890, "CET4", ""),
     Word(598, "deposit", "/di'pɒzit/", "存款, 定金, 堆积物\nvt. 存放, 堆积\nvi. 沉淀", "Example sentence for deposit.", 4692, "CET4", ""),
     Word(599, "deserve", "/di'zә:v/", "该得到, 值得\nvi. 应得报答", "Example sentence for deserve.", 2224, "CET4", ""),
-    Word(600, "divorce", "/di'vɒ:s/", "离婚\nvt. 与...离婚", "Example sentence for divorce.", 2978, "CET4", ""),
+    Word(600, "divorce", "/di'vɒ:s/", "离婚\nvt. 与...离婚", "Example sentence for divorce.", 2978, "CET4", "")
+)
+
+internal val ecdictWordsChunk3 = listOf(
     Word(601, "absolute", "/'æbsәlu:t/", "绝对的, 专制的, 完全的, 独立的\nn. 绝对事物", "Example sentence for absolute.", 3165, "CET4", ""),
     Word(602, "academic", "/.ækә'demik/", "学院的, 学术的, 不切实际的\nn. 大学生, 大学教师, 学者, 学会会员", "Example sentence for academic.", 1465, "CET4", ""),
     Word(603, "accident", "/'æksidәnt/", "意外事件, 机遇, 事故, 次要方面\n[化] 意外事故", "Example sentence for accident.", 1707, "CET4", ""),
@@ -809,7 +815,10 @@ internal val ecdictWordsChunk1 = listOf(
     Word(797, "agricultural", "/.ægri'kʌltʃәrәl/", "农业的\n[法] 农业的, 耕作的", "Example sentence for agricultural.", 3104, "CET4", ""),
     Word(798, "agriculture", "/'ægrikʌltʃә/", "农业\n[机] 农业, 农学", "Example sentence for agriculture.", 4165, "CET4", ""),
     Word(799, "allegation", "/.æli'geiʃәn/", "断言, 主张, 申辩\n[法] 声明, 事实陈述, 断言", "Example sentence for allegation.", 3516, "CET6", ""),
-    Word(800, "ambassador", "/æm'bæsәdә/", "大使\n[法] 大使, 使节, 代理", "Example sentence for ambassador.", 4520, "CET4", ""),
+    Word(800, "ambassador", "/æm'bæsәdә/", "大使\n[法] 大使, 使节, 代理", "Example sentence for ambassador.", 4520, "CET4", "")
+)
+
+internal val ecdictWordsChunk4 = listOf(
     Word(801, "amendment", "/ә'mendmәnt/", "修订, 改善, 改良, 改正\n[化] 调理剂", "Example sentence for amendment.", 3667, "TOEFL", ""),
     Word(802, "announcement", "/ә'naunsmәnt/", "公告, 发表, 告知\n[经] 通告, 布告, 公告", "Example sentence for announcement.", 3604, "CET4", ""),
     Word(803, "associated", "", "联合的\n[计] 关联的", "Example sentence for associated.", 4132, "CET6", ""),
@@ -1012,7 +1021,7 @@ internal val ecdictWordsChunk1 = listOf(
     Word(1000, "bug", "/bʌg/", "错误, 虫, 病菌, 缺陷, 窃听器, 癖好, 防盗报警器, 双座小汽车, 要人\nvt. 装防盗报警器, 装窃听器, 激怒\nvi. 捉虫, 暴突\n[计] 缺点, 错误", "Example sentence for bug.", 4159, "CET6", "")
 )
 
-internal val ecdictWordsChunk2 = listOf(
+internal val ecdictWordsChunk5 = listOf(
     Word(1001, "cab", "/kæb/", "出租车, 出租汽车, 出租马车\nvi. 乘出租马车(或汽车)", "Example sentence for cab.", 4220, "CET4", ""),
     Word(1002, "con", "/kɒn/", "精读, 仔细研究, 默记\nadv. 反面地, 从反面\na. 欺诈的\nn. 反对者, 反对票, 肺结核\n[计] 控制台", "Example sentence for con.", 5617, "CET6", ""),
     Word(1003, "cop", "/kɒp/", "警官\nvt. 抓住", "Example sentence for cop.", 2199, "TOEFL", ""),
@@ -1212,7 +1221,10 @@ internal val ecdictWordsChunk2 = listOf(
     Word(1197, "basket", "/'bɑ:skit/", "篮, 篮子\nvt. 装入篮", "Example sentence for basket.", 3255, "CET4", ""),
     Word(1198, "batter", "/'bætә/", "连续猛打（尤其指妇女），猛击\nn. 面糊（食物），击球员，打击手", "Example sentence for batter.", 7225, "TOEFL", ""),
     Word(1199, "betray", "/bi'trei/", "出卖, 背叛, 辜负, 暴露\n[法] 出卖, 背叛, 泄漏", "Example sentence for betray.", 4974, "CET4", ""),
-    Word(1200, "birdie", "/'bә:di/", "小鸟", "Example sentence for birdie.", 11341, "CET4", ""),
+    Word(1200, "birdie", "/'bә:di/", "小鸟", "Example sentence for birdie.", 11341, "CET4", "")
+)
+
+internal val ecdictWordsChunk6 = listOf(
     Word(1201, "bodily", "/'bɒdili/", "身体的\nadv. 亲自", "Example sentence for bodily.", 8434, "TOEFL", ""),
     Word(1202, "bomber", "/'bɒmә/", "轰炸机, 投弹手", "Example sentence for bomber.", 4954, "TOEFL", ""),
     Word(1203, "bounce", "/bauns/", "跳, 跳跃, 弹力, 撞击\nvi. 反跳, 弹跳\nvt. 使跳回, 撞击\n[计] 打回", "Example sentence for bounce.", 3792, "CET4", ""),
@@ -1412,7 +1424,10 @@ internal val ecdictWordsChunk2 = listOf(
     Word(1397, "atrocity", "/ә'trɒsiti/", "残暴, 凶恶, 暴行\n[法] 暴行, 残酷, 残忍", "Example sentence for atrocity.", 8040, "GRE", ""),
     Word(1398, "attacker", "/ә'tækә/", "攻击者", "Example sentence for attacker.", 8701, "CET6", ""),
     Word(1399, "aviation", "/.eivi'eiʃәn/", "航空, 航空学, 飞行术\n[法] 航空, 飞行, 飞行术", "Example sentence for aviation.", 7923, "CET4", ""),
-    Word(1400, "balanced", "/'bælәnst/", "公平的, 平衡的\n[计] 平衡的, 对称的, 均衡的", "Example sentence for balanced.", 4888, "TOEFL", ""),
+    Word(1400, "balanced", "/'bælәnst/", "公平的, 平衡的\n[计] 平衡的, 对称的, 均衡的", "Example sentence for balanced.", 4888, "TOEFL", "")
+)
+
+internal val ecdictWordsChunk7 = listOf(
     Word(1401, "bankrupt", "/'bæŋkrʌpt/", "破产者\na. 破产的\nvt. 使破产", "Example sentence for bankrupt.", 8878, "CET6", ""),
     Word(1402, "basement", "/'beismәnt/", "地下室, 墙脚\n[化] 地下室", "Example sentence for basement.", 3598, "CET4", ""),
     Word(1403, "beginner", "/bi'ginә/", "初学者", "Example sentence for beginner.", 8837, "CET4", ""),
@@ -1512,10 +1527,7 @@ internal val ecdictWordsChunk2 = listOf(
     Word(1497, "aggregate", "/'ægrigәt/", "合计, 总计, 聚集体\na. 合计的, 聚集的\nv. 聚集, 集合, 合计达\n[计] 聚合体", "Example sentence for aggregate.", 12841, "TOEFL", ""),
     Word(1498, "aggression", "/ә'greʃәn/", "侵犯, 侵略\n[医] 攻击", "Example sentence for aggression.", 4521, "CET4", ""),
     Word(1499, "allowance", "/ә'lauәns/", "津贴, 零用钱, 限额, 折扣, 允许\nvt. 定量供应", "Example sentence for allowance.", 7677, "CET4", ""),
-    Word(1500, "alternate", "/'ɒ:ltәnәt/", "交替的, 轮流的, 间隔的\nv. 轮流, (使)交替", "Example sentence for alternate.", 7396, "CET6", "")
-)
-
-internal val ecdictWordsChunk3 = listOf(
+    Word(1500, "alternate", "/'ɒ:ltәnәt/", "交替的, 轮流的, 间隔的\nv. 轮流, (使)交替", "Example sentence for alternate.", 7396, "CET6", ""),
     Word(1501, "aluminium", "/.ælju'miniәm/", "铝\na. 铝的", "Example sentence for aluminium.", 32731, "CET4", ""),
     Word(1502, "ambiguous", "/æm'bigjuәs/", "不明确的, 模棱两可的\n[法] 意思含糊的, 模棱两可的, 暧昧的", "Example sentence for ambiguous.", 7071, "CET4", ""),
     Word(1503, "ambitious", "/æm'biʃәs/", "有野心的, 抱负不凡的, 雄心勃勃的", "Example sentence for ambitious.", 4287, "CET6", ""),
@@ -1615,7 +1627,10 @@ internal val ecdictWordsChunk3 = listOf(
     Word(1597, "confederation", "/kәn.fedә'reiʃәn/", "同盟, 联盟, 组织联盟", "Example sentence for confederation.", 18262, "CET4", ""),
     Word(1598, "confession", "/kәn'feʃәn/", "承认, 坦白, 招供\n[法] 自白, 招供, 自认有罪", "Example sentence for confession.", 4818, "TOEFL", ""),
     Word(1599, "confidential", "/.kɒnfi'denʃәl/", "机密的, 获他人信赖的, 易于信任他人的\n[经] 秘密件", "Example sentence for confidential.", 7010, "CET4", ""),
-    Word(1600, "congratulate", "/kәn'grætʃәleit/", "祝贺, 庆贺", "Example sentence for congratulate.", 8361, "CET4", ""),
+    Word(1600, "congratulate", "/kәn'grætʃәleit/", "祝贺, 庆贺", "Example sentence for congratulate.", 8361, "CET4", "")
+)
+
+internal val ecdictWordsChunk8 = listOf(
     Word(1601, "congressman", "/'kɒŋgresmәn/", "国会议员, 众议院议员\n[法] 国会议会", "Example sentence for congressman.", 5390, "TOEFL", ""),
     Word(1602, "conjunction", "/kәn'dʒʌŋkʃәn/", "连接词, 联合, 结合\n[计] 合取", "Example sentence for conjunction.", 7557, "CET4", ""),
     Word(1603, "connected", "/kә'nektid/", "连接的, 连贯的, 有联系的, 关联的, 连结的, 有关系的\n[计] 连接的", "Example sentence for connected.", 9914, "CET6", ""),
@@ -1815,7 +1830,10 @@ internal val ecdictWordsChunk3 = listOf(
     Word(1797, "brag", "/bræg/", "吹牛\nv. 吹牛", "Example sentence for brag.", 8048, "TOEFL", ""),
     Word(1798, "bran", "/bræn/", "糠, 麸\n[医] 麸, 糠", "Example sentence for bran.", 13762, "CET4", ""),
     Word(1799, "brat", "/bræt/", "乳臭未干的小孩, 小孩\n[机] 不煤, 原煤", "Example sentence for brat.", 13644, "GRE", ""),
-    Word(1800, "brim", "/brim/", "边, 边缘, (河)边\nvt. 注满, 使满溢\nvi. 满溢", "Example sentence for brim.", 12307, "CET4", ""),
+    Word(1800, "brim", "/brim/", "边, 边缘, (河)边\nvt. 注满, 使满溢\nvi. 满溢", "Example sentence for brim.", 12307, "CET4", "")
+)
+
+internal val ecdictWordsChunk9 = listOf(
     Word(1801, "brow", "/brau/", "眉毛, 额\n[医] 额, 眉, 睫毛", "Example sentence for brow.", 5800, "CET4", ""),
     Word(1802, "buff", "/bʌf/", "暗黄色, 暗黄色皮革, 人的皮肤\nvt. 擦亮, 使柔软\na. 暗黄色的", "Example sentence for buff.", 12249, "CET4", ""),
     Word(1803, "bunk", "/bʌŋk/", "铺位, 废话, 逃走\nvi. 逃跑, 睡在铺上\nvt. 提供铺位", "Example sentence for bunk.", 8899, "TOEFL", ""),
@@ -2018,7 +2036,7 @@ internal val ecdictWordsChunk3 = listOf(
     Word(2000, "crony", "/'krәuni/", "密友, 亲密伙伴, 好朋友", "Example sentence for crony.", 13579, "CET4", "")
 )
 
-internal val ecdictWordsChunk4 = listOf(
+internal val ecdictWordsChunk10 = listOf(
     Word(2001, "croon", "/kru:n/", "低声歌唱, 低唱, 低吟\nn. 低唱, 低吟, 轻哼", "Example sentence for croon.", 15619, "GRE", ""),
     Word(2002, "crumb", "/krʌm/", "碎屑, 面包屑, 少许\nvt. 捏碎, 弄碎", "Example sentence for crumb.", 7218, "TOEFL", ""),
     Word(2003, "crust", "/krʌst/", "外壳, 坚硬外皮, 面包皮\nvt. 盖以硬皮\nvi. 结硬皮", "Example sentence for crust.", 5659, "CET4", ""),
@@ -2218,7 +2236,10 @@ internal val ecdictWordsChunk4 = listOf(
     Word(2197, "cheeky", "/'tʃi:ki/", "厚颜的, 无耻的, 色情的", "Example sentence for cheeky.", 22931, "CET4", ""),
     Word(2198, "cheery", "/'tʃiәri/", "愉快的", "Example sentence for cheery.", 14730, "CET4", ""),
     Word(2199, "chilly", "/'tʃili/", "寒冷的, 冷淡的, 不友好的\n[建] 番椒, 冷", "Example sentence for chilly.", 8438, "TOEFL", ""),
-    Word(2200, "chisel", "/'tʃizәl/", "凿子\nv. 凿, 刻, 雕凿, 欺骗", "Example sentence for chisel.", 16996, "TOEFL", ""),
+    Word(2200, "chisel", "/'tʃizәl/", "凿子\nv. 凿, 刻, 雕凿, 欺骗", "Example sentence for chisel.", 16996, "TOEFL", "")
+)
+
+internal val ecdictWordsChunk11 = listOf(
     Word(2201, "chives", "/tʃaɪvz/", "韭黃", "Example sentence for chives.", 14159, "CET4", ""),
     Word(2202, "choral", "/'kɒ:rәl/", "合唱队的", "Example sentence for choral.", 10675, "CET4", ""),
     Word(2203, "chrome", "/krәum/", "铬, 铬合金\n[医] 铬(24号元素)", "Example sentence for chrome.", 11993, "CET4", ""),
@@ -2418,7 +2439,10 @@ internal val ecdictWordsChunk4 = listOf(
     Word(2397, "booster", "/'bu:stә/", "向前推的人, 支持者, 后援者, 升压器\n[化] 爆管", "Example sentence for booster.", 8144, "CET6", ""),
     Word(2398, "bootleg", "/'bu:tleg/", "私卖(酒)", "Example sentence for bootleg.", 23417, "CET4", ""),
     Word(2399, "boredom", "/'bɒ:dәm/", "厌烦, 厌倦, 令人厌烦的事物", "Example sentence for boredom.", 8671, "TOEFL", ""),
-    Word(2400, "boulder", "/'bәuldә/", "大圆石\n[机] 圆石, 漂石", "Example sentence for boulder.", 6122, "TOEFL", ""),
+    Word(2400, "boulder", "/'bәuldә/", "大圆石\n[机] 圆石, 漂石", "Example sentence for boulder.", 6122, "TOEFL", "")
+)
+
+internal val ecdictWordsChunk12 = listOf(
     Word(2401, "bouncer", "/'baunsә/", "巨大的东西, 巨人, 跳跃的人, 同类中最大者", "Example sentence for bouncer.", 16771, "CET4", ""),
     Word(2402, "bouquet", "/bu'kei/", "花束\n[医] 丛, 酒香, 末梢分极", "Example sentence for bouquet.", 9088, "TOEFL", ""),
     Word(2403, "boyhood", "/'bɒihud/", "少年时代", "Example sentence for boyhood.", 12319, "CET4", ""),
@@ -2518,10 +2542,7 @@ internal val ecdictWordsChunk4 = listOf(
     Word(2497, "conifer", "/'kɒnifә/", "松柏目植物, 针叶树", "Example sentence for conifer.", 16342, "TOEFL", ""),
     Word(2498, "conjure", "/'kʌndʒә/", "念咒文召唤, 变戏法, 想象\nvi. 变戏法, 施魔法", "Example sentence for conjure.", 7727, "TOEFL", ""),
     Word(2499, "consign", "/kәn'sain/", "交付, 储蓄, 委托, 寄存\n[经] 托卖, 寄存, 寄销", "Example sentence for consign.", 15519, "TOEFL", ""),
-    Word(2500, "consort", "/'kɒnsɒ:t/", "配偶, 夫妻\nvi. 陪伴, 结交, 符合\nvt. 使结合", "Example sentence for consort.", 19990, "TOEFL", "")
-)
-
-internal val ecdictWordsChunk5 = listOf(
+    Word(2500, "consort", "/'kɒnsɒ:t/", "配偶, 夫妻\nvi. 陪伴, 结交, 符合\nvt. 使结合", "Example sentence for consort.", 19990, "TOEFL", ""),
     Word(2501, "contour", "/'kɒntuә/", "轮廓\nvt. 画轮廓\na. 显示轮廓的\n[计] 轮廓", "Example sentence for contour.", 7917, "TOEFL", ""),
     Word(2502, "convent", "/'kɒnvәnt/", "女修道会\n[法] 召集, 召开, 开会", "Example sentence for convent.", 11258, "CET4", ""),
     Word(2503, "cookery", "/'kukәri/", "烹调法, 烹调术", "Example sentence for cookery.", 24184, "CET4", ""),
@@ -2621,7 +2642,10 @@ internal val ecdictWordsChunk5 = listOf(
     Word(2597, "abrasive", "/ә'breisiv/", "研磨料\na. 有研磨作用的", "Example sentence for abrasive.", 16344, "TOEFL", ""),
     Word(2598, "absentee", "/.æbsәn'ti:/", "缺席者, 不在者\n[经] 缺勤者, 缺席者, 未到工者", "Example sentence for absentee.", 13021, "TOEFL", ""),
     Word(2599, "abundant", "/ә'bʌndәnt/", "丰富的, 充分的, 大量的", "Example sentence for abundant.", 6223, "CET4", ""),
-    Word(2600, "accolade", "/.ækәu'leid/", "荣誉, 赞美, 骑士爵位的授予礼, 连谱号", "Example sentence for accolade.", 15220, "GRE", ""),
+    Word(2600, "accolade", "/.ækәu'leid/", "荣誉, 赞美, 骑士爵位的授予礼, 连谱号", "Example sentence for accolade.", 15220, "GRE", "")
+)
+
+internal val ecdictWordsChunk13 = listOf(
     Word(2601, "accredit", "/ә'kredit/", "信托, 确认, 归结于, 委派\n[经] 发行信用证, 信托, 委托", "Example sentence for accredit.", 16480, "TOEFL", ""),
     Word(2602, "accustom", "/ә'kʌstәm/", "使习惯于", "Example sentence for accustom.", 7584, "CET4", ""),
     Word(2603, "achiever", "/ә'tʃi:vә/", "获得成功的人", "Example sentence for achiever.", 17640, "CET4", ""),
@@ -2821,7 +2845,10 @@ internal val ecdictWordsChunk5 = listOf(
     Word(2797, "delicacy", "/'delikәsi/", "细软, 精致, 精美的食品, 娇气, 微妙, 棘手, 娇弱, 灵敏, 灵巧", "Example sentence for delicacy.", 11228, "CET6", ""),
     Word(2798, "delusion", "/di'lu:ʒәn/", "迷惑, 欺瞒, 错觉\n[医] 妄想", "Example sentence for delusion.", 10894, "CET6", ""),
     Word(2799, "demented", "/di'mentid/", "发狂的, 精神错乱的\n[医] 痴呆的", "Example sentence for demented.", 17632, "GRE", ""),
-    Word(2800, "dementia", "/di'menʃiә/", "痴呆\n[医] 痴呆", "Example sentence for dementia.", 11181, "CET4", ""),
+    Word(2800, "dementia", "/di'menʃiә/", "痴呆\n[医] 痴呆", "Example sentence for dementia.", 11181, "CET4", "")
+)
+
+internal val ecdictWordsChunk14 = listOf(
     Word(2801, "demolish", "/di'mɒliʃ/", "毁坏, 破坏, 粉碎", "Example sentence for demolish.", 9728, "TOEFL", ""),
     Word(2802, "deranged", "/di'reindʒd/", "精神错乱的, 疯狂的", "Example sentence for deranged.", 21292, "GRE", ""),
     Word(2803, "derelict", "/'derilikt/", "被抛弃了的, 无主的, 玩忽职守的\nn. 遗弃物, 被遗弃的人, 玩忽职守者", "Example sentence for derelict.", 18085, "TOEFL", ""),
@@ -3024,7 +3051,7 @@ internal val ecdictWordsChunk5 = listOf(
     Word(3000, "barbarian", "/bɑ:'bєәriәn/", "野蛮人\na. 野蛮的", "Example sentence for barbarian.", 14613, "TOEFL", "")
 )
 
-internal val ecdictWordsChunk6 = listOf(
+internal val ecdictWordsChunk15 = listOf(
     Word(3001, "barometer", "/bә'rɒmitә/", "气压计\n[化] 气压计", "Example sentence for barometer.", 16352, "CET6", ""),
     Word(3002, "battleground", "/'bætlgraund/", "战场, 战地", "Example sentence for battleground.", 12109, "CET4", ""),
     Word(3003, "battleship", "/'bætlʃip/", "战列舰, 主力舰", "Example sentence for battleship.", 13304, "CET4", ""),
@@ -3224,7 +3251,10 @@ internal val ecdictWordsChunk6 = listOf(
     Word(3197, "compulsion", "/kәm'pʌlʃәn/", "强迫, 强制\n[医] 强迫", "Example sentence for compulsion.", 12079, "GRE", ""),
     Word(3198, "compulsive", "/kәm'pʌlsiv/", "强制的, 强迫的\n[医] 强迫性的", "Example sentence for compulsive.", 11963, "TOEFL", ""),
     Word(3199, "conceivable", "/kәn'si:vәbl/", "想得到的, 可想象的, 可理解的", "Example sentence for conceivable.", 10412, "CET4", ""),
-    Word(3200, "conceptual", "/kәn'septʃuәl/", "概念的\n[医] 概念的", "Example sentence for conceptual.", 5522, "TOEFL", ""),
+    Word(3200, "conceptual", "/kәn'septʃuәl/", "概念的\n[医] 概念的", "Example sentence for conceptual.", 5522, "TOEFL", "")
+)
+
+internal val ecdictWordsChunk16 = listOf(
     Word(3201, "concerted", "/kәn'sә:tid/", "商定的, 协定的, 一致的\n[法] 一致的, 协力的, 共同的", "Example sentence for concerted.", 11285, "TOEFL", ""),
     Word(3202, "conciliatory", "/kәn'siliәtәri/", "安抚的, 和好的, 调和的", "Example sentence for conciliatory.", 15499, "TOEFL", ""),
     Word(3203, "conclusive", "/kәn'klu:siv/", "决定性的, 确定性的, 最后的\n[法] 决定性的, 不容置疑的, 确实的", "Example sentence for conclusive.", 12501, "TOEFL", ""),
@@ -3424,7 +3454,10 @@ internal val ecdictWordsChunk6 = listOf(
     Word(3397, "disarmament", "/dis'ɑ:mәmәnt/", "裁军\n[法] 裁军, 解除军备", "Example sentence for disarmament.", 11533, "CET4", ""),
     Word(3398, "disbelief", "/.disbi'li:f/", "不信, 怀疑", "Example sentence for disbelief.", 7408, "CET6", ""),
     Word(3399, "discernible", "/di's\\\\:nәbl,-'z\\\\:-/", "看得清的, 可看出的, 可辨别的, 辨别得出的\n[计] 可识别的", "Example sentence for discernible.", 13124, "TOEFL", ""),
-    Word(3400, "discerning", "/di's\\\\:niŋ/", "有眼力的, 敏锐的, 有辨别能力的, 有洞察力的", "Example sentence for discerning.", 16994, "TOEFL", ""),
+    Word(3400, "discerning", "/di's\\\\:niŋ/", "有眼力的, 敏锐的, 有辨别能力的, 有洞察力的", "Example sentence for discerning.", 16994, "TOEFL", "")
+)
+
+internal val ecdictWordsChunk17 = listOf(
     Word(3401, "disciplined", "/'disiplind/", "遵守纪律的；受过训练的", "Example sentence for disciplined.", 10617, "TOEFL", ""),
     Word(3402, "disconcerting", "/ˌdɪskən'sɜ:rtɪŋ/", "困惑的, 不安的, 尴尬的\nv. 使不安( disconcert的现在分词)", "Example sentence for disconcerting.", 14170, "CET4", ""),
     Word(3403, "disconnect", "/.diskә'nekt/", "使分离, 使不相连, 拆开\nvi. 断开\n[计] 断开", "Example sentence for disconnect.", 8173, "TOEFL", ""),
@@ -3524,10 +3557,7 @@ internal val ecdictWordsChunk6 = listOf(
     Word(3497, "advertising", "/'ædvәtaiziŋ/", "广告业, 广告\na. 广告的\n[计] 发广告", "Example sentence for advertising.", 2640, "TOEFL", ""),
     Word(3498, "alphabetical", "/.ælfә'betikәl/", "依字母顺序的, 字母的", "Example sentence for alphabetical.", 19282, "TOEFL", ""),
     Word(3499, "alphabetically", "/.ælfә'betikәli/", "按字母顺序地", "Example sentence for alphabetically.", 24574, "CET4", ""),
-    Word(3500, "anxiously", "/'æŋʃәsli/", "忧虑地, 不安地", "Example sentence for anxiously.", 10627, "CET4", "")
-)
-
-internal val ecdictWordsChunk7 = listOf(
+    Word(3500, "anxiously", "/'æŋʃәsli/", "忧虑地, 不安地", "Example sentence for anxiously.", 10627, "CET4", ""),
     Word(3501, "approving", "/әp'ru:viŋ/", "赞成的", "Example sentence for approving.", 31380, "CET4", ""),
     Word(3502, "approximately", "/ә'prɒksimәtli/", "大约, 大致, 近于\n[经] 大约, 近似", "Example sentence for approximately.", 2365, "CET4", ""),
     Word(3503, "artificially", "/.ɑ:ti'fiʃәli/", "人工地, 人为地, 不自然地", "Example sentence for artificially.", 11359, "CET4", ""),
@@ -3627,7 +3657,10 @@ internal val ecdictWordsChunk7 = listOf(
     Word(3597, "annul", "/ә'nʌl/", "废除, 宣告无效, 取消\n[经] 撤销, 宣告无效", "Example sentence for annul.", 21724, "TOEFL", ""),
     Word(3598, "anode", "/'ænәud/", "阳极\n[化] 阳极", "Example sentence for anode.", 32962, "CET6", ""),
     Word(3599, "antic", "/'æntik/", "滑稽动作\na. 古怪的", "Example sentence for antic.", 27837, "GRE", ""),
-    Word(3600, "anvil", "/'ænvil/", "铁砧\n[医] 砧骨", "Example sentence for anvil.", 17970, "GRE", ""),
+    Word(3600, "anvil", "/'ænvil/", "铁砧\n[医] 砧骨", "Example sentence for anvil.", 17970, "GRE", "")
+)
+
+internal val ecdictWordsChunk18 = listOf(
     Word(3601, "aorta", "/ei'ɒ:tә/", "主动脉\n[医] 主动脉", "Example sentence for aorta.", 25569, "GRE", ""),
     Word(3602, "aptly", "/'æptli/", "适当地, 适宜地", "Example sentence for aptly.", 11756, "TOEFL", ""),
     Word(3603, "ardor", "/'ɑ:dә/", "热忱, 热情, 情欲, 激情, 灼热\n[医] 灼热", "Example sentence for ardor.", 20355, "TOEFL", ""),
@@ -3827,7 +3860,10 @@ internal val ecdictWordsChunk7 = listOf(
     Word(3797, "coddle", "/'kɒdl/", "娇养, 溺爱, 用文火煮(蛋)", "Example sentence for coddle.", 18813, "TOEFL", ""),
     Word(3798, "codify", "/'kәudifai/", "编成法典\n[法] 使成文法化, 编成法典, 编纂", "Example sentence for codify.", 14023, "TOEFL", ""),
     Word(3799, "coeval", "/kәu'i:vәl/", "同时代的\nn. 同时代的人", "Example sentence for coeval.", 45585, "GRE", ""),
-    Word(3800, "cogent", "/'kәudʒәnt/", "使人首肯的, 使人信服的, 中肯切题的\n[法] 有说服力的, 无法反驳的", "Example sentence for cogent.", 20848, "TOEFL", ""),
+    Word(3800, "cogent", "/'kәudʒәnt/", "使人首肯的, 使人信服的, 中肯切题的\n[法] 有说服力的, 无法反驳的", "Example sentence for cogent.", 20848, "TOEFL", "")
+)
+
+internal val ecdictWordsChunk19 = listOf(
     Word(3801, "cohere", "/kәu'hiә/", "附着, 粘着, 凝聚, 一致\n[建] 粘合", "Example sentence for cohere.", 28478, "TOEFL", ""),
     Word(3802, "comely", "/'kʌmli/", "清秀的, 标致的, 美丽的", "Example sentence for comely.", 24705, "GRE", ""),
     Word(3803, "comity", "/'kɒmiti/", "礼貌, 礼让\n[法] 礼让, 友谊", "Example sentence for comity.", 27885, "TOEFL", ""),
@@ -4030,7 +4066,7 @@ internal val ecdictWordsChunk7 = listOf(
     Word(4000, "coltish", "/'kәultiʃ/", "小马似的, 蹦蹦跳跳的, 不守纪律的", "Example sentence for coltish.", 41676, "GRE", "")
 )
 
-internal val ecdictWordsChunk8 = listOf(
+internal val ecdictWordsChunk20 = listOf(
     Word(4001, "comport", "/kәm'pɒ:t/", "举动, 表现\nvi. 相称, 适合", "Example sentence for comport.", 23213, "TOEFL", ""),
     Word(4002, "concave", "/'kɒnkeiv/", "凹的\n[医] 凹的, 凹面的", "Example sentence for concave.", 20157, "TOEFL", ""),
     Word(4003, "concord", "/'kɒŋkɒ:d/", "一致, 和睦, 协定", "Example sentence for concord.", 25113, "GRE", ""),
@@ -4230,7 +4266,10 @@ internal val ecdictWordsChunk8 = listOf(
     Word(4197, "ceramics", "/si'ræmiks/", "制陶术\n[化] 陶瓷学", "Example sentence for ceramics.", 8006, "TOEFL", ""),
     Word(4198, "chastise", "/tʃæ'staiz/", "责骂, 惩罚\n[法] 责罚, 惩戒, 严惩", "Example sentence for chastise.", 14398, "GRE", ""),
     Word(4199, "cherubic", "/tʃe'ru:bik/", "天使的, 无邪的, 可爱的", "Example sentence for cherubic.", 28255, "GRE", ""),
-    Word(4200, "children", "/'tʃildrәn/", "孩子, 孩子们", "Example sentence for children.", 0, "TOEFL", ""),
+    Word(4200, "children", "/'tʃildrәn/", "孩子, 孩子们", "Example sentence for children.", 0, "TOEFL", "")
+)
+
+internal val ecdictWordsChunk21 = listOf(
     Word(4201, "chipmunk", "/'tʃipmʌŋk/", "金花鼠", "Example sentence for chipmunk.", 23888, "GRE", ""),
     Word(4202, "chivalry", "/'ʃivәlri/", "骑士精神, 骑士制度", "Example sentence for chivalry.", 22033, "TOEFL", ""),
     Word(4203, "choleric", "/'kɒlәrik/", "易怒的\n[医] 胆汁质的, 急躁的", "Example sentence for choleric.", 39110, "GRE", ""),
@@ -4430,7 +4469,10 @@ internal val ecdictWordsChunk8 = listOf(
     Word(4397, "anesthesia", "/.ænis'θi:ziә/", "麻醉, 麻木\n[化] 麻醉", "Example sentence for anesthesia.", 12058, "TOEFL", ""),
     Word(4398, "anesthetic", "/.ænis'θetik/", "麻醉剂, 麻药\na. 麻醉的", "Example sentence for anesthetic.", 19234, "TOEFL", ""),
     Word(4399, "anhydrous", "/æn'haidrәs/", "无水的\n[医] 无水的", "Example sentence for anhydrous.", 39389, "GRE", ""),
-    Word(4400, "animation", "/.æni'meiʃәn/", "活泼, 生气, 激励, 卡通制作\n[计] 动画", "Example sentence for animation.", 7572, "GRE", ""),
+    Word(4400, "animation", "/.æni'meiʃәn/", "活泼, 生气, 激励, 卡通制作\n[计] 动画", "Example sentence for animation.", 7572, "GRE", "")
+)
+
+internal val ecdictWordsChunk22 = listOf(
     Word(4401, "annexation", "/ænek'seiʃәn/", "合并, 附加, 附加物\n[法] 兼并, 侵吞, 附加物", "Example sentence for annexation.", 15200, "GRE", ""),
     Word(4402, "anomalous", "/ә'nɒmәlәs/", "不规则的, 反常的\n[医] 异常的, 反常的", "Example sentence for anomalous.", 16778, "TOEFL", ""),
     Word(4403, "anonymity", "/.ænә'nimiti/", "匿名, 姓氏不明\n[计] 匿名信件", "Example sentence for anonymity.", 7498, "GRE", ""),
@@ -4530,10 +4572,7 @@ internal val ecdictWordsChunk8 = listOf(
     Word(4497, "barbarous", "/'bɑ:bәrәs/", "野蛮的, 残暴的, 粗野的", "Example sentence for barbarous.", 24373, "GRE", ""),
     Word(4498, "barbershop", "", "理发店", "Example sentence for barbershop.", 16205, "CET4", ""),
     Word(4499, "barefaced", "/'bєәfeist/", "公然的, 无耻的, 无面具的", "Example sentence for barefaced.", 0, "GRE", ""),
-    Word(4500, "barrenness", "", "贫瘠, 不妊, 不孕, 不生育, 不毛, 荒芜, 思想贫乏, 空洞, 无用, 无聊\n[医] 不育症, 不孕症", "Example sentence for barrenness.", 30758, "TOEFL", "")
-)
-
-internal val ecdictWordsChunk9 = listOf(
+    Word(4500, "barrenness", "", "贫瘠, 不妊, 不孕, 不生育, 不毛, 荒芜, 思想贫乏, 空洞, 无用, 无聊\n[医] 不育症, 不孕症", "Example sentence for barrenness.", 30758, "TOEFL", ""),
     Word(4501, "bedclothes", "/'bedklәuðz/", "铺盖, 床上用品\n[医] 铺盖, 被褥", "Example sentence for bedclothes.", 0, "CET4", ""),
     Word(4502, "bedraggled", "/bi'drægld/", "全身泥污的, 满身湿透的, 破烂的", "Example sentence for bedraggled.", 23446, "GRE", ""),
     Word(4503, "befuddlement", "", "[医] 迷惘, 迷糊", "Example sentence for befuddlement.", 35124, "GRE", ""),
@@ -4633,7 +4672,10 @@ internal val ecdictWordsChunk9 = listOf(
     Word(4597, "chicanery", "/ʃi'keinәri/", "强词夺理, 狡辩, 欺骗", "Example sentence for chicanery.", 29077, "GRE", ""),
     Word(4598, "chivalrous", "/'ʃivәlrәs/", "骑士的, 勇敢的", "Example sentence for chivalrous.", 29901, "GRE", ""),
     Word(4599, "chlorophyll", "/'klɔ:rәfil/", "叶绿素, 含有叶绿素的绿色蜡状物质\n[化] 叶绿素", "Example sentence for chlorophyll.", 22096, "TOEFL", ""),
-    Word(4600, "chopsticks", "/'tʃɒpstiks/", "筷子", "Example sentence for chopsticks.", 17509, "CET4", ""),
+    Word(4600, "chopsticks", "/'tʃɒpstiks/", "筷子", "Example sentence for chopsticks.", 17509, "CET4", "")
+)
+
+internal val ecdictWordsChunk23 = listOf(
     Word(4601, "choreograph", "/'kɒriәgrɑ:f/", "设计舞蹈动作", "Example sentence for choreograph.", 14305, "TOEFL", ""),
     Word(4602, "choreographer", "/.kɒri'ɒgrәfә/", "舞蹈指导", "Example sentence for choreographer.", 13604, "TOEFL", ""),
     Word(4603, "choreographic", "/.kɒriә'græfik/", "舞蹈艺术的, 舞台舞蹈的", "Example sentence for choreographic.", 32791, "TOEFL", ""),
@@ -4833,7 +4875,10 @@ internal val ecdictWordsChunk9 = listOf(
     Word(4797, "deceitful", "/di'si:tful/", "欺诈的", "Example sentence for deceitful.", 21623, "TOEFL", ""),
     Word(4798, "deciduous", "/di'sidjuәs/", "每年落叶的, 非永久性的\n[医] 脱落的", "Example sentence for deciduous.", 18846, "TOEFL", ""),
     Word(4799, "declamation", "/.deklә'meiʃәn/", "慷慨激昂的演说, 雄辩, 慷慨激昂的演说词", "Example sentence for declamation.", 36215, "GRE", ""),
-    Word(4800, "declassify", "/di:'klæsifai/", "(文件)解密, 从机密表删除", "Example sentence for declassify.", 21617, "GRE", ""),
+    Word(4800, "declassify", "/di:'klæsifai/", "(文件)解密, 从机密表删除", "Example sentence for declassify.", 21617, "GRE", "")
+)
+
+internal val ecdictWordsChunk24 = listOf(
     Word(4801, "declination", "/.dekli'neiʃәn/", "下倾, 倾斜, 衰微\n[医] 偏角, 偏差, 偏转(眼球)", "Example sentence for declination.", 22432, "GRE", ""),
     Word(4802, "declivity", "/di'kliviti/", "倾斜, 下坡", "Example sentence for declivity.", 39774, "TOEFL", ""),
     Word(4803, "decomposition", "/.di:kɒmpә'ziʃәn/", "分解, 腐败, 变质\n[化] 分解", "Example sentence for decomposition.", 15445, "TOEFL", ""),
