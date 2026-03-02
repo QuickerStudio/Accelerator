@@ -12,8 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,6 +59,11 @@ fun WritingScreen(
 
     // 刷新触发器
     var refreshTrigger by remember { mutableStateOf(0) }
+
+    // 键盘控制
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    var isKeyboardVisible by remember { mutableStateOf(false) }
 
     // 统计信息
     val wordCount = content.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
@@ -127,6 +135,9 @@ fun WritingScreen(
                             currentWordType = ""
                             // 触发刷新
                             refreshTrigger++
+                        },
+                        onFocusChanged = { hasFocus ->
+                            isKeyboardVisible = hasFocus
                         }
                     )
 
@@ -137,7 +148,10 @@ fun WritingScreen(
                         value = content,
                         onValueChange = { content = it },
                         placeholder = "开始写作...",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        onFocusChanged = { hasFocus ->
+                            isKeyboardVisible = hasFocus
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -209,6 +223,39 @@ fun WritingScreen(
                 onEditorContentChange = { editorContent = it }
             )
         }
+
+        // 关闭键盘按钮（跟随键盘）
+        if (isKeyboardVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .imePadding()  // 跟随键盘位置
+            ) {
+                Button(
+                    onClick = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        isKeyboardVisible = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF64748B)
+                    ),
+                    shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "关闭键盘",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("关闭键盘", fontSize = 14.sp)
+                }
+            }
+        }
     }
 }
 
@@ -218,7 +265,8 @@ private fun TitleTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     onClearAll: () -> Unit,
-    onSaveToCollection: () -> Unit
+    onSaveToCollection: () -> Unit,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -235,7 +283,11 @@ private fun TitleTextField(
                 color = Color(0xFF1E293B)
             ),
             cursorBrush = SolidColor(Color(0xFF2563EB)),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { focusState ->
+                    onFocusChanged(focusState.isFocused)
+                },
             decorationBox = { innerTextField ->
                 Box(
                     modifier = Modifier
@@ -302,7 +354,8 @@ private fun ContentEditor(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val lines = remember(value) {
@@ -318,7 +371,9 @@ private fun ContentEditor(
             color = Color(0xFF1E293B)
         ),
         cursorBrush = SolidColor(Color(0xFF2563EB)),
-        modifier = modifier,
+        modifier = modifier.onFocusChanged { focusState ->
+            onFocusChanged(focusState.isFocused)
+        },
         decorationBox = { innerTextField ->
             Box(
                 modifier = Modifier
