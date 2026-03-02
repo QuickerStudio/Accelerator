@@ -32,6 +32,10 @@ import com.english.accelerator.ui.writing.WritingScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 初始化 WordLearningManager
+        com.english.accelerator.data.WordLearningManager.init(this)
+
         enableEdgeToEdge()
         setContent {
             AcceleratorTheme {

@@ -1,5 +1,9 @@
 package com.english.accelerator.data
 
+import android.content.Context
+import android.content.SharedPreferences
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.util.concurrent.ConcurrentHashMap
 
 // 单词学习记录
@@ -14,6 +18,41 @@ data class WordLearningRecord(
 object WordLearningManager {
     // 使用 ConcurrentHashMap 存储单词学习记录，key 为单词 ID
     private val learningRecords = ConcurrentHashMap<Int, WordLearningRecord>()
+    private var sharedPreferences: SharedPreferences? = null
+    private val gson = Gson()
+    private const val PREFS_NAME = "word_learning_prefs"
+    private const val KEY_RECORDS = "learning_records"
+
+    /**
+     * 初始化，从 SharedPreferences 加载数据
+     */
+    fun init(context: Context) {
+        sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        loadFromPreferences()
+    }
+
+    /**
+     * 从 SharedPreferences 加载数据
+     */
+    private fun loadFromPreferences() {
+        val json = sharedPreferences?.getString(KEY_RECORDS, null) ?: return
+        try {
+            val type = object : TypeToken<Map<Int, WordLearningRecord>>() {}.type
+            val records: Map<Int, WordLearningRecord> = gson.fromJson(json, type)
+            learningRecords.clear()
+            learningRecords.putAll(records)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * 保存数据到 SharedPreferences
+     */
+    private fun saveToPreferences() {
+        val json = gson.toJson(learningRecords.toMap())
+        sharedPreferences?.edit()?.putString(KEY_RECORDS, json)?.apply()
+    }
 
     /**
      * 记录单词学习状态
@@ -27,6 +66,7 @@ object WordLearningManager {
             timestamp = System.currentTimeMillis(),
             isImportant = existingRecord?.isImportant ?: false  // 保留重点标记
         )
+        saveToPreferences()
     }
 
     /**
@@ -36,6 +76,7 @@ object WordLearningManager {
         val record = learningRecords[wordId]
         if (record != null) {
             learningRecords[wordId] = record.copy(isImportant = !record.isImportant)
+            saveToPreferences()
         }
     }
 
@@ -54,7 +95,7 @@ object WordLearningManager {
     }
 
     /**
-     * 获取今天的学习记录
+     * 获取今天的学习记录（最近24小时）
      */
     fun getTodayRecords(): List<WordLearningRecord> {
         val todayStart = System.currentTimeMillis() - 24 * 60 * 60 * 1000 // 24小时前
@@ -64,7 +105,7 @@ object WordLearningManager {
     }
 
     /**
-     * 获取本周的学习记录
+     * 获取本周的学习记录（1-7天前）
      */
     fun getThisWeekRecords(): List<WordLearningRecord> {
         val weekStart = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000 // 7天前
@@ -75,7 +116,7 @@ object WordLearningManager {
     }
 
     /**
-     * 获取更早的学习记录
+     * 获取更早的学习记录（7天前）
      */
     fun getEarlierRecords(): List<WordLearningRecord> {
         val weekStart = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000 // 7天前
@@ -98,5 +139,6 @@ object WordLearningManager {
      */
     fun clearAll() {
         learningRecords.clear()
+        saveToPreferences()
     }
 }

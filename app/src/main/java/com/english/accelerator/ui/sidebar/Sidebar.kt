@@ -766,6 +766,7 @@ private fun LearningLogsSection() {
     var pinnedExpanded by remember { mutableStateOf(false) }  // 默认折叠
     var todayExpanded by remember { mutableStateOf(true) }
     var thisWeekExpanded by remember { mutableStateOf(false) }
+    var earlierExpanded by remember { mutableStateOf(false) }  // 更早列表默认折叠
 
     // 使用状态来触发重组
     var refreshTrigger by remember { mutableStateOf(0) }
@@ -861,10 +862,10 @@ private fun LearningLogsSection() {
             icon = "📅",
             title = "更早",
             words = earlierWords,
-            isExpanded = true,
-            onToggle = {},
+            isExpanded = earlierExpanded,
+            onToggle = { earlierExpanded = !earlierExpanded },
             hasBackground = true,
-            showToggle = false,
+            showToggle = true,  // 允许展开/折叠
             importantWordIds = importantWordIds,
             onRefresh = { refreshTrigger++ }
         )
