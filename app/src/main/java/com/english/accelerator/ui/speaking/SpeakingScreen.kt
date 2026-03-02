@@ -28,6 +28,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ui.sidebar.Sidebar
@@ -676,6 +677,28 @@ fun ConversationCard(
                 color = Color(0xFF94A3B8)
             )
         }
+    }
+}
+
+// Preview for BottomInputArea
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun BottomInputAreaPreview() {
+    var inputText by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        BottomInputArea(
+            inputText = inputText,
+            onInputChange = { inputText = it },
+            onSend = { },
+            onCamera = { },
+            onAttach = { }
+        )
     }
 }
 
