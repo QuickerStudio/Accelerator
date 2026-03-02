@@ -43,13 +43,11 @@ fun VocabularyScreen(
         mutableIntStateOf(com.english.accelerator.data.LearningProgressManager.getCurrentIndexInPage())
     }
 
-    // 当前页的单词列表（包含插入的复习单词）
+    // 加载单词并混入复习单词（洗牌算法）
     var currentPageWords by remember {
-        mutableStateOf(StreamingWordLoader.getPage(context, currentPageIndex).toMutableList())
+        val newWords = StreamingWordLoader.getPage(context, currentPageIndex)
+        mutableStateOf(com.english.accelerator.data.ReviewManager.shuffleWithReviewWords(newWords))
     }
-
-    // 标记当前单词是否为复习单词
-    var isReviewWord by remember { mutableStateOf(false) }
 
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
@@ -114,10 +112,6 @@ fun VocabularyScreen(
                         if (currentIndexInPage < currentPageWords.size) {
                             val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, false)
-
-                            // 记录滑动并检查是否需要插入复习单词
-                            val shouldInsertReview = com.english.accelerator.data.ReviewManager.recordSwipe()
-
                             currentIndexInPage++
 
                             // 保存学习进度
@@ -130,33 +124,17 @@ fun VocabularyScreen(
                             toastBackgroundColor = Color(0xFFFEE2E2) // 浅红色
                             showToast = true
 
-                            // 检查是否需要插入复习单词
-                            if (shouldInsertReview && com.english.accelerator.data.ReviewManager.hasReviewWords()) {
-                                val reviewWord = com.english.accelerator.data.ReviewManager.getReviewWord(context)
-                                if (reviewWord != null && currentIndexInPage < currentPageWords.size) {
-                                    // 在当前位置插入复习单词
-                                    currentPageWords = currentPageWords.toMutableList().apply {
-                                        add(currentIndexInPage, reviewWord)
-                                    }
-                                    isReviewWord = true
-                                    toastMessage = "复习单词"
-                                    toastBackgroundColor = Color(0xFFFFF4E6) // 浅橙色
-                                }
-                            } else {
-                                isReviewWord = false
-                            }
-
                             // 预加载检查：滑到第 40 个时预加载下一页
                             if (currentIndexInPage == 40) {
                                 StreamingWordLoader.preloadNextPage(context, currentPageIndex)
                             }
 
-                            // 换页检查：当前页学完了，加载下一页
+                            // 换页检查：当前页学完了，加载下一页并混入复习单词
                             if (currentIndexInPage >= currentPageWords.size) {
                                 currentPageIndex++
                                 currentIndexInPage = 0
-                                currentPageWords = StreamingWordLoader.getPage(context, currentPageIndex).toMutableList()
-                                isReviewWord = false
+                                val newWords = StreamingWordLoader.getPage(context, currentPageIndex)
+                                currentPageWords = com.english.accelerator.data.ReviewManager.shuffleWithReviewWords(newWords)
 
                                 // 保存换页后的进度
                                 com.english.accelerator.data.LearningProgressManager.saveProgress(
@@ -171,10 +149,6 @@ fun VocabularyScreen(
                         if (currentIndexInPage < currentPageWords.size) {
                             val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, true)
-
-                            // 记录滑动并检查是否需要插入复习单词
-                            val shouldInsertReview = com.english.accelerator.data.ReviewManager.recordSwipe()
-
                             currentIndexInPage++
 
                             // 保存学习进度
@@ -187,33 +161,17 @@ fun VocabularyScreen(
                             toastBackgroundColor = Color(0xFFDCFCE7) // 浅绿色
                             showToast = true
 
-                            // 检查是否需要插入复习单词
-                            if (shouldInsertReview && com.english.accelerator.data.ReviewManager.hasReviewWords()) {
-                                val reviewWord = com.english.accelerator.data.ReviewManager.getReviewWord(context)
-                                if (reviewWord != null && currentIndexInPage < currentPageWords.size) {
-                                    // 在当前位置插入复习单词
-                                    currentPageWords = currentPageWords.toMutableList().apply {
-                                        add(currentIndexInPage, reviewWord)
-                                    }
-                                    isReviewWord = true
-                                    toastMessage = "复习单词"
-                                    toastBackgroundColor = Color(0xFFFFF4E6) // 浅橙色
-                                }
-                            } else {
-                                isReviewWord = false
-                            }
-
                             // 预加载检查
                             if (currentIndexInPage == 40) {
                                 StreamingWordLoader.preloadNextPage(context, currentPageIndex)
                             }
 
-                            // 换页检查
+                            // 换页检查：当前页学完了，加载下一页并混入复习单词
                             if (currentIndexInPage >= currentPageWords.size) {
                                 currentPageIndex++
                                 currentIndexInPage = 0
-                                currentPageWords = StreamingWordLoader.getPage(context, currentPageIndex).toMutableList()
-                                isReviewWord = false
+                                val newWords = StreamingWordLoader.getPage(context, currentPageIndex)
+                                currentPageWords = com.english.accelerator.data.ReviewManager.shuffleWithReviewWords(newWords)
 
                                 // 保存换页后的进度
                                 com.english.accelerator.data.LearningProgressManager.saveProgress(
