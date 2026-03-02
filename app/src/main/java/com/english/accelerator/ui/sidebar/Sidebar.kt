@@ -764,6 +764,30 @@ private fun LearningLogsSection() {
     var todayExpanded by remember { mutableStateOf(true) }
     var thisWeekExpanded by remember { mutableStateOf(false) }
 
+    // 模拟单词学习数据（单词 + 记忆状态）
+    val pinnedWords = listOf(
+        Pair("Vocabulary", true),
+        Pair("Accelerate", false)
+    )
+
+    val todayWords = listOf(
+        Pair("Practice", true),
+        Pair("Fluent", true),
+        Pair("Grammar", false),
+        Pair("Pronunciation", false)
+    )
+
+    val thisWeekWords = listOf(
+        Pair("Comprehension", true),
+        Pair("Expression", false),
+        Pair("Idiom", true)
+    )
+
+    val earlierWords = listOf(
+        Pair("Dialect", true),
+        Pair("Accent", false)
+    )
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "单词",
@@ -776,37 +800,37 @@ private fun LearningLogsSection() {
         Spacer(modifier = Modifier.height(12.dp))
 
         // 学习日志列表
-        LogCategorySection(
+        WordLogCategorySection(
             icon = "📌",
-            title = "置顶",
-            logs = listOf("重要单词复习"),
+            title = "重点单词",
+            words = pinnedWords,
             isExpanded = pinnedExpanded,
             onToggle = { pinnedExpanded = !pinnedExpanded },
             hasBackground = true
         )
 
-        LogCategorySection(
+        WordLogCategorySection(
             icon = "📅",
             title = "今天",
-            logs = listOf("学习了 20 个新单词", "复习了 15 个单词"),
+            words = todayWords,
             isExpanded = todayExpanded,
             onToggle = { todayExpanded = !todayExpanded },
             hasBackground = false
         )
 
-        LogCategorySection(
+        WordLogCategorySection(
             icon = "📅",
             title = "本周",
-            logs = listOf("完成 3 次学习", "掌握 50 个单词"),
+            words = thisWeekWords,
             isExpanded = thisWeekExpanded,
             onToggle = { thisWeekExpanded = !thisWeekExpanded },
             hasBackground = false
         )
 
-        LogCategorySection(
+        WordLogCategorySection(
             icon = "📅",
             title = "更早",
-            logs = listOf("上周学习记录", "上月学习记录"),
+            words = earlierWords,
             isExpanded = true,
             onToggle = {},
             hasBackground = true,
@@ -816,10 +840,10 @@ private fun LearningLogsSection() {
 }
 
 @Composable
-private fun LogCategorySection(
+private fun WordLogCategorySection(
     icon: String,
     title: String,
-    logs: List<String>,
+    words: List<Pair<String, Boolean>>, // Pair<单词, 是否已记住>
     isExpanded: Boolean,
     onToggle: () -> Unit,
     hasBackground: Boolean,
@@ -863,34 +887,46 @@ private fun LogCategorySection(
             }
         }
 
-        // 日志项（可折叠）
+        // 单词列表（可折叠）
         if (isExpanded) {
-            logs.forEach { log ->
-                LogItem(content = log)
+            words.forEach { (word, isMemorized) ->
+                WordLogItem(word = word, isMemorized = isMemorized)
             }
         }
     }
 }
 
 @Composable
-private fun LogItem(content: String) {
-    Column(
+private fun WordLogItem(word: String, isMemorized: Boolean) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .height(48.dp)
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = content,
+            text = word,
             fontSize = 14.sp,
             color = Color(0xFF1E293B)
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "2 小时前",
-            fontSize = 12.sp,
-            color = Color(0xFF94A3B8)
-        )
+
+        // 状态标签
+        Box(
+            modifier = Modifier
+                .background(
+                    color = if (isMemorized) Color(0xFFDCFCE7) else Color(0xFFFEE2E2),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = if (isMemorized) "已记住" else "未记住",
+                fontSize = 12.sp,
+                color = if (isMemorized) Color(0xFF10B981) else Color(0xFFEF4444)
+            )
+        }
     }
     Divider(
         color = Color(0xFFE2E8F0),
