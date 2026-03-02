@@ -31,6 +31,7 @@ fun SimpleEnglishKeyboard(
         modifier = modifier
             .fillMaxWidth()
             .background(Color(0xFFE5E7EB))
+            .padding(bottom = 15.dp)  // 底部留出15dp避免按钮太靠近屏幕边缘
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
