@@ -72,6 +72,9 @@ fun Sidebar(
         label = "sidebarOffset"
     )
 
+    // 记录侧边栏的位置
+    var sidebarOffset by remember { mutableStateOf(Offset.Zero) }
+
     Box(modifier = modifier.fillMaxSize()) {
         // 遮罩层
         if (isOpen) {
@@ -92,6 +95,9 @@ fun Sidebar(
                 .shadow(16.dp)
                 .background(Color.White)
                 .statusBarsPadding()
+                .onGloballyPositioned { coordinates ->
+                    sidebarOffset = coordinates.positionInRoot()
+                }
         ) {
             if (isEditorMode) {
                 // 编辑器视图
@@ -402,7 +408,16 @@ private fun AllNotesSection(
         Spacer(modifier = Modifier.height(12.dp))
 
         // 笔记列表（水平滚动）+ 拖拽预览层
-        Box(modifier = Modifier.fillMaxWidth()) {
+        var listBoxOffset by remember { mutableStateOf(Offset.Zero) }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .onGloballyPositioned { coordinates ->
+                    listBoxOffset = coordinates.positionInRoot()
+                }
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -422,11 +437,12 @@ private fun AllNotesSection(
                 }
             }
 
-            // 拖拽预览层（只在笔记列表区域显示）
+            // 拖拽预览层（在笔记列表的同一层级，放在最后以确保在最上层）
             if (dragDropState.isDragging && dragDropState.draggingNote != null) {
-                DragPreviewLayer(
+                DragPreviewLayerInList(
                     note = dragDropState.draggingNote!!,
-                    offset = dragDropState.dragOffset
+                    offset = dragDropState.dragOffset,
+                    listBoxOffset = listBoxOffset
                 )
             }
         }
@@ -443,6 +459,7 @@ private fun NoteCard(
     onClick: () -> Unit = {}
 ) {
     var cardOffset by remember { mutableStateOf(Offset.Zero) }
+    var dragStartOffset by remember { mutableStateOf(Offset.Zero) }
 
     // 判断当前卡片是否正在被拖拽
     val isDragging = dragDropState.draggingNote?.id == note.id
@@ -457,14 +474,16 @@ private fun NoteCard(
             .pointerInput(note.id) {
                 detectDragGesturesAfterLongPress(
                     onDragStart = { offset ->
+                        // 记录拖拽起始位置（相对于卡片的偏移）
+                        dragStartOffset = offset
                         // 开始拖拽，传入卡片中心位置
                         dragDropState.startDragging(note, cardOffset + Offset(50.dp.toPx(), 60.dp.toPx()))
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        // 更新拖拽位置
+                        // 更新拖拽位置 - 使用卡片位置 + 手指相对于卡片的位置
                         dragDropState.updateDragPosition(
-                            dragDropState.dragOffset + dragAmount
+                            cardOffset + change.position
                         )
                     },
                     onDragEnd = {
@@ -798,26 +817,27 @@ private fun LogItem(content: String) {
     )
 }
 
-// 拖拽预览层
+// 拖拽预览层（在笔记列表内）
 @Composable
-private fun DragPreviewLayer(
+private fun DragPreviewLayerInList(
     note: com.english.accelerator.data.Note,
-    offset: Offset
+    offset: Offset,
+    listBoxOffset: Offset
 ) {
     // 计算卡片左上角位置（减去卡片尺寸的一半，使卡片中心对齐手指位置）
+    // 同时减去 listBox 的偏移量，将屏幕坐标转换为 Box 内的相对坐标
     val cardWidth = 100.dp
     val cardHeight = 120.dp
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    // 使用 LocalDensity 来正确转换像素到 dp
+    androidx.compose.ui.platform.LocalDensity.current.run {
         Card(
             modifier = Modifier
                 .width(cardWidth)
                 .height(cardHeight)
                 .offset(
-                    x = offset.x.dp - cardWidth / 2,
-                    y = offset.y.dp - cardHeight / 2
+                    x = (offset.x - listBoxOffset.x).toDp() - cardWidth / 2,
+                    y = (offset.y - listBoxOffset.y).toDp() - cardHeight / 2
                 )
                 .shadow(8.dp, RoundedCornerShape(12.dp)),
             shape = RoundedCornerShape(12.dp),
@@ -845,6 +865,55 @@ private fun DragPreviewLayer(
                     maxLines = 3
                 )
             }
+        }
+    }
+}
+
+// 拖拽预览层
+@Composable
+private fun DragPreviewLayer(
+    note: com.english.accelerator.data.Note,
+    offset: Offset,
+    sidebarOffset: Offset
+) {
+    // 计算卡片左上角位置（减去卡片尺寸的一半，使卡片中心对齐手指位置）
+    // 同时减去侧边栏的偏移量，将屏幕坐标转换为侧边栏内的相对坐标
+    val cardWidth = 100.dp
+    val cardHeight = 120.dp
+
+    Card(
+        modifier = Modifier
+            .width(cardWidth)
+            .height(cardHeight)
+            .offset(
+                x = (offset.x - sidebarOffset.x).dp - cardWidth / 2,
+                y = (offset.y - sidebarOffset.y).dp - cardHeight / 2
+            )
+            .shadow(8.dp, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF1F5F9).copy(alpha = 0.9f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp)
+        ) {
+            Text(
+                text = note.title.ifEmpty { "无标题" },
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF1E293B),
+                maxLines = 2
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = note.content,
+                fontSize = 11.sp,
+                color = Color(0xFF64748B),
+                maxLines = 3
+            )
         }
     }
 }
