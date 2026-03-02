@@ -39,6 +39,9 @@ class MainActivity : ComponentActivity() {
         // 初始化 WordRepository
         com.english.accelerator.data.WordRepository.init(this)
 
+        // 初始化 LearningProgressManager
+        com.english.accelerator.data.LearningProgressManager.init(this)
+
         enableEdgeToEdge()
         setContent {
             AcceleratorTheme {

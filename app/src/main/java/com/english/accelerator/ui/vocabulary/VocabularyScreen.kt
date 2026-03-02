@@ -35,12 +35,18 @@ fun VocabularyScreen(
 ) {
     val context = LocalContext.current
 
-    // 流式加载：当前页和索引
-    var currentPageIndex by remember { mutableIntStateOf(0) }
-    var currentIndexInPage by remember { mutableIntStateOf(0) }
+    // 流式加载：当前页和索引（从持久化存储中恢复）
+    var currentPageIndex by remember {
+        mutableIntStateOf(com.english.accelerator.data.LearningProgressManager.getCurrentPageIndex())
+    }
+    var currentIndexInPage by remember {
+        mutableIntStateOf(com.english.accelerator.data.LearningProgressManager.getCurrentIndexInPage())
+    }
 
     // 当前页的单词列表
-    var currentPageWords by remember { mutableStateOf(StreamingWordLoader.getPage(context, 0)) }
+    var currentPageWords by remember {
+        mutableStateOf(StreamingWordLoader.getPage(context, currentPageIndex))
+    }
 
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
@@ -106,6 +112,13 @@ fun VocabularyScreen(
                             val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, false)
                             currentIndexInPage++
+
+                            // 保存学习进度
+                            com.english.accelerator.data.LearningProgressManager.saveProgress(
+                                currentPageIndex,
+                                currentIndexInPage
+                            )
+
                             toastMessage = "未记住"
                             toastBackgroundColor = Color(0xFFFEE2E2) // 浅红色
                             showToast = true
@@ -120,6 +133,12 @@ fun VocabularyScreen(
                                 currentPageIndex++
                                 currentIndexInPage = 0
                                 currentPageWords = StreamingWordLoader.getPage(context, currentPageIndex)
+
+                                // 保存换页后的进度
+                                com.english.accelerator.data.LearningProgressManager.saveProgress(
+                                    currentPageIndex,
+                                    currentIndexInPage
+                                )
                             }
                         }
                     },
@@ -129,6 +148,13 @@ fun VocabularyScreen(
                             val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, true)
                             currentIndexInPage++
+
+                            // 保存学习进度
+                            com.english.accelerator.data.LearningProgressManager.saveProgress(
+                                currentPageIndex,
+                                currentIndexInPage
+                            )
+
                             toastMessage = "已记住"
                             toastBackgroundColor = Color(0xFFDCFCE7) // 浅绿色
                             showToast = true
@@ -143,6 +169,12 @@ fun VocabularyScreen(
                                 currentPageIndex++
                                 currentIndexInPage = 0
                                 currentPageWords = StreamingWordLoader.getPage(context, currentPageIndex)
+
+                                // 保存换页后的进度
+                                com.english.accelerator.data.LearningProgressManager.saveProgress(
+                                    currentPageIndex,
+                                    currentIndexInPage
+                                )
                             }
                         }
                     },
