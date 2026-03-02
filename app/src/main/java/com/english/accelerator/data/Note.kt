@@ -71,19 +71,6 @@ object NoteGroupManager {
     private val groups = mutableListOf<NoteGroup>()
     private var nextId = 1
 
-    init {
-        // 添加 10 个示例分组
-        repeat(10) { index ->
-            groups.add(
-                NoteGroup(
-                    id = nextId++,
-                    name = "分组 ${index + 1}",
-                    timestamp = System.currentTimeMillis() - (index * 1000)
-                )
-            )
-        }
-    }
-
     fun getAllGroups(): List<NoteGroup> {
         return groups.sortedByDescending { it.timestamp }
     }

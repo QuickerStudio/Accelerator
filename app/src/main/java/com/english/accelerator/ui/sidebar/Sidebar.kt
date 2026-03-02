@@ -540,6 +540,9 @@ private fun NoteGroupsSection(
     onGroupClick: (Int) -> Unit = {}
 ) {
     var isReversed by remember { mutableStateOf(false) }
+    var isAddGroupMode by remember { mutableStateOf(false) }
+    var groupNameText by remember { mutableStateOf("") }
+
     val allGroups = com.english.accelerator.data.NoteGroupManager.getAllGroups()
     val groups = if (isReversed) allGroups.reversed() else allGroups
 
@@ -580,14 +583,72 @@ private fun NoteGroupsSection(
 
             // 添加分组按钮
             IconButton(
-                onClick = { /* TODO: 添加分组 */ },
-                modifier = Modifier.size(32.dp)
+                onClick = {
+                    if (groupNameText.isNotEmpty()) {
+                        // 有内容时：创建分组并清空
+                        com.english.accelerator.data.NoteGroupManager.addGroup(groupNameText)
+                        groupNameText = ""
+                    } else {
+                        // 无内容时：切换输入模式
+                        isAddGroupMode = !isAddGroupMode
+                    }
+                },
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(
+                        color = if (groupNameText.isNotEmpty()) Color(0xFFDCFCE7) else Color.Transparent,
+                        shape = CircleShape
+                    )
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "添加分组",
                     tint = Color(0xFF64748B),
                     modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // 输入框（从右向左滑入）
+        val inputBoxOffset by animateDpAsState(
+            targetValue = if (isAddGroupMode) 0.dp else 300.dp,
+            animationSpec = tween(durationMillis = 600),
+            label = "inputBoxOffset"
+        )
+
+        if (isAddGroupMode || inputBoxOffset < 300.dp) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                TextField(
+                    value = groupNameText,
+                    onValueChange = { newValue -> groupNameText = newValue },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .offset(x = inputBoxOffset)
+                        .padding(end = 48.dp),
+                    placeholder = {
+                        Text(
+                            text = "输入分组名称...",
+                            fontSize = 14.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF1F5F9),
+                        unfocusedContainerColor = Color(0xFFF1F5F9),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    shape = RoundedCornerShape(20.dp),
+                    singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontSize = 14.sp,
+                        color = Color(0xFF1E293B)
+                    )
                 )
             }
         }
