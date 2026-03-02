@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.ui.sidebar.Sidebar
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -44,6 +45,7 @@ fun SpeakingScreen(
     var inputText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+    var showSidebar by remember { mutableStateOf(false) }
 
     // Initialize with welcome message
     LaunchedEffect(Unit) {
@@ -55,77 +57,96 @@ fun SpeakingScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("对话", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
-                navigationIcon = {
-                    IconButton(onClick = { /* TODO: Open drawer */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* TODO: Voice call mode */ }) {
-                        Icon(Icons.Default.Phone, contentDescription = "Voice call")
-                    }
-                    IconButton(onClick = { /* TODO: More options */ }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color(0xFF1E293B),
-                    navigationIconContentColor = Color(0xFF64748B),
-                    actionIconContentColor = Color(0xFF64748B)
-                )
-            )
-        },
-        bottomBar = {
-            Column {
-                // Bottom input area (aligned with vocabulary screen)
-                BottomInputArea(
-                    inputText = inputText,
-                    onInputChange = { inputText = it },
-                    onSend = {
-                        if (inputText.isNotBlank()) {
-                            // Add user message
-                            messages.add(Message(content = inputText, isFromUser = true))
-                            inputText = ""
-
-                            // TODO: Send to AI and get response
-                            isLoading = true
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("对话", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
+                    navigationIcon = {
+                        IconButton(onClick = { showSidebar = true }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
                         }
                     },
-                    onCamera = { /* TODO: Open camera */ },
-                    onAttach = { /* TODO: Attach file */ }
+                    actions = {
+                        IconButton(onClick = { /* TODO: Voice call mode */ }) {
+                            Icon(Icons.Default.Phone, contentDescription = "Voice call")
+                        }
+                        IconButton(onClick = { /* TODO: More options */ }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = Color(0xFF1E293B),
+                        navigationIconContentColor = Color(0xFF64748B),
+                        actionIconContentColor = Color(0xFF64748B)
+                    )
                 )
+            },
+            bottomBar = {
+                Column {
+                    // Bottom input area (aligned with vocabulary screen)
+                    BottomInputArea(
+                        inputText = inputText,
+                        onInputChange = { inputText = it },
+                        onSend = {
+                            if (inputText.isNotBlank()) {
+                                // Add user message
+                                messages.add(Message(content = inputText, isFromUser = true))
+                                inputText = ""
 
-                // Bottom navigation bar
-                BottomNavigationBar(onNavigateToSettings = onNavigateToSettings)
-            }
-        }
-    ) { paddingValues ->
-        // Message list
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF8FAFC))
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
-            items(messages) { message ->
-                MessageBubble(message = message)
-            }
+                                // TODO: Send to AI and get response
+                                isLoading = true
+                            }
+                        },
+                        onCamera = { /* TODO: Open camera */ },
+                        onAttach = { /* TODO: Attach file */ }
+                    )
 
-            // Loading indicator
-            if (isLoading) {
-                item {
-                    LoadingBubble()
+                    // Bottom navigation bar
+                    BottomNavigationBar(onNavigateToSettings = onNavigateToSettings)
                 }
             }
+        ) { paddingValues ->
+            // Message list
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF8FAFC))
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 16.dp)
+            ) {
+                items(messages) { message ->
+                    MessageBubble(message = message)
+                }
+
+                // Loading indicator
+                if (isLoading) {
+                    item {
+                        LoadingBubble()
+                    }
+                }
+            }
+        }
+
+        // Sidebar
+        if (showSidebar) {
+            Sidebar(
+                isOpen = showSidebar,
+                onClose = { showSidebar = false },
+                onNavigateToSettings = onNavigateToSettings,
+                isEditorMode = false,
+                onEditorModeChange = { },
+                editingNoteId = null,
+                onEditingNoteIdChange = { },
+                editorTitle = "",
+                onEditorTitleChange = { },
+                editorContent = "",
+                onEditorContentChange = { }
+            )
         }
     }
 }
