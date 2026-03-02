@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.data.BookmarkManager
 import com.english.accelerator.data.WordLearningManager
-import com.english.accelerator.data.sampleWords
+import com.english.accelerator.data.WordRepository
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
@@ -33,6 +33,9 @@ fun VocabularyScreen(
     onToggleInputArea: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {}
 ) {
+    // 从 WordRepository 获取单词列表
+    val words = remember { WordRepository.getHighFrequencyWords(100) }
+
     var currentIndex by remember { mutableIntStateOf(0) }
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
@@ -91,12 +94,12 @@ fun VocabularyScreen(
                 contentAlignment = Alignment.Center
             ) {
                 WordCardStack(
-                    words = sampleWords,
+                    words = words,
                     currentIndex = currentIndex,
                     onSwipeLeft = {
                         // 标记为"未记住"
-                        if (currentIndex < sampleWords.size - 1) {
-                            val currentWord = sampleWords[currentIndex]
+                        if (currentIndex < words.size - 1) {
+                            val currentWord = words[currentIndex]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, false)
                             currentIndex++
                             toastMessage = "未记住"
@@ -106,8 +109,8 @@ fun VocabularyScreen(
                     },
                     onSwipeRight = {
                         // 标记为"已记住"
-                        if (currentIndex < sampleWords.size - 1) {
-                            val currentWord = sampleWords[currentIndex]
+                        if (currentIndex < words.size - 1) {
+                            val currentWord = words[currentIndex]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, true)
                             currentIndex++
                             toastMessage = "已记住"
