@@ -1,5 +1,116 @@
 # CHANGELOG
 
+## [v0.4.0] - 2026-03-02
+
+### New Features ✨
+
+#### Writing Screen Implementation
+- **Writing Interface**
+  - Title input field with system keyboard support (multi-language)
+  - Content editor with custom English keyboard (English-only practice)
+  - Real-time word count and character count display
+  - Grammar score display (placeholder for future AI integration)
+  - Clear and Save buttons with soft color scheme
+
+- **Custom English Keyboard**
+  - QWERTY layout with 4 rows (Q-P, A-L, Shift+Z-M+Backspace, Punctuation+Space)
+  - Shift key for uppercase/lowercase toggle with visual feedback
+  - Close button to dismiss keyboard
+  - 15dp bottom padding to avoid screen edge
+  - Automatically hides system keyboard when active
+
+- **Essay Collection Library**
+  - Save essays with title, content, and grammar score
+  - Side panel display (40% width) with essay list
+  - Click to load essay, long-press (3 seconds) to delete
+  - Auto-refresh after save operation
+  - Persistent storage using SharedPreferences + Gson
+
+- **AI Assist Panel (Placeholder)**
+  - Side panel layout (40% width) ready for LLM integration
+  - Comment card design with color-coded feedback types
+  - Grammar (yellow), Style (purple), Positive (green)
+
+### UI/UX Enhancements 🎨
+
+- **Top Bar Updates**
+  - AI button (AutoAwesome icon) toggles purple when active
+  - Collection button (Book icon) toggles blue when active
+  - Grammar score and word type display in horizontal layout
+
+- **Bottom Navigation Bar Animation**
+  - Fade out when custom keyboard is visible
+  - Fade in when keyboard is closed
+  - Smooth transitions for better user experience
+
+- **Color Scheme**
+  - Clear button: Light red (#FEE2E2) with dark red icon (#DC2626)
+  - Save button: Light green (#D1FAE5) with dark green icon (#059669)
+  - Keyboard background: Light gray (#E5E7EB)
+  - Keyboard buttons: White with dark gray text
+
+### Technical Implementation 🔧
+
+- **File Structure**
+  - `WritingScreen.kt` - Main writing interface
+  - `SimpleEnglishKeyboard.kt` - Custom keyboard component
+  - `EssayCollectionPanel.kt` - Essay collection side panel
+  - `Essay.kt` - Essay data class
+  - `EssayCollectionManager.kt` - Essay persistence manager
+
+- **Key Features**
+  - Dual keyboard strategy (system for title, custom for content)
+  - English-only input filtering for content area
+  - Side panel pattern (mutually exclusive AI/Collection panels)
+  - Callback mechanism for bottom navigation bar control
+
+### Design Decisions 📐
+
+1. **Dual Keyboard Strategy**
+   - Title field uses system keyboard (supports all languages for labeling)
+   - Content field uses custom English keyboard (forces English practice)
+
+2. **Side Panel Pattern**
+   - Both AI assist and essay collection use 40% width side panels
+   - Mutually exclusive (only one can be open at a time)
+   - Consistent with word bookmark functionality
+
+3. **Bottom Navigation Behavior**
+   - Hides when custom keyboard is visible (more screen space)
+   - Fade in/out animations for smooth transitions
+
+4. **English-Only Input Filtering**
+   - Allows: letters, digits, whitespace, English punctuation
+   - Prevents accidental non-English input during practice
+
+### Documentation 📚
+
+- Created `docs/writing-screen-implementation.md` with comprehensive implementation details
+- Documented features, architecture, design decisions, and future enhancements
+
+### Git Commits 📝
+
+- `1dd3a9a` - Implement custom English keyboard
+- `9b894be` - Add fade in/out animation for bottom navigation bar when custom keyboard is visible
+- `9b7599b` - Move keyboard buttons up by 15dp to avoid being too close to screen edge
+
+### Known Limitations ⚠️
+
+- Cursor positioning: Input always appends to the end
+- No text selection support yet
+- No undo/redo functionality
+- AI features are placeholder only (no actual LLM integration)
+
+### Future Enhancements 🚀
+
+- AI integration with local LLM for grammar checking
+- Advanced editing (undo/redo, text selection, cursor positioning)
+- Export options (text files, sharing, backup/restore)
+- Writing analytics (progress tracking, vocabulary usage, error patterns)
+- Custom cursor implementation with positioning support
+
+---
+
 ## [v0.3.0] - 2026-03-02
 
 ### 新增功能 ✨
