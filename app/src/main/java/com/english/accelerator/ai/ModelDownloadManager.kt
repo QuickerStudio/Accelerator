@@ -1,7 +1,6 @@
 package com.english.accelerator.ai
 
 import android.content.Context
-import android.os.Environment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -14,7 +13,6 @@ import kotlin.system.measureTimeMillis
  *
  * Features:
  * - Dual-route download with automatic ping-based selection
- * - Local file detection (Desktop, Downloads, etc.)
  * - Smart route switching based on network latency
  * - Resume download support (TODO)
  */
@@ -24,67 +22,6 @@ class ModelDownloadManager(private val context: Context) {
     private val fallbackModelUrl = "https://www.modelscope.cn/models/google/gemma-3n-E2B-it/resolve/master/gemma-3n-E2B-it.task"
 
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it.task")
-
-    // Common local paths to check for existing model
-    private val localSearchPaths = listOf(
-        // Desktop
-        File(Environment.getExternalStorageDirectory(), "Desktop/gemma-3n-E2B-it"),
-        // Downloads
-        File(Environment.getExternalStorageDirectory(), "Download/gemma-3n-E2B-it"),
-        File(Environment.getExternalStorageDirectory(), "Downloads/gemma-3n-E2B-it"),
-        // Documents
-        File(Environment.getExternalStorageDirectory(), "Documents/gemma-3n-E2B-it")
-    )
-
-    /**
-     * Check if model exists locally (in app storage or common locations)
-     * @return Pair<Boolean, String?> - (exists, path if found)
-     */
-    suspend fun checkLocalModel(): Pair<Boolean, String?> = withContext(Dispatchers.IO) {
-        // Check app storage first
-        if (isModelDownloaded()) {
-            return@withContext Pair(true, modelFile.absolutePath)
-        }
-
-        // Check common local paths
-        for (searchPath in localSearchPaths) {
-            if (searchPath.exists() && searchPath.isDirectory) {
-                // Look for .task file in the directory
-                val taskFile = searchPath.listFiles()?.find { it.extension == "task" }
-                if (taskFile != null && taskFile.length() > 100_000_000) { // At least 100MB
-                    return@withContext Pair(true, taskFile.absolutePath)
-                }
-            }
-        }
-
-        Pair(false, null)
-    }
-
-    /**
-     * Copy local model file to app storage
-     */
-    suspend fun copyLocalModel(sourcePath: String): Result<File> = withContext(Dispatchers.IO) {
-        try {
-            val sourceFile = File(sourcePath)
-            if (!sourceFile.exists()) {
-                return@withContext Result.failure(Exception("Source file not found: $sourcePath"))
-            }
-
-            // Create destination directory
-            modelFile.parentFile?.mkdirs()
-
-            // Copy file
-            sourceFile.inputStream().use { input ->
-                modelFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
-
-            Result.success(modelFile)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     /**
      * Ping a URL to measure latency
@@ -126,7 +63,7 @@ class ModelDownloadManager(private val context: Context) {
 
     /**
      * Download the model with progress tracking and automatic route selection
-     * - Checks local files first
+     * - Checks if model already exists (skip download)
      * - Pings both routes and selects faster one
      * - Falls back to alternative route if download fails
      *
@@ -136,27 +73,25 @@ class ModelDownloadManager(private val context: Context) {
     suspend fun downloadModel(
         onProgress: (Float) -> Unit
     ): Result<File> = withContext(Dispatchers.IO) {
-        // Step 1: Check if model already exists locally
-        val (localExists, localPath) = checkLocalModel()
-        if (localExists && localPath != null) {
-            // Copy local file to app storage
-            return@withContext copyLocalModel(localPath)
+        // Check if model already exists
+        if (isModelDownloaded()) {
+            return@withContext Result.success(modelFile)
         }
 
-        // Step 2: Create models directory
+        // Create models directory
         modelFile.parentFile?.mkdirs()
 
-        // Step 3: Select best route based on ping
+        // Select best route based on ping
         val bestRoute = selectBestRoute()
         val alternativeRoute = if (bestRoute == primaryModelUrl) fallbackModelUrl else primaryModelUrl
 
-        // Step 4: Try best route first
+        // Try best route first
         val bestResult = tryDownload(bestRoute, onProgress)
         if (bestResult.isSuccess) {
             return@withContext bestResult
         }
 
-        // Step 5: Fall back to alternative route
+        // Fall back to alternative route
         val fallbackResult = tryDownload(alternativeRoute, onProgress)
         if (fallbackResult.isSuccess) {
             return@withContext fallbackResult
