@@ -25,9 +25,45 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.data.Word
+import kotlin.math.min
+
+/**
+ * 根据单词长度计算自适应字体大小
+ * @param wordLength 单词长度
+ * @param baseFontSize 基础字体大小（sp）
+ * @param minFontSize 最小字体大小（sp）
+ * @return 自适应后的字体大小
+ */
+private fun calculateAdaptiveFontSize(
+    wordLength: Int,
+    baseFontSize: Float = 56f,
+    minFontSize: Float = 32f
+): Float {
+    return when {
+        wordLength <= 8 -> baseFontSize // 短单词使用基础大小
+        wordLength <= 12 -> baseFontSize * 0.85f // 中等单词缩小 15%
+        wordLength <= 16 -> baseFontSize * 0.7f // 较长单词缩小 30%
+        else -> min(baseFontSize * 0.6f, minFontSize).coerceAtLeast(minFontSize) // 超长单词最小 32sp
+    }
+}
+
+/**
+ * 根据单词长度计算字母间距
+ * @param wordLength 单词长度
+ * @return 字母间距（sp）
+ */
+private fun calculateLetterSpacing(wordLength: Int): Float {
+    return when {
+        wordLength <= 8 -> 2f
+        wordLength <= 12 -> 1f
+        wordLength <= 16 -> 0.5f
+        else -> 0f
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -37,6 +73,11 @@ fun WordCard(
     modifier: Modifier = Modifier
 ) {
     val view = LocalView.current
+
+    // 计算自适应字体大小
+    val wordLength = word.word.length
+    val adaptiveFontSize = calculateAdaptiveFontSize(wordLength)
+    val adaptiveLetterSpacing = calculateLetterSpacing(wordLength)
 
     // 卡片总高度：560dp
     // 面积分配：
@@ -90,15 +131,19 @@ fun WordCard(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // 单词 - 超大字体，视觉焦点
+                    // 单词 - 自适应字体大小
                     Text(
                         text = word.word,
-                        fontSize = 56.sp,
+                        fontSize = adaptiveFontSize.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF2563EB),
                         textAlign = TextAlign.Center,
-                        letterSpacing = 2.sp,
-                        modifier = Modifier.fillMaxWidth()
+                        letterSpacing = adaptiveLetterSpacing.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -111,7 +156,11 @@ fun WordCard(
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Medium,
                         letterSpacing = 0.5.sp,
-                        modifier = Modifier.fillMaxWidth()
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
                     )
                 }
 
