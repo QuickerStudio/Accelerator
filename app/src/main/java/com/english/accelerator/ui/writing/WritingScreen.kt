@@ -1,6 +1,7 @@
 package com.english.accelerator.ui.writing
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,12 +15,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // AI 评论数据类
 data class AiComment(
@@ -33,6 +38,7 @@ fun WritingScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
     var showSidebar by remember { mutableStateOf(false) }
+    var showEssayCollection by remember { mutableStateOf(false) }
 
     // 编辑器状态
     var title by remember { mutableStateOf("") }
@@ -47,6 +53,10 @@ fun WritingScreen(
     // AI 辅助状态
     var showAiPanel by remember { mutableStateOf(false) }
     var aiComments by remember { mutableStateOf<List<AiComment>>(emptyList()) }
+
+    // 语法评分和词语类型
+    var grammarScore by remember { mutableStateOf(0) }
+    var currentWordType by remember { mutableStateOf("") }
 
     // 统计信息
     val wordCount = content.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
@@ -65,8 +75,11 @@ fun WritingScreen(
                     showAiPanel = !showAiPanel
                 },
                 onBookmarkClick = {
-                    // TODO: 保存草稿
-                }
+                    showEssayCollection = true
+                },
+                isConversationMode = showAiPanel,
+                grammarScore = grammarScore,
+                currentWordType = currentWordType
             )
 
             // 编辑器区域
@@ -78,7 +91,7 @@ fun WritingScreen(
                 // 主编辑区
                 Column(
                     modifier = Modifier
-                        .weight(if (showAiPanel) 0.6f else 1f)
+                        .weight(if (showAiPanel || showEssayCollection) 0.6f else 1f)
                         .fillMaxHeight()
                         .padding(16.dp)
                 ) {
@@ -86,7 +99,21 @@ fun WritingScreen(
                     TitleTextField(
                         value = title,
                         onValueChange = { title = it },
-                        placeholder = "标题"
+                        placeholder = "标题",
+                        onClearContent = { content = "" },
+                        onSaveToCollection = {
+                            // 保存到作文收藏库
+                            EssayCollectionManager.addEssay(
+                                title = title,
+                                content = content,
+                                grammarScore = grammarScore
+                            )
+                            // 保存后清空标题和内容
+                            title = ""
+                            content = ""
+                            grammarScore = 0
+                            currentWordType = ""
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -133,6 +160,21 @@ fun WritingScreen(
                             .padding(end = 16.dp, top = 16.dp, bottom = 16.dp)
                     )
                 }
+
+                // 作文收藏库面板
+                if (showEssayCollection) {
+                    EssayCollectionPanel(
+                        onEssayClick = { essay ->
+                            title = essay.title
+                            content = essay.content
+                            grammarScore = essay.grammarScore
+                        },
+                        modifier = Modifier
+                            .weight(0.4f)
+                            .fillMaxHeight()
+                            .padding(end = 16.dp, top = 16.dp, bottom = 16.dp)
+                    )
+                }
             }
         }
 
@@ -159,39 +201,122 @@ fun WritingScreen(
 private fun TitleTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    placeholder: String
+    placeholder: String,
+    onClearContent: () -> Unit,
+    onSaveToCollection: () -> Unit
 ) {
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        textStyle = TextStyle(
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E293B)
-        ),
-        cursorBrush = SolidColor(Color(0xFF2563EB)),
-        decorationBox = { innerTextField ->
-            Box(
+    var showSwipeActions by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    Box(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // 主输入框
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = TextStyle(
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            ),
+            cursorBrush = SolidColor(Color(0xFF2563EB)),
+            readOnly = false,
+            modifier = Modifier
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            showSwipeActions = true
+                            coroutineScope.launch {
+                                delay(3000)
+                                showSwipeActions = false
+                            }
+                        }
+                    )
+                },
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color.White,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFCBD5E1)
+                        )
+                    }
+                    innerTextField()
+                }
+            }
+        )
+
+        // 滑动操作按钮
+        if (showSwipeActions) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(56.dp)
                     .background(
-                        color = Color.White,
+                        color = Color(0xFFF1F5F9),
                         shape = RoundedCornerShape(12.dp)
                     )
-                    .padding(16.dp)
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFCBD5E1)
+                // 左滑：清空内容区域
+                Button(
+                    onClick = {
+                        onClearContent()
+                        showSwipeActions = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFEF4444)
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "清空内容",
+                        modifier = Modifier.size(18.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("清空内容", fontSize = 14.sp)
                 }
-                innerTextField()
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 右滑：保存到收藏库并清空标题和内容
+                Button(
+                    onClick = {
+                        onSaveToCollection()
+                        showSwipeActions = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF10B981)
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Book,
+                        contentDescription = "保存到收藏库",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("保存", fontSize = 14.sp)
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -226,15 +351,14 @@ private fun ContentEditor(
                     )
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     // 行号区域
                     Column(
                         modifier = Modifier
                             .background(Color(0xFFF8FAFC))
                             .padding(horizontal = 12.dp, vertical = 16.dp)
+                            .verticalScroll(scrollState)
                     ) {
                         lines.forEachIndexed { index, _ ->
                             Text(
@@ -251,7 +375,8 @@ private fun ContentEditor(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+                            .verticalScroll(scrollState)
+                            .padding(start = 8.dp, top = 16.dp, end = 8.dp, bottom = 16.dp)
                     ) {
                         if (value.isEmpty()) {
                             Text(
@@ -263,10 +388,49 @@ private fun ContentEditor(
                         }
                         innerTextField()
                     }
+
+                    // 滚动条
+                    VerticalScrollbar(
+                        scrollState = scrollState,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(vertical = 16.dp, horizontal = 4.dp)
+                    )
                 }
             }
         }
     )
+}
+
+@Composable
+private fun VerticalScrollbar(
+    scrollState: androidx.compose.foundation.ScrollState,
+    modifier: Modifier = Modifier
+) {
+    val maxScroll = scrollState.maxValue
+    val currentScroll = scrollState.value
+
+    if (maxScroll > 0) {
+        Box(
+            modifier = modifier
+                .width(6.dp)
+                .background(Color(0xFFF1F5F9), RoundedCornerShape(3.dp))
+        ) {
+            val thumbHeight = 0.3f // 滚动条高度比例
+            val thumbOffset = if (maxScroll > 0) {
+                (currentScroll.toFloat() / maxScroll) * (1f - thumbHeight)
+            } else 0f
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(thumbHeight)
+                    .align(Alignment.TopCenter)
+                    .offset(y = (thumbOffset * scrollState.maxValue).dp)
+                    .background(Color(0xFF94A3B8), RoundedCornerShape(3.dp))
+            )
+        }
+    }
 }
 
 @Composable
