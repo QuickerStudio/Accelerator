@@ -214,7 +214,8 @@ class ModelDownloadManager(private val context: Context) {
             }
 
             connection.inputStream.use { input ->
-                modelFile.outputStream(responseCode == HttpURLConnection.HTTP_PARTIAL).use { output ->
+                val append = responseCode == HttpURLConnection.HTTP_PARTIAL
+                java.io.FileOutputStream(modelFile, append).use { output ->
                     val buffer = ByteArray(8192)
                     var downloaded = existingSize
                     var bytes: Int

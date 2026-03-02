@@ -125,9 +125,11 @@ class GemmaInferenceManager private constructor(
         try {
             _modelState.value = ModelState.Downloading(0f, 0L)
 
-            modelDownloadManager.downloadModel { progress, speed ->
-                _modelState.value = ModelState.Downloading(progress, speed)
-            }.onSuccess {
+            modelDownloadManager.downloadModel(
+                onProgress = { progress: Float, speed: Long ->
+                    _modelState.value = ModelState.Downloading(progress, speed)
+                }
+            ).onSuccess {
                 initialize()
             }.onFailure { error ->
                 _modelState.value = ModelState.Error("Download failed: ${error.message}")
