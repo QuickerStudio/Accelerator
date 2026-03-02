@@ -446,7 +446,7 @@ fun BottomInputArea(
             modifier = Modifier
                 .size(36.dp)
                 .align(Alignment.CenterEnd)
-                .offset(x = (-4).dp)  // 微调位置
+                .offset(x = (-108).dp)  // 微调位置
                 .clip(CircleShape)
                 .background(
                     if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
@@ -677,28 +677,6 @@ fun ConversationCard(
                 color = Color(0xFF94A3B8)
             )
         }
-    }
-}
-
-// Preview for BottomInputArea
-@Preview(showBackground = true, widthDp = 400)
-@Composable
-fun BottomInputAreaPreview() {
-    var inputText by remember { mutableStateOf("") }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-        BottomInputArea(
-            inputText = inputText,
-            onInputChange = { inputText = it },
-            onSend = { },
-            onCamera = { },
-            onAttach = { }
-        )
     }
 }
 
