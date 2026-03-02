@@ -5,7 +5,10 @@ data class Word(
     val word: String,
     val phonetic: String,
     val translation: String,
-    val example: String
+    val example: String,
+    val frequency: Int = 0,        // 词频（0-10000，数字越大越常用）
+    val level: String = "",         // 等级：CET4/CET6/TOEFL/IELTS/GRE
+    val pos: String = ""            // 词性：n./v./adj./adv./prep.等
 )
 
 // 假数据用于测试
