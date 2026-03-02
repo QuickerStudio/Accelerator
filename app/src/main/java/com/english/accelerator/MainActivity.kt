@@ -51,12 +51,25 @@ class MainActivity : ComponentActivity() {
         // 初始化 EssayCollectionManager
         com.english.accelerator.data.EssayCollectionManager.init(this)
 
+        // 初始化 GemmaInferenceManager
+        com.english.accelerator.ai.GemmaInferenceManager.init(this)
+
         enableEdgeToEdge()
         setContent {
             AcceleratorTheme {
                 AcceleratorApp()
             }
         }
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        com.english.accelerator.ai.GemmaInferenceManager.getInstance().onLowMemory()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        com.english.accelerator.ai.GemmaInferenceManager.getInstance().cleanup()
     }
 }
 
