@@ -1,6 +1,7 @@
 package com.english.accelerator.ui.writing
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
@@ -24,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
+import kotlinx.coroutines.launch
 
 // AI 评论数据类
 data class AiComment(
@@ -224,13 +228,13 @@ fun WritingScreen(
             )
         }
 
-        // 关闭键盘按钮（跟随键盘）
+        // 关闭键盘按钮（固定在底部）
         if (isKeyboardVisible) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .imePadding()  // 跟随键盘位置
+                    .navigationBarsPadding()  // 固定在底部导航栏上方
             ) {
                 Button(
                     onClick = {
@@ -243,7 +247,7 @@ fun WritingScreen(
                     ),
                     shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
+                        .align(Alignment.BottomCenter)
                         .padding(horizontal = 16.dp)
                 ) {
                     Icon(
@@ -442,12 +446,30 @@ private fun VerticalScrollbar(
 ) {
     val maxScroll = scrollState.maxValue
     val currentScroll = scrollState.value
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
 
     if (maxScroll > 0) {
-        Box(
+        BoxWithConstraints(
             modifier = modifier
-                .width(6.dp)
-                .background(Color(0xFFF1F5F9), RoundedCornerShape(3.dp))
+                .width(12.dp)  // 增加宽度便于拖拽
+                .background(Color(0xFFF1F5F9), RoundedCornerShape(6.dp))
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        val scrollbarHeight = size.height.toFloat()
+                        val thumbHeight = 0.3f
+                        val scrollableHeight = scrollbarHeight * (1f - thumbHeight)
+
+                        // 计算拖拽对应的滚动距离
+                        val dragRatio = dragAmount.y / scrollableHeight
+                        val scrollDelta = (maxScroll * dragRatio).toInt()
+
+                        coroutineScope.launch {
+                            scrollState.scrollTo((currentScroll + scrollDelta).coerceIn(0, maxScroll))
+                        }
+                    }
+                }
         ) {
             val thumbHeight = 0.3f // 滚动条高度比例
             val thumbOffset = if (maxScroll > 0) {
@@ -459,8 +481,8 @@ private fun VerticalScrollbar(
                     .fillMaxWidth()
                     .fillMaxHeight(thumbHeight)
                     .align(Alignment.TopCenter)
-                    .offset(y = (thumbOffset * scrollState.maxValue).dp)
-                    .background(Color(0xFF94A3B8), RoundedCornerShape(3.dp))
+                    .offset(y = with(density) { (thumbOffset * maxScroll).toDp() })
+                    .background(Color(0xFF94A3B8), RoundedCornerShape(6.dp))
             )
         }
     }
