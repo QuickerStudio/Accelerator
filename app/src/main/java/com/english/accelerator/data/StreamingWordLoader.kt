@@ -2,7 +2,6 @@ package com.english.accelerator.data
 
 import android.content.Context
 import android.util.LruCache
-import android.util.Log
 
 /**
  * 流式单词加载器 (Streaming Word Loader)
@@ -73,8 +72,6 @@ import android.util.Log
  * @see EcdictWords
  */
 object StreamingWordLoader {
-    private const val TAG = "StreamingWordLoader"
-
     // 配置
     private const val PAGE_SIZE = 50  // 每页 50 个单词
     private const val PRELOAD_THRESHOLD = 40  // 滑到第 40 个时预加载下一页
@@ -91,9 +88,7 @@ object StreamingWordLoader {
      */
     fun init(context: Context) {
         if (allWords == null) {
-            Log.d(TAG, "init: 开始加载单词数据")
             allWords = JsonWordLoader.loadWords(context)
-            Log.d(TAG, "init: 加载完成，共 ${allWords?.size} 个单词")
         }
     }
 
@@ -102,18 +97,12 @@ object StreamingWordLoader {
      * @param pageIndex 页码（从 0 开始）
      */
     fun getPage(context: Context, pageIndex: Int): List<Word> {
-        // 确保已初始化
         init(context)
-
-        Log.d(TAG, "getPage: 请求第 $pageIndex 页")
 
         // 先查缓存
         pageCache.get(pageIndex)?.let {
-            Log.d(TAG, "getPage: 从缓存获取第 $pageIndex 页，共 ${it.size} 个单词")
             return it
         }
-
-        Log.d(TAG, "getPage: 缓存未命中，开始加载第 $pageIndex 页")
 
         // 缓存未命中，从所有单词中获取
         val words = allWords ?: emptyList()
@@ -125,8 +114,6 @@ object StreamingWordLoader {
         } else {
             emptyList()
         }
-
-        Log.d(TAG, "getPage: 加载完成，第 $pageIndex 页共 ${pageWords.size} 个单词")
 
         // 放入缓存
         pageCache.put(pageIndex, pageWords)
@@ -140,14 +127,9 @@ object StreamingWordLoader {
         val nextPageIndex = currentPageIndex + 1
         val totalWords = allWords?.size ?: 5000
         if (nextPageIndex * PAGE_SIZE < totalWords) {
-            Log.d(TAG, "preloadNextPage: 开始预加载第 $nextPageIndex 页")
-            // 异步预加载，不阻塞当前线程
             Thread {
                 getPage(context, nextPageIndex)
-                Log.d(TAG, "preloadNextPage: 第 $nextPageIndex 页预加载完成")
             }.start()
-        } else {
-            Log.d(TAG, "preloadNextPage: 已到达最后一页，无需预加载")
         }
     }
 
@@ -155,7 +137,6 @@ object StreamingWordLoader {
      * 清空缓存
      */
     fun clearCache() {
-        Log.d(TAG, "clearCache: 清空缓存")
         pageCache.evictAll()
     }
 

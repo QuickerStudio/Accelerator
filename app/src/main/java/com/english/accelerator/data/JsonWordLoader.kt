@@ -1,7 +1,6 @@
 package com.english.accelerator.data
 
 import android.content.Context
-import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.InputStreamReader
@@ -11,7 +10,6 @@ import java.io.InputStreamReader
  * 从 res/raw/ecdict_words.json 加载单词数据
  */
 object JsonWordLoader {
-    private const val TAG = "JsonWordLoader"
     private var allWords: List<Word>? = null
 
     /**
@@ -19,12 +17,8 @@ object JsonWordLoader {
      */
     fun loadWords(context: Context): List<Word> {
         if (allWords != null) {
-            Log.d(TAG, "loadWords: 使用缓存数据，共 ${allWords!!.size} 个单词")
             return allWords!!
         }
-
-        Log.d(TAG, "loadWords: 开始从 JSON 加载单词数据")
-        val startTime = System.currentTimeMillis()
 
         try {
             val inputStream = context.resources.openRawResource(
@@ -41,12 +35,9 @@ object JsonWordLoader {
             allWords = gson.fromJson(reader, type)
             reader.close()
 
-            val duration = System.currentTimeMillis() - startTime
-            Log.d(TAG, "loadWords: 加载完成，耗时 ${duration}ms，共 ${allWords!!.size} 个单词")
-
             return allWords!!
         } catch (e: Exception) {
-            Log.e(TAG, "loadWords: 加载失败", e)
+            e.printStackTrace()
             return emptyList()
         }
     }
@@ -71,7 +62,6 @@ object JsonWordLoader {
      * 清空缓存
      */
     fun clearCache() {
-        Log.d(TAG, "clearCache: 清空缓存")
         allWords = null
     }
 }

@@ -2,7 +2,6 @@ package com.english.accelerator.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -12,7 +11,6 @@ import com.google.gson.reflect.TypeToken
  * 负责管理用户收藏的单词，并持久化存储
  */
 object BookmarkManager {
-    private const val TAG = "BookmarkManager"
     private const val PREFS_NAME = "bookmark_prefs"
     private const val KEY_BOOKMARKS = "bookmarked_words"
 
@@ -38,9 +36,8 @@ object BookmarkManager {
             val words: List<Word> = gson.fromJson(json, type)
             bookmarkedWords.clear()
             bookmarkedWords.addAll(words)
-            Log.d(TAG, "loadFromPreferences: 加载了 ${bookmarkedWords.size} 个收藏单词")
         } catch (e: Exception) {
-            Log.e(TAG, "loadFromPreferences: 加载失败", e)
+            e.printStackTrace()
         }
     }
 
@@ -50,7 +47,6 @@ object BookmarkManager {
     private fun saveToPreferences() {
         val json = gson.toJson(bookmarkedWords.toList())
         sharedPreferences?.edit()?.putString(KEY_BOOKMARKS, json)?.apply()
-        Log.d(TAG, "saveToPreferences: 保存了 ${bookmarkedWords.size} 个收藏单词")
     }
 
     /**
@@ -60,7 +56,6 @@ object BookmarkManager {
         if (!bookmarkedWords.any { it.id == word.id }) {
             bookmarkedWords.add(word)
             saveToPreferences()
-            Log.d(TAG, "addBookmark: 收藏单词 ${word.word}")
         }
     }
 
@@ -70,7 +65,6 @@ object BookmarkManager {
     fun removeBookmark(word: Word) {
         bookmarkedWords.removeAll { it.id == word.id }
         saveToPreferences()
-        Log.d(TAG, "removeBookmark: 取消收藏单词 ${word.word}")
     }
 
     /**
@@ -93,6 +87,5 @@ object BookmarkManager {
     fun clearAll() {
         bookmarkedWords.clear()
         saveToPreferences()
-        Log.d(TAG, "clearAll: 清空所有收藏")
     }
 }
