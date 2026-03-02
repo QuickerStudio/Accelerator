@@ -767,18 +767,29 @@ private fun LearningLogsSection() {
     var todayExpanded by remember { mutableStateOf(true) }
     var thisWeekExpanded by remember { mutableStateOf(false) }
 
+    // 使用状态来触发重组
+    var refreshTrigger by remember { mutableStateOf(0) }
+
     // 从 WordLearningManager 获取真实数据
-    val pinnedWords = com.english.accelerator.data.WordLearningManager.getImportantWords()
-        .map { Triple(it.wordId, it.word, it.isMemorized) }
+    val pinnedWords = remember(refreshTrigger) {
+        com.english.accelerator.data.WordLearningManager.getImportantWords()
+            .map { Triple(it.wordId, it.word, it.isMemorized) }
+    }
 
-    val todayWords = com.english.accelerator.data.WordLearningManager.getTodayRecords()
-        .map { Triple(it.wordId, it.word, it.isMemorized) }
+    val todayWords = remember(refreshTrigger) {
+        com.english.accelerator.data.WordLearningManager.getTodayRecords()
+            .map { Triple(it.wordId, it.word, it.isMemorized) }
+    }
 
-    val thisWeekWords = com.english.accelerator.data.WordLearningManager.getThisWeekRecords()
-        .map { Triple(it.wordId, it.word, it.isMemorized) }
+    val thisWeekWords = remember(refreshTrigger) {
+        com.english.accelerator.data.WordLearningManager.getThisWeekRecords()
+            .map { Triple(it.wordId, it.word, it.isMemorized) }
+    }
 
-    val earlierWords = com.english.accelerator.data.WordLearningManager.getEarlierRecords()
-        .map { Triple(it.wordId, it.word, it.isMemorized) }
+    val earlierWords = remember(refreshTrigger) {
+        com.english.accelerator.data.WordLearningManager.getEarlierRecords()
+            .map { Triple(it.wordId, it.word, it.isMemorized) }
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -814,7 +825,8 @@ private fun LearningLogsSection() {
             isExpanded = pinnedExpanded,
             onToggle = { pinnedExpanded = !pinnedExpanded },
             hasBackground = true,
-            isImportantSection = true  // 标记为重点单词区域
+            isImportantSection = true,
+            onRefresh = { refreshTrigger++ }
         )
 
         WordLogCategorySection(
@@ -823,7 +835,8 @@ private fun LearningLogsSection() {
             words = todayWords,
             isExpanded = todayExpanded,
             onToggle = { todayExpanded = !todayExpanded },
-            hasBackground = false
+            hasBackground = false,
+            onRefresh = { refreshTrigger++ }
         )
 
         WordLogCategorySection(
@@ -832,7 +845,8 @@ private fun LearningLogsSection() {
             words = thisWeekWords,
             isExpanded = thisWeekExpanded,
             onToggle = { thisWeekExpanded = !thisWeekExpanded },
-            hasBackground = false
+            hasBackground = false,
+            onRefresh = { refreshTrigger++ }
         )
 
         WordLogCategorySection(
@@ -842,7 +856,8 @@ private fun LearningLogsSection() {
             isExpanded = true,
             onToggle = {},
             hasBackground = true,
-            showToggle = false
+            showToggle = false,
+            onRefresh = { refreshTrigger++ }
         )
     }
 }
@@ -856,7 +871,8 @@ private fun WordLogCategorySection(
     onToggle: () -> Unit,
     hasBackground: Boolean,
     showToggle: Boolean = true,
-    isImportantSection: Boolean = false  // 是否为重点单词区域
+    isImportantSection: Boolean = false,  // 是否为重点单词区域
+    onRefresh: () -> Unit = {}  // 刷新回调
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         // 分组标题
@@ -906,7 +922,8 @@ private fun WordLogCategorySection(
                 WordLogItem(
                     wordId = wordId,
                     word = word,
-                    isMemorized = isMemorized
+                    isMemorized = isMemorized,
+                    onRefresh = onRefresh
                 )
             }
         }
@@ -915,7 +932,7 @@ private fun WordLogCategorySection(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun WordLogItem(wordId: Int, word: String, isMemorized: Boolean) {
+private fun WordLogItem(wordId: Int, word: String, isMemorized: Boolean, onRefresh: () -> Unit = {}) {
     var isImportant by remember { mutableStateOf(com.english.accelerator.data.WordLearningManager.isImportant(wordId)) }
 
     Row(
@@ -931,6 +948,7 @@ private fun WordLogItem(wordId: Int, word: String, isMemorized: Boolean) {
                     // 长按切换重点标记
                     com.english.accelerator.data.WordLearningManager.toggleImportant(wordId)
                     isImportant = !isImportant  // 更新本地状态触发重组
+                    onRefresh()  // 触发父组件刷新
                 }
             )
             .padding(horizontal = 20.dp),
