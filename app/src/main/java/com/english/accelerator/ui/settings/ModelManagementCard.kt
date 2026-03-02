@@ -170,33 +170,11 @@ fun ModelManagementCard(
             ) {
                 when (modelState) {
                     is GemmaInferenceManager.ModelState.NotDownloaded -> {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // 切换线路按钮（图标+文字）
-                            TextButton(
-                                onClick = {
-                                    currentRoute = if (currentRoute == "HuggingFace") "魔塔社区" else "HuggingFace"
-                                    onSwitchRoute()
-                                },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = Color(0xFF8B5CF6)
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.SwapHoriz,
-                                    contentDescription = "切换线路",
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = currentRoute,
-                                    fontSize = 12.sp
-                                )
-                            }
-
-                            // 云朵下载按钮
+                            // 云朵下载按钮（左侧）
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
@@ -215,6 +193,28 @@ fun ModelManagementCard(
                                     text = "点击下载",
                                     fontSize = 11.sp,
                                     color = Color(0xFF64748B)
+                                )
+                            }
+
+                            // 切换线路按钮（右侧，图标+文字）
+                            TextButton(
+                                onClick = {
+                                    currentRoute = if (currentRoute == "HuggingFace") "魔塔社区" else "HuggingFace"
+                                    onSwitchRoute()
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color(0xFF8B5CF6)
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SwapHoriz,
+                                    contentDescription = "切换线路",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = currentRoute,
+                                    fontSize = 12.sp
                                 )
                             }
                         }
