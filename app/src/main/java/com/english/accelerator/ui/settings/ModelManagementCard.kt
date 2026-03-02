@@ -85,6 +85,7 @@ fun ModelManagementCard(
     var longPressProgress by remember { mutableStateOf(0f) }
     var isLongPressing by remember { mutableStateOf(false) }
     var isPaused by remember { mutableStateOf(false) }
+    var currentRoute by remember { mutableStateOf("HuggingFace") }
 
     // Long press timer
     LaunchedEffect(isLongPressing) {
@@ -169,30 +170,53 @@ fun ModelManagementCard(
             ) {
                 when (modelState) {
                     is GemmaInferenceManager.ModelState.NotDownloaded -> {
-                        // 切换线路按钮
-                        IconButton(
-                            onClick = onSwitchRoute,
-                            modifier = Modifier.size(40.dp)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.SwapHoriz,
-                                contentDescription = "切换线路",
-                                tint = Color(0xFF8B5CF6),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                            // 切换线路按钮（图标+文字）
+                            TextButton(
+                                onClick = {
+                                    currentRoute = if (currentRoute == "HuggingFace") "魔塔社区" else "HuggingFace"
+                                    onSwitchRoute()
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color(0xFF8B5CF6)
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SwapHoriz,
+                                    contentDescription = "切换线路",
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = currentRoute,
+                                    fontSize = 12.sp
+                                )
+                            }
 
-                        // 云朵下载按钮
-                        IconButton(
-                            onClick = onDownload,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = "下载模型",
-                                tint = Color(0xFF8B5CF6),
-                                modifier = Modifier.size(32.dp)
-                            )
+                            // 云朵下载按钮
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                IconButton(
+                                    onClick = onDownload,
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudDownload,
+                                        contentDescription = "下载模型",
+                                        tint = Color(0xFF8B5CF6),
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "点击下载",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
                         }
                     }
                     is GemmaInferenceManager.ModelState.Downloading -> {
