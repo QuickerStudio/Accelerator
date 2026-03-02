@@ -146,8 +146,16 @@ fun WritingScreen(
                     // 内容编辑器
                     ContentEditor(
                         value = content,
-                        onValueChange = { content = it },
-                        placeholder = "开始写作...",
+                        onValueChange = { newValue ->
+                            // 只允许英文字母、数字、空格和英文标点符号
+                            val filtered = newValue.filter { char ->
+                                char.isLetterOrDigit() ||
+                                char.isWhitespace() ||
+                                char in ".,!?;:'\"-()[]{}/@#$%&*+=<>~`|\\/"
+                            }
+                            content = filtered
+                        },
+                        placeholder = "Every word you write is a step forward. Start your English journey here!",
                         modifier = Modifier.weight(1f),
                         onFocusChanged = { hasFocus ->
                             isKeyboardVisible = hasFocus
