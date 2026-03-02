@@ -408,7 +408,7 @@ fun BottomInputArea(
                     modifier = Modifier
                         .size(36.dp)
                         .align(Alignment.CenterEnd)
-                        .offset(x = 8.dp)  // 稍微往右，靠近语音按钮
+                        .offset(x = (-8).dp)  // 往左 8dp，在内容区域最右边
                         .clip(CircleShape)
                         .background(
                             if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
