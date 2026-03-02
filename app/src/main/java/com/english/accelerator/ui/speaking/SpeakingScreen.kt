@@ -369,38 +369,59 @@ fun BottomInputArea(
             )
         }
 
-        // Long press gesture detector overlay (transparent, turns blue when recording)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(28.dp))
-                .background(
-                    if (isRecording) Color(0xFFBFDBFE) else Color.Transparent
-                )
-                .padding(
-                    start = 52.dp,
-                    end = 100.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
-                )
-                .height(50.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            focusManager.clearFocus()
-                            isRecording = true
-                        },
-                        onPress = {
-                            val pressed = tryAwaitRelease()
-                            if (isRecording && pressed) {
-                                isRecording = false
-                                // TODO: Send voice message
-                                onSend()
-                            }
-                        }
+        // Long press gesture detector overlay (only active when not recording)
+        // Transparent overlay that detects long press without blocking taps
+        if (!isRecording) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(28.dp))
+                    .padding(
+                        start = 52.dp,
+                        end = 100.dp,
+                        top = 8.dp,
+                        bottom = 8.dp
                     )
-                }
-        )
+                    .height(50.dp)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onLongPress = {
+                                focusManager.clearFocus()
+                                isRecording = true
+                            }
+                        )
+                    }
+            )
+        }
+
+        // Recording indicator overlay (shows blue background when recording)
+        if (isRecording) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color(0xFFBFDBFE))
+                    .padding(
+                        start = 52.dp,
+                        end = 100.dp,
+                        top = 8.dp,
+                        bottom = 8.dp
+                    )
+                    .height(50.dp)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                val pressed = tryAwaitRelease()
+                                if (pressed) {
+                                    isRecording = false
+                                    // TODO: Send voice message
+                                    onSend()
+                                }
+                            }
+                        )
+                    }
+            )
+        }
 
         // 悬浮按钮层
         Row(
