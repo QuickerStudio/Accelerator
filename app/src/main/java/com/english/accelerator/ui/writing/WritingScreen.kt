@@ -23,9 +23,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.ai.GemmaInferenceManager
+import com.english.accelerator.ai.InferenceResult
+import com.english.accelerator.ai.SuggestionType
 import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
+import kotlinx.coroutines.launch
 
 // AI 评论数据类
 data class AiComment(
@@ -55,6 +59,12 @@ fun WritingScreen(
     // AI 辅助状态
     var showAiPanel by remember { mutableStateOf(false) }
     var aiComments by remember { mutableStateOf<List<AiComment>>(emptyList()) }
+
+    // Gemma AI 状态
+    val gemmaManager = remember { GemmaInferenceManager.getInstance() }
+    val modelState by gemmaManager.modelState.collectAsState()
+    var inferenceResult by remember { mutableStateOf<InferenceResult?>(null) }
+    val scope = rememberCoroutineScope()
 
     // 语法评分和词语类型
     var grammarScore by remember { mutableStateOf(0) }
@@ -187,12 +197,16 @@ fun WritingScreen(
                             content = ""
                         },
                         onAiAssist = {
-                            // 模拟 AI 评论
-                            aiComments = listOf(
-                                AiComment(3, "建议：这句话可以更简洁", "grammar"),
-                                AiComment(7, "很好的表达！", "positive"),
-                                AiComment(12, "注意时态一致性", "grammar")
-                            )
+                            // 使用 Gemma 进行语法检查
+                            scope.launch {
+                                if (content.isNotBlank()) {
+                                    inferenceResult = InferenceResult.Loading
+                                    inferenceResult = gemmaManager.generateSuggestions(
+                                        text = content,
+                                        type = SuggestionType.GRAMMAR_CHECK
+                                    )
+                                }
+                            }
                         }
                     )
                 }
@@ -200,7 +214,41 @@ fun WritingScreen(
                 // AI 辅助面板
                 if (showAiPanel) {
                     AiAssistPanel(
-                        comments = aiComments,
+                        modelState = modelState,
+                        inferenceResult = inferenceResult,
+                        onCheckGrammar = {
+                            scope.launch {
+                                if (content.isNotBlank()) {
+                                    inferenceResult = InferenceResult.Loading
+                                    inferenceResult = gemmaManager.generateSuggestions(
+                                        text = content,
+                                        type = SuggestionType.GRAMMAR_CHECK
+                                    )
+                                }
+                            }
+                        },
+                        onGetSuggestions = {
+                            scope.launch {
+                                if (content.isNotBlank()) {
+                                    inferenceResult = InferenceResult.Loading
+                                    inferenceResult = gemmaManager.generateSuggestions(
+                                        text = content,
+                                        type = SuggestionType.WRITING_IMPROVEMENT
+                                    )
+                                }
+                            }
+                        },
+                        onDownloadModel = {
+                            scope.launch {
+                                gemmaManager.downloadModel()
+                            }
+                        },
+                        onApplySuggestion = { suggestion ->
+                            // 应用建议到内容
+                            if (suggestion.original.isNotEmpty()) {
+                                content = content.replace(suggestion.original, suggestion.corrected)
+                            }
+                        },
                         modifier = Modifier
                             .weight(0.4f)
                             .fillMaxHeight()
@@ -501,7 +549,12 @@ private fun EditorToolbar(
 
 @Composable
 private fun AiAssistPanel(
-    comments: List<AiComment>,
+    modelState: GemmaInferenceManager.ModelState,
+    inferenceResult: InferenceResult?,
+    onCheckGrammar: () -> Unit,
+    onGetSuggestions: () -> Unit,
+    onDownloadModel: () -> Unit,
+    onApplySuggestion: (com.english.accelerator.ai.GrammarSuggestion) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -535,89 +588,252 @@ private fun AiAssistPanel(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
         Divider(color = Color(0xFFE2E8F0))
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 评论列表
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (comments.isEmpty()) {
-                Text(
-                    text = "点击 AI 按钮获取写作建议",
-                    fontSize = 14.sp,
-                    color = Color(0xFF94A3B8),
-                    modifier = Modifier.padding(vertical = 32.dp)
-                )
-            } else {
-                comments.forEach { comment ->
-                    CommentCard(comment)
+        // 根据模型状态显示不同内容
+        when (modelState) {
+            is GemmaInferenceManager.ModelState.NotDownloaded -> {
+                ModelDownloadPrompt(onDownload = onDownloadModel)
+            }
+            is GemmaInferenceManager.ModelState.Downloading -> {
+                DownloadProgress(progress = modelState.progress)
+            }
+            is GemmaInferenceManager.ModelState.Ready -> {
+                // 控制按钮
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = onCheckGrammar,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF8B5CF6)
+                        )
+                    ) {
+                        Text("语法检查", fontSize = 12.sp)
+                    }
+                    Button(
+                        onClick = onGetSuggestions,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF3B82F6)
+                        )
+                    ) {
+                        Text("写作建议", fontSize = 12.sp)
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 显示推理结果
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    when (inferenceResult) {
+                        is InferenceResult.Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Color(0xFF8B5CF6))
+                            }
+                        }
+                        is InferenceResult.Success -> {
+                            if (inferenceResult.suggestions.isEmpty()) {
+                                Text(
+                                    text = "没有发现需要改进的地方！",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF10B981),
+                                    modifier = Modifier.padding(vertical = 16.dp)
+                                )
+                            } else {
+                                inferenceResult.suggestions.forEach { suggestion ->
+                                    SuggestionCard(
+                                        suggestion = suggestion,
+                                        onApply = { onApplySuggestion(suggestion) }
+                                    )
+                                }
+                            }
+                        }
+                        is InferenceResult.Error -> {
+                            Text(
+                                text = "错误: ${inferenceResult.message}",
+                                fontSize = 14.sp,
+                                color = Color(0xFFEF4444),
+                                modifier = Modifier.padding(vertical = 16.dp)
+                            )
+                        }
+                        null -> {
+                            Text(
+                                text = "点击上方按钮开始分析",
+                                fontSize = 14.sp,
+                                color = Color(0xFF94A3B8),
+                                modifier = Modifier.padding(vertical = 32.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            is GemmaInferenceManager.ModelState.Error -> {
+                Text(
+                    text = "模型错误: ${modelState.message}",
+                    fontSize = 14.sp,
+                    color = Color(0xFFEF4444),
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CommentCard(comment: AiComment) {
-    val backgroundColor = when (comment.type) {
-        "grammar" -> Color(0xFFFEF3C7)
-        "style" -> Color(0xFFDDD6FE)
-        "positive" -> Color(0xFFD1FAE5)
-        else -> Color(0xFFF1F5F9)
+private fun ModelDownloadPrompt(onDownload: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.CloudDownload,
+            contentDescription = null,
+            tint = Color(0xFF8B5CF6),
+            modifier = Modifier.size(48.dp)
+        )
+        Text(
+            text = "需要下载 AI 模型",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E293B)
+        )
+        Text(
+            text = "模型大小约 1-2GB\n首次使用需要下载",
+            fontSize = 14.sp,
+            color = Color(0xFF64748B),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        Button(
+            onClick = onDownload,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF8B5CF6)
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Download,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("下载模型")
+        }
     }
+}
 
-    val iconColor = when (comment.type) {
-        "grammar" -> Color(0xFFF59E0B)
-        "style" -> Color(0xFF8B5CF6)
-        "positive" -> Color(0xFF10B981)
-        else -> Color(0xFF64748B)
+@Composable
+private fun DownloadProgress(progress: Float) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "正在下载模型...",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E293B)
+        )
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier.fillMaxWidth().height(8.dp),
+            color = Color(0xFF8B5CF6),
+            trackColor = Color(0xFFE2E8F0)
+        )
+        Text(
+            text = "${(progress * 100).toInt()}%",
+            fontSize = 14.sp,
+            color = Color(0xFF64748B)
+        )
     }
+}
 
+@Composable
+private fun SuggestionCard(
+    suggestion: com.english.accelerator.ai.GrammarSuggestion,
+    onApply: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
+            containerColor = Color(0xFFF8FAFC)
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 行号标记
-            Surface(
-                color = iconColor,
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.size(24.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Text(
-                        text = "${comment.lineNumber}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
+            if (suggestion.original.isNotEmpty()) {
+                // 显示原文和修正
+                Text(
+                    text = "原文:",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF64748B)
+                )
+                Text(
+                    text = suggestion.original,
+                    fontSize = 14.sp,
+                    color = Color(0xFFEF4444)
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowDownward,
+                    contentDescription = null,
+                    tint = Color(0xFF8B5CF6),
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "建议:",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF64748B)
+                )
+                Text(
+                    text = suggestion.corrected,
+                    fontSize = 14.sp,
+                    color = Color(0xFF10B981)
+                )
+            } else {
+                // 只显示建议
+                Text(
+                    text = suggestion.corrected,
+                    fontSize = 14.sp,
+                    color = Color(0xFF1E293B)
+                )
             }
 
-            // 评论内容
             Text(
-                text = comment.comment,
-                fontSize = 14.sp,
-                color = Color(0xFF1E293B),
-                modifier = Modifier.weight(1f)
+                text = suggestion.reason,
+                fontSize = 12.sp,
+                color = Color(0xFF64748B),
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
             )
+
+            if (suggestion.original.isNotEmpty()) {
+                Button(
+                    onClick = onApply,
+                    modifier = Modifier.align(Alignment.End),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF10B981)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text("应用", fontSize = 12.sp)
+                }
+            }
         }
     }
 }
