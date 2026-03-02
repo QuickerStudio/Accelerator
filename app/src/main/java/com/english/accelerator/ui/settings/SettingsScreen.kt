@@ -78,6 +78,19 @@ fun SettingsScreen() {
                     scope.launch {
                         gemmaManager.initialize()
                     }
+                },
+                onPause = {
+                    gemmaManager.pauseDownload()
+                },
+                onResume = {
+                    gemmaManager.resumeDownload()
+                },
+                onSwitchRoute = {
+                    scope.launch {
+                        gemmaManager.cancelDownload()
+                        // TODO: 重新开始下载并切换线路
+                        gemmaManager.downloadModel()
+                    }
                 }
             )
         }

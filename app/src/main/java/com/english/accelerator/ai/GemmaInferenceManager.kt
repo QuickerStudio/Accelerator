@@ -135,6 +135,28 @@ class GemmaInferenceManager private constructor(
     }
 
     /**
+     * Pause the current download
+     */
+    fun pauseDownload() {
+        modelDownloadManager.pauseDownload()
+    }
+
+    /**
+     * Resume the paused download
+     */
+    fun resumeDownload() {
+        modelDownloadManager.resumeDownload()
+    }
+
+    /**
+     * Cancel the current download
+     */
+    fun cancelDownload() {
+        modelDownloadManager.cancelDownload()
+        _modelState.value = ModelState.NotDownloaded
+    }
+
+    /**
      * Generate suggestions based on the input text and suggestion type
      */
     suspend fun generateSuggestions(

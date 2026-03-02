@@ -14,7 +14,8 @@ import kotlin.system.measureTimeMillis
  * Features:
  * - Dual-route download with automatic ping-based selection
  * - Smart route switching based on network latency
- * - Resume download support (TODO)
+ * - Pause/Resume download support
+ * - Manual route switching
  */
 class ModelDownloadManager(private val context: Context) {
     // Gemma 3n E2B-it standard model (unified across all sources)
@@ -22,6 +23,20 @@ class ModelDownloadManager(private val context: Context) {
     private val fallbackModelUrl = "https://www.modelscope.cn/models/google/gemma-3n-E2B-it/resolve/master/gemma-3n-E2B-it.task"
 
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it.task")
+
+    // Download control
+    @Volatile
+    private var isPaused = false
+    @Volatile
+    private var isCancelled = false
+
+    // Current route
+    enum class DownloadRoute {
+        PRIMARY,    // HuggingFace
+        FALLBACK    // ModelScope
+    }
+
+    private var currentRoute: DownloadRoute = DownloadRoute.PRIMARY
 
     /**
      * Ping a URL to measure latency
@@ -66,13 +81,20 @@ class ModelDownloadManager(private val context: Context) {
      * - Checks if model already exists (skip download)
      * - Pings both routes and selects faster one
      * - Falls back to alternative route if download fails
+     * - Supports pause/resume
      *
      * @param onProgress Callback with download progress (0.0 to 1.0)
+     * @param forceRoute Optional: force a specific download route
      * @return Result with the model file or error
      */
     suspend fun downloadModel(
-        onProgress: (Float) -> Unit
+        onProgress: (Float) -> Unit,
+        forceRoute: DownloadRoute? = null
     ): Result<File> = withContext(Dispatchers.IO) {
+        // Reset control flags
+        isPaused = false
+        isCancelled = false
+
         // Check if model already exists
         if (isModelDownloaded()) {
             return@withContext Result.success(modelFile)
@@ -81,26 +103,84 @@ class ModelDownloadManager(private val context: Context) {
         // Create models directory
         modelFile.parentFile?.mkdirs()
 
-        // Select best route based on ping
-        val bestRoute = selectBestRoute()
-        val alternativeRoute = if (bestRoute == primaryModelUrl) fallbackModelUrl else primaryModelUrl
-
-        // Try best route first
-        val bestResult = tryDownload(bestRoute, onProgress)
-        if (bestResult.isSuccess) {
-            return@withContext bestResult
+        // Select route
+        val selectedUrl = if (forceRoute != null) {
+            currentRoute = forceRoute
+            when (forceRoute) {
+                DownloadRoute.PRIMARY -> primaryModelUrl
+                DownloadRoute.FALLBACK -> fallbackModelUrl
+            }
+        } else {
+            // Auto-select based on ping
+            val bestRoute = selectBestRoute()
+            currentRoute = if (bestRoute == primaryModelUrl) DownloadRoute.PRIMARY else DownloadRoute.FALLBACK
+            bestRoute
         }
 
-        // Fall back to alternative route
-        val fallbackResult = tryDownload(alternativeRoute, onProgress)
-        if (fallbackResult.isSuccess) {
-            return@withContext fallbackResult
+        val alternativeUrl = if (selectedUrl == primaryModelUrl) fallbackModelUrl else primaryModelUrl
+
+        // Try selected route first
+        val result = tryDownload(selectedUrl, onProgress)
+        if (result.isSuccess) {
+            return@withContext result
         }
 
-        // Both failed
-        Result.failure(
-            Exception("Download failed from both sources. Best route: ${bestResult.exceptionOrNull()?.message}, Alternative: ${fallbackResult.exceptionOrNull()?.message}")
-        )
+        // Fall back to alternative route if not cancelled
+        if (!isCancelled) {
+            val fallbackResult = tryDownload(alternativeUrl, onProgress)
+            if (fallbackResult.isSuccess) {
+                return@withContext fallbackResult
+            }
+        }
+
+        // Both failed or cancelled
+        if (isCancelled) {
+            Result.failure(Exception("Download cancelled"))
+        } else {
+            Result.failure(
+                Exception("Download failed from both sources. Selected: ${result.exceptionOrNull()?.message}")
+            )
+        }
+    }
+
+    /**
+     * Pause the current download
+     */
+    fun pauseDownload() {
+        isPaused = true
+    }
+
+    /**
+     * Resume the paused download
+     */
+    fun resumeDownload() {
+        isPaused = false
+    }
+
+    /**
+     * Cancel the current download
+     */
+    fun cancelDownload() {
+        isCancelled = true
+        isPaused = false
+    }
+
+    /**
+     * Check if download is paused
+     */
+    fun isPaused(): Boolean = isPaused
+
+    /**
+     * Get current download route
+     */
+    fun getCurrentRoute(): DownloadRoute = currentRoute
+
+    /**
+     * Get route name for display
+     */
+    fun getRouteName(route: DownloadRoute): String = when (route) {
+        DownloadRoute.PRIMARY -> "HuggingFace"
+        DownloadRoute.FALLBACK -> "ModelScope (国内)"
     }
 
     /**
@@ -125,6 +205,16 @@ class ModelDownloadManager(private val context: Context) {
                     var bytes: Int
 
                     while (input.read(buffer).also { bytes = it } != -1) {
+                        // Check if cancelled
+                        if (isCancelled) {
+                            throw Exception("Download cancelled")
+                        }
+
+                        // Wait if paused
+                        while (isPaused && !isCancelled) {
+                            Thread.sleep(100)
+                        }
+
                         output.write(buffer, 0, bytes)
                         downloaded += bytes
                         if (totalSize > 0) {
@@ -136,8 +226,8 @@ class ModelDownloadManager(private val context: Context) {
 
             Result.success(modelFile)
         } catch (e: Exception) {
-            // Clean up partial download
-            if (modelFile.exists()) {
+            // Clean up partial download only if cancelled
+            if (isCancelled && modelFile.exists()) {
                 modelFile.delete()
             }
             Result.failure(e)

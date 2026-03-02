@@ -76,11 +76,15 @@ fun ModelManagementCard(
     modelState: GemmaInferenceManager.ModelState,
     onDownload: () -> Unit,
     onDelete: () -> Unit,
-    onInitialize: () -> Unit
+    onInitialize: () -> Unit,
+    onPause: () -> Unit = {},
+    onResume: () -> Unit = {},
+    onSwitchRoute: () -> Unit = {}
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var longPressProgress by remember { mutableStateOf(0f) }
     var isLongPressing by remember { mutableStateOf(false) }
+    var isPaused by remember { mutableStateOf(false) }
 
     // Long press timer
     LaunchedEffect(isLongPressing) {
@@ -224,6 +228,54 @@ fun ModelManagementCard(
                 color = Color(0xFF8B5CF6),
                 trackColor = Color(0xFFE2E8F0)
             )
+
+            // 下载控制按钮
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 暂停/恢复按钮
+                Button(
+                    onClick = {
+                        if (isPaused) {
+                            onResume()
+                            isPaused = false
+                        } else {
+                            onPause()
+                            isPaused = true
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isPaused) Color(0xFF10B981) else Color(0xFFF59E0B)
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                        contentDescription = if (isPaused) "恢复" else "暂停",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isPaused) "恢复" else "暂停")
+                }
+
+                // 切换线路按钮
+                Button(
+                    onClick = onSwitchRoute,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF8B5CF6)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SwapHoriz,
+                        contentDescription = "切换线路",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("切换线路")
+                }
+            }
         }
     }
 

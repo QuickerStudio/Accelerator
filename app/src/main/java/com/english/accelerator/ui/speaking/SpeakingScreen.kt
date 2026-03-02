@@ -751,7 +751,10 @@ fun ConversationHistoryScreen(
                 items(conversations) { conversation ->
                     ConversationCard(
                         conversation = conversation,
-                        onClick = { onConversationClick(conversation) }
+                        onClick = { onConversationClick(conversation) },
+                        onDelete = {
+                            conversations.remove(conversation)
+                        }
                     )
                 }
             }
@@ -762,7 +765,8 @@ fun ConversationHistoryScreen(
 @Composable
 fun ConversationCard(
     conversation: Conversation,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit = {}
 ) {
     val timeFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
 
@@ -774,44 +778,63 @@ fun ConversationCard(
         color = Color(0xFFF8FAFC),
         shadowElevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Box {
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = conversation.title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF1E293B),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "${conversation.messageCount} 条消息",
+                        fontSize = 12.sp,
+                        color = Color(0xFF94A3B8)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = conversation.title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF1E293B)
+                    text = conversation.preview,
+                    fontSize = 14.sp,
+                    color = Color(0xFF64748B),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = "${conversation.messageCount} 条消息",
+                    text = timeFormat.format(Date(conversation.timestamp)),
                     fontSize = 12.sp,
                     color = Color(0xFF94A3B8)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = conversation.preview,
-                fontSize = 14.sp,
-                color = Color(0xFF64748B),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = timeFormat.format(Date(conversation.timestamp)),
-                fontSize = 12.sp,
-                color = Color(0xFF94A3B8)
-            )
+            // 删除按钮
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(32.dp)
+                    .offset(x = 4.dp, y = 4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "删除",
+                    tint = Color(0xFF94A3B8),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
