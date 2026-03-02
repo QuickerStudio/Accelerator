@@ -7,6 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -28,10 +29,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 
 @Composable
 fun Sidebar(
@@ -51,7 +58,10 @@ fun Sidebar(
     // 选中的分组 ID（null 表示显示全部笔记）
     var selectedGroupId by remember { mutableStateOf<Int?>(null) }
 
-    // 长按笔记后显示分组选择器
+    // 拖拽状态管理
+    val dragDropState = rememberDragDropState()
+
+    // 长按笔记后显示分组选择器（保留作为备用方案）
     var showGroupSelector by remember { mutableStateOf(false) }
     var selectedNoteForMove by remember { mutableStateOf<com.english.accelerator.data.Note?>(null) }
 
@@ -129,6 +139,7 @@ fun Sidebar(
                     // 全部笔记区域
                     AllNotesSection(
                         selectedGroupId = selectedGroupId,
+                        dragDropState = dragDropState,
                         onNewNoteClick = {
                             // 切换到编辑器视图
                             onEditorModeChange(true)
@@ -142,11 +153,6 @@ fun Sidebar(
                             onEditingNoteIdChange(note.id)
                             onEditorTitleChange(note.title)
                             onEditorContentChange(note.content)
-                        },
-                        onNoteLongPress = { note ->
-                            // 长按笔记，显示分组选择器
-                            selectedNoteForMove = note
-                            showGroupSelector = true
                         }
                     )
 
@@ -155,6 +161,7 @@ fun Sidebar(
                     // 笔记分组区域
                     NoteGroupsSection(
                         selectedGroupId = selectedGroupId,
+                        dragDropState = dragDropState,
                         onGroupClick = { groupId ->
                             // Toggle 分组筛选
                             selectedGroupId = if (selectedGroupId == groupId) null else groupId
@@ -322,9 +329,9 @@ private fun SidebarHeader(
 @Composable
 private fun AllNotesSection(
     selectedGroupId: Int? = null,
+    dragDropState: DragDropState,
     onNewNoteClick: () -> Unit = {},
-    onNoteClick: (com.english.accelerator.data.Note) -> Unit = {},
-    onNoteLongPress: (com.english.accelerator.data.Note) -> Unit = {}
+    onNoteClick: (com.english.accelerator.data.Note) -> Unit = {}
 ) {
     var isReversed by remember { mutableStateOf(false) }
 
@@ -394,21 +401,32 @@ private fun AllNotesSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 笔记列表（水平滚动）
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // 显示实际笔记
-            notes.forEach { note ->
-                NoteCard(
-                    title = note.title.ifEmpty { "无标题" },
-                    preview = note.content,
-                    onClick = { onNoteClick(note) },
-                    onLongPress = { onNoteLongPress(note) }
+        // 笔记列表（水平滚动）+ 拖拽预览层
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 显示实际笔记
+                notes.forEach { note ->
+                    NoteCard(
+                        note = note,
+                        title = note.title.ifEmpty { "无标题" },
+                        preview = note.content,
+                        dragDropState = dragDropState,
+                        onClick = { onNoteClick(note) }
+                    )
+                }
+            }
+
+            // 拖拽预览层（只在笔记列表区域显示）
+            if (dragDropState.isDragging && dragDropState.draggingNote != null) {
+                DragPreviewLayer(
+                    note = dragDropState.draggingNote!!,
+                    offset = dragDropState.dragOffset
                 )
             }
         }
@@ -418,22 +436,57 @@ private fun AllNotesSection(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NoteCard(
+    note: com.english.accelerator.data.Note,
     title: String,
     preview: String,
-    onClick: () -> Unit = {},
-    onLongPress: () -> Unit = {}
+    dragDropState: DragDropState,
+    onClick: () -> Unit = {}
 ) {
+    var cardOffset by remember { mutableStateOf(Offset.Zero) }
+
+    // 判断当前卡片是否正在被拖拽
+    val isDragging = dragDropState.draggingNote?.id == note.id
+
     Card(
         modifier = Modifier
             .width(100.dp)
             .height(120.dp)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongPress
-            ),
+            .onGloballyPositioned { coordinates ->
+                cardOffset = coordinates.positionInRoot()
+            }
+            .pointerInput(note.id) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { offset ->
+                        // 开始拖拽，传入卡片中心位置
+                        dragDropState.startDragging(note, cardOffset + Offset(50.dp.toPx(), 60.dp.toPx()))
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        // 更新拖拽位置
+                        dragDropState.updateDragPosition(
+                            dragDropState.dragOffset + dragAmount
+                        )
+                    },
+                    onDragEnd = {
+                        // 结束拖拽，更新笔记分组
+                        val targetGroupId = dragDropState.endDragging()
+                        if (targetGroupId != null) {
+                            com.english.accelerator.data.NoteManager.updateNoteGroup(
+                                note.id,
+                                targetGroupId
+                            )
+                        }
+                    },
+                    onDragCancel = {
+                        // 取消拖拽
+                        dragDropState.cancelDragging()
+                    }
+                )
+            }
+            .clickable(enabled = !isDragging, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF1F5F9)
+            containerColor = if (isDragging) Color.Transparent else Color(0xFFF1F5F9)
         )
     ) {
         Column(
@@ -441,20 +494,22 @@ private fun NoteCard(
                 .fillMaxSize()
                 .padding(12.dp)
         ) {
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF1E293B),
-                maxLines = 2
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = preview,
-                fontSize = 11.sp,
-                color = Color(0xFF64748B),
-                maxLines = 3
-            )
+            if (!isDragging) {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF1E293B),
+                    maxLines = 2
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = preview,
+                    fontSize = 11.sp,
+                    color = Color(0xFF64748B),
+                    maxLines = 3
+                )
+            }
         }
     }
 }
@@ -462,6 +517,7 @@ private fun NoteCard(
 @Composable
 private fun NoteGroupsSection(
     selectedGroupId: Int? = null,
+    dragDropState: DragDropState,
     onGroupClick: (Int) -> Unit = {}
 ) {
     var isReversed by remember { mutableStateOf(false) }
@@ -530,8 +586,11 @@ private fun NoteGroupsSection(
             // 显示实际分组
             groups.forEach { group ->
                 NoteGroupCard(
+                    groupId = group.id,
                     name = group.name,
                     isSelected = selectedGroupId == group.id,
+                    isHovering = dragDropState.hoveringGroupId == group.id,
+                    dragDropState = dragDropState,
                     onClick = { onGroupClick(group.id) }
                 )
             }
@@ -541,17 +600,38 @@ private fun NoteGroupsSection(
 
 @Composable
 private fun NoteGroupCard(
+    groupId: Int,
     name: String,
     isSelected: Boolean = false,
+    isHovering: Boolean = false,
+    dragDropState: DragDropState,
     onClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .size(64.dp)
+            .onGloballyPositioned { coordinates ->
+                // 注册分组卡片的位置
+                val position = coordinates.positionInRoot()
+                val size = coordinates.size.toSize()
+                dragDropState.registerGroupPosition(
+                    groupId,
+                    androidx.compose.ui.geometry.Rect(
+                        position.x,
+                        position.y,
+                        position.x + size.width,
+                        position.y + size.height
+                    )
+                )
+            }
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) Color(0xFF3B82F6) else Color(0xFFF1F5F9)
+            containerColor = when {
+                isHovering -> Color(0xFF10B981) // 悬停时显示绿色
+                isSelected -> Color(0xFF3B82F6)
+                else -> Color(0xFFF1F5F9)
+            }
         )
     ) {
         Column(
@@ -567,7 +647,11 @@ private fun NoteGroupCard(
             Text(
                 text = name,
                 fontSize = 10.sp,
-                color = if (isSelected) Color.White else Color(0xFF64748B)
+                color = when {
+                    isHovering -> Color.White
+                    isSelected -> Color.White
+                    else -> Color(0xFF64748B)
+                }
             )
         }
     }
@@ -712,6 +796,57 @@ private fun LogItem(content: String) {
         thickness = 1.dp,
         modifier = Modifier.padding(horizontal = 20.dp)
     )
+}
+
+// 拖拽预览层
+@Composable
+private fun DragPreviewLayer(
+    note: com.english.accelerator.data.Note,
+    offset: Offset
+) {
+    // 计算卡片左上角位置（减去卡片尺寸的一半，使卡片中心对齐手指位置）
+    val cardWidth = 100.dp
+    val cardHeight = 120.dp
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Card(
+            modifier = Modifier
+                .width(cardWidth)
+                .height(cardHeight)
+                .offset(
+                    x = offset.x.dp - cardWidth / 2,
+                    y = offset.y.dp - cardHeight / 2
+                )
+                .shadow(8.dp, RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFF1F5F9).copy(alpha = 0.9f)
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = note.title.ifEmpty { "无标题" },
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF1E293B),
+                    maxLines = 2
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = note.content,
+                    fontSize = 11.sp,
+                    color = Color(0xFF64748B),
+                    maxLines = 3
+                )
+            }
+        }
+    }
 }
 
 // 分组选择器弹窗
