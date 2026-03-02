@@ -1,18 +1,32 @@
 package com.english.accelerator.ui.writing
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
+
+// AI 评论数据类
+data class AiComment(
+    val lineNumber: Int,
+    val comment: String,
+    val type: String // "grammar", "style", "positive"
+)
 
 @Composable
 fun WritingScreen(
@@ -20,11 +34,23 @@ fun WritingScreen(
 ) {
     var showSidebar by remember { mutableStateOf(false) }
 
-    // 编辑器状态持久化
+    // 编辑器状态
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+
+    // 编辑器状态持久化（侧边栏）
     var isEditorMode by remember { mutableStateOf(false) }
     var editingNoteId by remember { mutableStateOf<Int?>(null) }
     var editorTitle by remember { mutableStateOf("") }
     var editorContent by remember { mutableStateOf("") }
+
+    // AI 辅助状态
+    var showAiPanel by remember { mutableStateOf(false) }
+    var aiComments by remember { mutableStateOf<List<AiComment>>(emptyList()) }
+
+    // 统计信息
+    val wordCount = content.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
+    val charCount = content.length
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -36,19 +62,77 @@ fun WritingScreen(
                     showSidebar = true
                 },
                 onConversationClick = {
-                    // TODO: 对话模式
+                    showAiPanel = !showAiPanel
                 },
                 onBookmarkClick = {
-                    // TODO: 收藏本
+                    // TODO: 保存草稿
                 }
             )
 
-            // 内容区域
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            // 编辑器区域
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFFAFAFA))
             ) {
-                Text("写作练习")
+                // 主编辑区
+                Column(
+                    modifier = Modifier
+                        .weight(if (showAiPanel) 0.6f else 1f)
+                        .fillMaxHeight()
+                        .padding(16.dp)
+                ) {
+                    // 标题输入框
+                    TitleTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        placeholder = "标题"
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 内容编辑器
+                    ContentEditor(
+                        value = content,
+                        onValueChange = { content = it },
+                        placeholder = "开始写作...",
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 底部工具栏
+                    EditorToolbar(
+                        wordCount = wordCount,
+                        charCount = charCount,
+                        onSave = {
+                            // TODO: 保存草稿
+                        },
+                        onClear = {
+                            title = ""
+                            content = ""
+                        },
+                        onAiAssist = {
+                            // 模拟 AI 评论
+                            aiComments = listOf(
+                                AiComment(3, "建议：这句话可以更简洁", "grammar"),
+                                AiComment(7, "很好的表达！", "positive"),
+                                AiComment(12, "注意时态一致性", "grammar")
+                            )
+                        }
+                    )
+                }
+
+                // AI 辅助面板
+                if (showAiPanel) {
+                    AiAssistPanel(
+                        comments = aiComments,
+                        modifier = Modifier
+                            .weight(0.4f)
+                            .fillMaxHeight()
+                            .padding(end = 16.dp, top = 16.dp, bottom = 16.dp)
+                    )
+                }
             }
         }
 
@@ -66,6 +150,331 @@ fun WritingScreen(
                 onEditorTitleChange = { editorTitle = it },
                 editorContent = editorContent,
                 onEditorContentChange = { editorContent = it }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TitleTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = TextStyle(
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E293B)
+        ),
+        cursorBrush = SolidColor(Color(0xFF2563EB)),
+        decorationBox = { innerTextField ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color.White,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFCBD5E1)
+                    )
+                }
+                innerTextField()
+            }
+        }
+    )
+}
+
+@Composable
+private fun ContentEditor(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
+    val lines = remember(value) {
+        if (value.isEmpty()) listOf("") else value.split("\n")
+    }
+
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = TextStyle(
+            fontSize = 18.sp,
+            lineHeight = 28.sp,
+            color = Color(0xFF1E293B)
+        ),
+        cursorBrush = SolidColor(Color(0xFF2563EB)),
+        modifier = modifier,
+        decorationBox = { innerTextField ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = Color.White,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                ) {
+                    // 行号区域
+                    Column(
+                        modifier = Modifier
+                            .background(Color(0xFFF8FAFC))
+                            .padding(horizontal = 12.dp, vertical = 16.dp)
+                    ) {
+                        lines.forEachIndexed { index, _ ->
+                            Text(
+                                text = "${index + 1}",
+                                fontSize = 16.sp,
+                                lineHeight = 28.sp,
+                                color = Color(0xFF94A3B8),
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                        }
+                    }
+
+                    // 内容区域
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+                    ) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                fontSize = 18.sp,
+                                lineHeight = 28.sp,
+                                color = Color(0xFFCBD5E1)
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun EditorToolbar(
+    wordCount: Int,
+    charCount: Int,
+    onSave: () -> Unit,
+    onClear: () -> Unit,
+    onAiAssist: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 统计信息
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "$wordCount 词",
+                fontSize = 14.sp,
+                color = Color(0xFF64748B)
+            )
+            Text(
+                text = "$charCount 字符",
+                fontSize = 14.sp,
+                color = Color(0xFF64748B)
+            )
+        }
+
+        // 操作按钮
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // AI 辅助按钮
+            IconButton(
+                onClick = onAiAssist,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = "AI 辅助",
+                    tint = Color(0xFF8B5CF6)
+                )
+            }
+
+            // 清空按钮
+            IconButton(
+                onClick = onClear,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "清空",
+                    tint = Color(0xFF64748B)
+                )
+            }
+
+            // 保存按钮
+            Button(
+                onClick = onSave,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2563EB)
+                ),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Save,
+                    contentDescription = "保存",
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "保存",
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AiAssistPanel(
+    comments: List<AiComment>,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp)
+    ) {
+        // 标题
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "AI 辅助",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = Color(0xFF8B5CF6),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Divider(color = Color(0xFFE2E8F0))
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 评论列表
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (comments.isEmpty()) {
+                Text(
+                    text = "点击 AI 按钮获取写作建议",
+                    fontSize = 14.sp,
+                    color = Color(0xFF94A3B8),
+                    modifier = Modifier.padding(vertical = 32.dp)
+                )
+            } else {
+                comments.forEach { comment ->
+                    CommentCard(comment)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommentCard(comment: AiComment) {
+    val backgroundColor = when (comment.type) {
+        "grammar" -> Color(0xFFFEF3C7)
+        "style" -> Color(0xFFDDD6FE)
+        "positive" -> Color(0xFFD1FAE5)
+        else -> Color(0xFFF1F5F9)
+    }
+
+    val iconColor = when (comment.type) {
+        "grammar" -> Color(0xFFF59E0B)
+        "style" -> Color(0xFF8B5CF6)
+        "positive" -> Color(0xFF10B981)
+        else -> Color(0xFF64748B)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // 行号标记
+            Surface(
+                color = iconColor,
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.size(24.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(
+                        text = "${comment.lineNumber}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+
+            // 评论内容
+            Text(
+                text = comment.comment,
+                fontSize = 14.sp,
+                color = Color(0xFF1E293B),
+                modifier = Modifier.weight(1f)
             )
         }
     }
