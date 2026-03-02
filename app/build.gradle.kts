@@ -52,6 +52,13 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation("com.google.code.gson:gson:2.10.1")
 
+    // MediaPipe LLM Inference for Gemma
+    implementation("com.google.mediapipe:tasks-genai:0.10.14")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
     // Testing dependencies
     testImplementation(libs.junit)
     testImplementation("io.mockk:mockk:1.13.8")
