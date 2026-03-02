@@ -228,13 +228,13 @@ fun WritingScreen(
             )
         }
 
-        // 关闭键盘按钮（固定在底部）
+        // 关闭键盘按钮（跟随键盘顶部）
         if (isKeyboardVisible) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()  // 固定在底部导航栏上方
+                    .imePadding()  // 跟随键盘位置，避免被遮挡
             ) {
                 Button(
                     onClick = {
@@ -247,7 +247,7 @@ fun WritingScreen(
                     ),
                     shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
+                        .align(Alignment.TopCenter)
                         .padding(horizontal = 16.dp)
                 ) {
                     Icon(
@@ -447,14 +447,13 @@ private fun VerticalScrollbar(
     val maxScroll = scrollState.maxValue
     val currentScroll = scrollState.value
     val coroutineScope = rememberCoroutineScope()
-    val density = LocalDensity.current
 
     if (maxScroll > 0) {
         BoxWithConstraints(
             modifier = modifier
                 .width(12.dp)  // 增加宽度便于拖拽
                 .background(Color(0xFFF1F5F9), RoundedCornerShape(6.dp))
-                .pointerInput(Unit) {
+                .pointerInput(maxScroll) {
                     detectDragGestures { change, dragAmount ->
                         change.consume()
                         val scrollbarHeight = size.height.toFloat()
@@ -466,11 +465,13 @@ private fun VerticalScrollbar(
                         val scrollDelta = (maxScroll * dragRatio).toInt()
 
                         coroutineScope.launch {
-                            scrollState.scrollTo((currentScroll + scrollDelta).coerceIn(0, maxScroll))
+                            val newScroll = (currentScroll + scrollDelta).coerceIn(0, maxScroll)
+                            scrollState.scrollTo(newScroll)
                         }
                     }
                 }
         ) {
+            val containerHeight = constraints.maxHeight.toFloat()
             val thumbHeight = 0.3f // 滚动条高度比例
             val thumbOffset = if (maxScroll > 0) {
                 (currentScroll.toFloat() / maxScroll) * (1f - thumbHeight)
@@ -481,7 +482,7 @@ private fun VerticalScrollbar(
                     .fillMaxWidth()
                     .fillMaxHeight(thumbHeight)
                     .align(Alignment.TopCenter)
-                    .offset(y = with(density) { (thumbOffset * maxScroll).toDp() })
+                    .offset(y = (thumbOffset * containerHeight).dp)
                     .background(Color(0xFF94A3B8), RoundedCornerShape(6.dp))
             )
         }
