@@ -52,6 +52,7 @@ fun SettingsScreen() {
     var downloadProgress by remember { mutableStateOf(0f) }
     var downloadSpeed by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(modelDownloadManager.getCurrentRouteName()) }
+    var isDownloadComplete by remember { mutableStateOf(modelDownloadManager.isModelDownloaded()) }
 
     Column(
         modifier = Modifier
@@ -73,7 +74,7 @@ fun SettingsScreen() {
         // AI 模型管理部分
         SettingsSection(title = "AI 模型管理") {
             ModelDownloadCard(
-                isDownloaded = modelDownloadManager.isModelDownloaded(),
+                isDownloaded = isDownloadComplete,
                 isDownloading = isDownloading,
                 isPaused = isPaused,
                 isError = isError,
@@ -85,13 +86,15 @@ fun SettingsScreen() {
                         isError -> {
                             // 重试
                             isError = false
+                            isDownloadComplete = false
                             scope.launch {
                                 isDownloading = true
                                 modelDownloadManager.downloadModel { downloaded, total, speed ->
-                                    downloadProgress = downloaded.toFloat() / total
+                                    downloadProgress = if (total > 0) downloaded.toFloat() / total else 0f
                                     downloadSpeed = speed
                                 }.onSuccess {
                                     isDownloading = false
+                                    isDownloadComplete = true
                                     gemmaManager.initialize()
                                 }.onFailure {
                                     isDownloading = false
@@ -111,13 +114,15 @@ fun SettingsScreen() {
                         }
                         else -> {
                             // 开始下载
+                            isDownloadComplete = false
                             scope.launch {
                                 isDownloading = true
                                 modelDownloadManager.downloadModel { downloaded, total, speed ->
-                                    downloadProgress = downloaded.toFloat() / total
+                                    downloadProgress = if (total > 0) downloaded.toFloat() / total else 0f
                                     downloadSpeed = speed
                                 }.onSuccess {
                                     isDownloading = false
+                                    isDownloadComplete = true
                                     gemmaManager.initialize()
                                 }.onFailure {
                                     isDownloading = false

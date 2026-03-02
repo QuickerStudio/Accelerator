@@ -70,6 +70,9 @@ class DownloadEngine {
                     var lastDownloaded = downloaded
                     var speed = 0L
 
+                    // 初始进度回调
+                    onProgress(downloaded, totalSize, speed)
+
                     while (input.read(buffer).also { bytes = it } != -1) {
                         // 检查是否取消
                         if (isCancelled) {
@@ -84,16 +87,21 @@ class DownloadEngine {
                         output.write(buffer, 0, bytes)
                         downloaded += bytes
 
-                        // 每秒计算一次速度
+                        // 计算实时速度（每次都更新，但只在间隔>=1秒时重新计算）
                         val currentTime = System.currentTimeMillis()
-                        if (currentTime - lastUpdateTime >= 1000) {
-                            speed = ((downloaded - lastDownloaded) * 1000) / (currentTime - lastUpdateTime)
+                        val timeDiff = currentTime - lastUpdateTime
+                        if (timeDiff >= 1000) {
+                            speed = ((downloaded - lastDownloaded) * 1000) / timeDiff
                             lastUpdateTime = currentTime
                             lastDownloaded = downloaded
                         }
 
+                        // 每次都回调进度，确保UI实时更新
                         onProgress(downloaded, totalSize, speed)
                     }
+
+                    // 下载完成，最后一次回调确保进度为100%
+                    onProgress(totalSize, totalSize, 0L)
                 }
             }
 
