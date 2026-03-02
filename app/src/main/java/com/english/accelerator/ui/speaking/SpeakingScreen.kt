@@ -104,6 +104,8 @@ fun SpeakingScreen(
                         onAttach = { /* TODO: Attach file */ }
                     )
 
+                    Spacer(modifier = Modifier.height(45.dp))
+
                     // Bottom navigation bar
                     BottomNavigationBar(onNavigateToSettings = onNavigateToSettings)
                 }
@@ -284,10 +286,11 @@ fun BottomInputArea(
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onCamera: () -> Unit,
-    onAttach: () -> Unit
+    onAttach: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {

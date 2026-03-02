@@ -102,7 +102,13 @@ fun AcceleratorApp() {
                 ) {
                     BottomNavigationBar(
                         currentRoute = currentRoute,
-                        onNavigate = { route -> currentRoute = route }
+                        onNavigate = { route ->
+                            // 切换路由时关闭输入框
+                            if (route != Screen.Vocabulary.route) {
+                                showInputArea = false
+                            }
+                            currentRoute = route
+                        }
                     )
                 }
             }
