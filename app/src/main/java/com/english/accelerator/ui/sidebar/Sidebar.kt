@@ -178,6 +178,9 @@ fun Sidebar(
 
                     // 单词学习日志
                     LearningLogsSection()
+
+                    // 底部内边距，避免被导航栏遮挡
+                    Spacer(modifier = Modifier.height(100.dp))
                 }
             }
         }
