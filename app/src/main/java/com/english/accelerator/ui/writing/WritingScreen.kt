@@ -54,6 +54,9 @@ fun WritingScreen(
     var grammarScore by remember { mutableStateOf(0) }
     var currentWordType by remember { mutableStateOf("") }
 
+    // 刷新触发器
+    var refreshTrigger by remember { mutableStateOf(0) }
+
     // 统计信息
     val wordCount = content.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
     val charCount = content.length
@@ -105,7 +108,11 @@ fun WritingScreen(
                         value = title,
                         onValueChange = { title = it },
                         placeholder = "标题",
-                        onClearContent = { content = "" },
+                        onClearAll = {
+                            // 清空标题和内容
+                            title = ""
+                            content = ""
+                        },
                         onSaveToCollection = {
                             // 保存到作文收藏库
                             EssayCollectionManager.addEssay(
@@ -118,6 +125,8 @@ fun WritingScreen(
                             content = ""
                             grammarScore = 0
                             currentWordType = ""
+                            // 触发刷新
+                            refreshTrigger++
                         }
                     )
 
@@ -174,6 +183,7 @@ fun WritingScreen(
                             content = essay.content
                             grammarScore = essay.grammarScore
                         },
+                        refreshTrigger = refreshTrigger,
                         modifier = Modifier
                             .weight(0.4f)
                             .fillMaxHeight()
@@ -207,7 +217,7 @@ private fun TitleTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    onClearContent: () -> Unit,
+    onClearAll: () -> Unit,
     onSaveToCollection: () -> Unit
 ) {
     Row(
@@ -251,7 +261,7 @@ private fun TitleTextField(
 
         // 清空按钮
         IconButton(
-            onClick = onClearContent,
+            onClick = onClearAll,
             modifier = Modifier
                 .size(56.dp)
                 .background(
@@ -261,7 +271,7 @@ private fun TitleTextField(
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
-                contentDescription = "清空内容",
+                contentDescription = "清空全部",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )

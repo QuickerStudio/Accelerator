@@ -1,7 +1,9 @@
 package com.english.accelerator.ui.writing
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,16 +22,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.data.Essay
 import com.english.accelerator.data.EssayCollectionManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun EssayCollectionPanel(
     onEssayClick: (Essay) -> Unit,
+    refreshTrigger: Int = 0,  // 添加刷新触发器
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
     val essays = remember { mutableStateListOf<Essay>() }
 
-    LaunchedEffect(Unit) {
+    // 监听刷新触发器
+    LaunchedEffect(refreshTrigger) {
         essays.clear()
         essays.addAll(EssayCollectionManager.getCollectedEssays())
     }
@@ -98,18 +104,28 @@ fun EssayCollectionPanel(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun EssayTag(
     essay: Essay,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {
+                    // 长按3秒后删除
+                    coroutineScope.launch {
+                        delay(3000)
+                        onDelete()
+                    }
+                }
+            ),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFF8FAFC)
         ),
@@ -129,7 +145,7 @@ private fun EssayTag(
                 Text(
                     text = essay.title,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.Bold,  // 改为粗体
                     color = Color(0xFF1E293B),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -160,47 +176,6 @@ private fun EssayTag(
                     )
                 }
             }
-
-            // 删除按钮
-            IconButton(
-                onClick = { showDeleteDialog = true },
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "删除",
-                    tint = Color(0xFFEF4444),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
         }
-    }
-
-    // 删除确认对话框
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = {
-                Text("删除作文")
-            },
-            text = {
-                Text("确定要删除「${essay.title}」吗？")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDelete()
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text("删除", color = Color(0xFFEF4444))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("取消")
-                }
-            }
-        )
     }
 }
