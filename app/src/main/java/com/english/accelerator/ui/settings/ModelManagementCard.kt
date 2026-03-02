@@ -263,8 +263,10 @@ fun ModelManagementCard(
                 Button(
                     onClick = onSwitchRoute,
                     modifier = Modifier.weight(1f),
+                    enabled = false,  // 下载中锁定线路切换
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF8B5CF6)
+                        containerColor = Color(0xFF8B5CF6),
+                        disabledContainerColor = Color(0xFFCBD5E1)
                     )
                 ) {
                     Icon(
