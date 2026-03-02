@@ -343,19 +343,19 @@ fun BottomInputArea(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 文本输入框区域 (60%)
+            // 文本输入框区域 (70%)
             Box(
                 modifier = Modifier
-                    .weight(0.6f)
+                    .weight(0.7f)
+                    .height(50.dp)
                     .clip(RoundedCornerShape(28.dp))
                     .background(Color(0xFFE2E8F0))
                     .padding(
                         start = 52.dp,
-                        end = 16.dp,
+                        end = 52.dp,  // 右侧留空间给发送按钮
                         top = 8.dp,
                         bottom = 8.dp
-                    )
-                    .height(50.dp),
+                    ),
                 contentAlignment = Alignment.CenterStart
             ) {
                 BasicTextField(
@@ -401,17 +401,38 @@ fun BottomInputArea(
                         modifier = Modifier.size(20.dp)
                     )
                 }
+
+                // 发送按钮（右侧悬浮在文本框内）
+                IconButton(
+                    onClick = onSend,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .align(Alignment.CenterEnd)
+                        .offset(x = 8.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
+                        ),
+                    enabled = inputText.isNotBlank()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "发送",
+                        tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
 
-            // 语音按钮区域 (40%)
+            // 语音按钮区域 (30%)
             Box(
                 modifier = Modifier
-                    .weight(0.4f)
+                    .weight(0.3f)
+                    .height(50.dp)
                     .clip(RoundedCornerShape(28.dp))
                     .background(
                         if (isRecording) Color(0xFFBFDBFE) else Color(0xFFE2E8F0)
                     )
-                    .height(50.dp)
                     .pointerInput(Unit) {
                         awaitEachGesture {
                             Log.d("VoiceInput", "Voice button pressed")
@@ -437,27 +458,6 @@ fun BottomInputArea(
                     modifier = Modifier.size(24.dp)
                 )
             }
-        }
-
-        // 发送按钮（悬浮在右侧）
-        IconButton(
-            onClick = onSend,
-            modifier = Modifier
-                .size(36.dp)
-                .align(Alignment.CenterEnd)
-                .offset(x = (-8).dp)
-                .clip(CircleShape)
-                .background(
-                    if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
-                ),
-            enabled = inputText.isNotBlank()
-        ) {
-            Icon(
-                imageVector = Icons.Default.Send,
-                contentDescription = "发送",
-                tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
-                modifier = Modifier.size(18.dp)
-            )
         }
     }
 }
