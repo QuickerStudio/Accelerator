@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.data.BookmarkManager
 import com.english.accelerator.data.WordLearningManager
-import com.english.accelerator.data.WordRepository
+import com.english.accelerator.data.StreamingWordLoader
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
@@ -33,10 +33,13 @@ fun VocabularyScreen(
     onToggleInputArea: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {}
 ) {
-    // 从 WordRepository 获取单词列表
-    val words = remember { WordRepository.getHighFrequencyWords(100) }
+    // 流式加载：当前页和索引
+    var currentPageIndex by remember { mutableIntStateOf(0) }
+    var currentIndexInPage by remember { mutableIntStateOf(0) }
 
-    var currentIndex by remember { mutableIntStateOf(0) }
+    // 当前页的单词列表
+    var currentPageWords by remember { mutableStateOf(StreamingWordLoader.getPage(0)) }
+
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
 
@@ -94,28 +97,52 @@ fun VocabularyScreen(
                 contentAlignment = Alignment.Center
             ) {
                 WordCardStack(
-                    words = words,
-                    currentIndex = currentIndex,
+                    words = currentPageWords,
+                    currentIndex = currentIndexInPage,
                     onSwipeLeft = {
                         // 标记为"未记住"
-                        if (currentIndex < words.size - 1) {
-                            val currentWord = words[currentIndex]
+                        if (currentIndexInPage < currentPageWords.size - 1) {
+                            val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, false)
-                            currentIndex++
+                            currentIndexInPage++
                             toastMessage = "未记住"
                             toastBackgroundColor = Color(0xFFFEE2E2) // 浅红色
                             showToast = true
+
+                            // 预加载检查：滑到第 40 个时预加载下一页
+                            if (currentIndexInPage == 40) {
+                                StreamingWordLoader.preloadNextPage(currentPageIndex)
+                            }
+
+                            // 换页检查：当前页学完了，加载下一页
+                            if (currentIndexInPage >= currentPageWords.size - 1) {
+                                currentPageIndex++
+                                currentIndexInPage = 0
+                                currentPageWords = StreamingWordLoader.getPage(currentPageIndex)
+                            }
                         }
                     },
                     onSwipeRight = {
                         // 标记为"已记住"
-                        if (currentIndex < words.size - 1) {
-                            val currentWord = words[currentIndex]
+                        if (currentIndexInPage < currentPageWords.size - 1) {
+                            val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, true)
-                            currentIndex++
+                            currentIndexInPage++
                             toastMessage = "已记住"
                             toastBackgroundColor = Color(0xFFDCFCE7) // 浅绿色
                             showToast = true
+
+                            // 预加载检查
+                            if (currentIndexInPage == 40) {
+                                StreamingWordLoader.preloadNextPage(currentPageIndex)
+                            }
+
+                            // 换页检查
+                            if (currentIndexInPage >= currentPageWords.size - 1) {
+                                currentPageIndex++
+                                currentIndexInPage = 0
+                                currentPageWords = StreamingWordLoader.getPage(currentPageIndex)
+                            }
                         }
                     },
                     onLongPress = { word ->
