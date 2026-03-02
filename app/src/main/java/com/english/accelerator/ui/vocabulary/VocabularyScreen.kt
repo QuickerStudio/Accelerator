@@ -101,7 +101,7 @@ fun VocabularyScreen(
                     currentIndex = currentIndexInPage,
                     onSwipeLeft = {
                         // 标记为"未记住"
-                        if (currentIndexInPage < currentPageWords.size - 1) {
+                        if (currentIndexInPage < currentPageWords.size) {
                             val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, false)
                             currentIndexInPage++
@@ -115,7 +115,7 @@ fun VocabularyScreen(
                             }
 
                             // 换页检查：当前页学完了，加载下一页
-                            if (currentIndexInPage >= currentPageWords.size - 1) {
+                            if (currentIndexInPage >= currentPageWords.size) {
                                 currentPageIndex++
                                 currentIndexInPage = 0
                                 currentPageWords = StreamingWordLoader.getPage(currentPageIndex)
@@ -124,7 +124,7 @@ fun VocabularyScreen(
                     },
                     onSwipeRight = {
                         // 标记为"已记住"
-                        if (currentIndexInPage < currentPageWords.size - 1) {
+                        if (currentIndexInPage < currentPageWords.size) {
                             val currentWord = currentPageWords[currentIndexInPage]
                             WordLearningManager.recordWord(currentWord.id, currentWord.word, true)
                             currentIndexInPage++
@@ -138,7 +138,7 @@ fun VocabularyScreen(
                             }
 
                             // 换页检查
-                            if (currentIndexInPage >= currentPageWords.size - 1) {
+                            if (currentIndexInPage >= currentPageWords.size) {
                                 currentPageIndex++
                                 currentIndexInPage = 0
                                 currentPageWords = StreamingWordLoader.getPage(currentPageIndex)
