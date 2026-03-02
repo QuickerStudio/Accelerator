@@ -1,6 +1,7 @@
 package com.english.accelerator.data
 
 import android.util.LruCache
+import android.util.Log
 
 /**
  * 流式单词加载器 (Streaming Word Loader)
@@ -71,6 +72,8 @@ import android.util.LruCache
  * @see EcdictWords
  */
 object StreamingWordLoader {
+    private const val TAG = "StreamingWordLoader"
+
     // 配置
     private const val PAGE_SIZE = 50  // 每页 50 个单词
     private const val PRELOAD_THRESHOLD = 40  // 滑到第 40 个时预加载下一页
@@ -84,8 +87,15 @@ object StreamingWordLoader {
      * @param pageIndex 页码（从 0 开始）
      */
     fun getPage(pageIndex: Int): List<Word> {
+        Log.d(TAG, "getPage: 请求第 $pageIndex 页")
+
         // 先查缓存
-        pageCache.get(pageIndex)?.let { return it }
+        pageCache.get(pageIndex)?.let {
+            Log.d(TAG, "getPage: 从缓存获取第 $pageIndex 页，共 ${it.size} 个单词")
+            return it
+        }
+
+        Log.d(TAG, "getPage: 缓存未命中，开始加载第 $pageIndex 页")
 
         // 缓存未命中，从分块中加载
         val startId = pageIndex * PAGE_SIZE + 1
@@ -95,6 +105,8 @@ object StreamingWordLoader {
         for (id in startId..endId) {
             getWordFromChunk(id)?.let { words.add(it) }
         }
+
+        Log.d(TAG, "getPage: 加载完成，第 $pageIndex 页共 ${words.size} 个单词")
 
         // 放入缓存
         pageCache.put(pageIndex, words)
@@ -147,10 +159,14 @@ object StreamingWordLoader {
     fun preloadNextPage(currentPageIndex: Int) {
         val nextPageIndex = currentPageIndex + 1
         if (nextPageIndex * PAGE_SIZE < 5000) {
+            Log.d(TAG, "preloadNextPage: 开始预加载第 $nextPageIndex 页")
             // 异步预加载，不阻塞当前线程
             Thread {
                 getPage(nextPageIndex)
+                Log.d(TAG, "preloadNextPage: 第 $nextPageIndex 页预加载完成")
             }.start()
+        } else {
+            Log.d(TAG, "preloadNextPage: 已到达最后一页，无需预加载")
         }
     }
 
@@ -158,6 +174,7 @@ object StreamingWordLoader {
      * 清空缓存
      */
     fun clearCache() {
+        Log.d(TAG, "clearCache: 清空缓存")
         pageCache.evictAll()
     }
 

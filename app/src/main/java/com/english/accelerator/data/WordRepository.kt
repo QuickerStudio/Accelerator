@@ -1,6 +1,7 @@
 package com.english.accelerator.data
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.concurrent.ConcurrentHashMap
@@ -10,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
  * 负责加载、管理和提供单词数据
  */
 object WordRepository {
+    private const val TAG = "WordRepository"
+
     private val allWords = ConcurrentHashMap<Int, Word>()
     private val gson = Gson()
     private var isInitialized = false
@@ -18,10 +21,19 @@ object WordRepository {
      * 初始化词库
      */
     fun init(context: Context) {
-        if (isInitialized) return
+        if (isInitialized) {
+            Log.d(TAG, "init: 词库已初始化，跳过")
+            return
+        }
+
+        Log.d(TAG, "init: 开始初始化词库")
+        val startTime = System.currentTimeMillis()
 
         // 加载内置词库
         loadBuiltInWords()
+
+        val duration = System.currentTimeMillis() - startTime
+        Log.d(TAG, "init: 词库初始化完成，耗时 ${duration}ms，共 ${allWords.size} 个单词")
 
         isInitialized = true
     }
@@ -30,14 +42,22 @@ object WordRepository {
      * 加载内置词库数据
      */
     private fun loadBuiltInWords() {
+        Log.d(TAG, "loadBuiltInWords: 开始加载内置词库")
         // 注意：不再使用 ecdictWords 合并列表（会导致 Method too large）
         // 改为直接从 StreamingWordLoader 获取所有单词
-        for (pageIndex in 0 until StreamingWordLoader.getTotalPages()) {
+        val totalPages = StreamingWordLoader.getTotalPages()
+        Log.d(TAG, "loadBuiltInWords: 总共 $totalPages 页")
+
+        for (pageIndex in 0 until totalPages) {
             val pageWords = StreamingWordLoader.getPage(pageIndex)
             pageWords.forEach { word ->
                 allWords[word.id] = word
             }
+            if (pageIndex % 20 == 0) {
+                Log.d(TAG, "loadBuiltInWords: 已加载 ${pageIndex + 1}/$totalPages 页")
+            }
         }
+        Log.d(TAG, "loadBuiltInWords: 加载完成")
     }
 
     /**
