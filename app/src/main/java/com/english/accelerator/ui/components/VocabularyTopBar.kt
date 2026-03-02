@@ -35,6 +35,7 @@ fun VocabularyTopBar(
     onConversationClick: () -> Unit,
     onBookmarkClick: () -> Unit,
     isConversationMode: Boolean = false,
+    isCollectionMode: Boolean = false,
     grammarScore: Int = 0,
     currentWordType: String = "",
     modifier: Modifier = Modifier
@@ -120,11 +121,18 @@ fun VocabularyTopBar(
             }
 
             // 作文收藏库按钮
-            IconButton(onClick = onBookmarkClick) {
+            IconButton(
+                onClick = onBookmarkClick,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(
+                        if (isCollectionMode) Color(0xFF2563EB) else Color.Transparent
+                    )
+            ) {
                 Icon(
                     imageVector = Icons.Default.Book,
                     contentDescription = "作文收藏库",
-                    tint = Color(0xFF1E293B)
+                    tint = if (isCollectionMode) Color.White else Color(0xFF1E293B)
                 )
             }
         }

@@ -72,12 +72,21 @@ fun WritingScreen(
                     showSidebar = true
                 },
                 onConversationClick = {
+                    // Toggle AI 面板，关闭作文收藏库
                     showAiPanel = !showAiPanel
+                    if (showAiPanel) {
+                        showEssayCollection = false
+                    }
                 },
                 onBookmarkClick = {
-                    showEssayCollection = true
+                    // Toggle 作文收藏库，关闭 AI 面板
+                    showEssayCollection = !showEssayCollection
+                    if (showEssayCollection) {
+                        showAiPanel = false
+                    }
                 },
                 isConversationMode = showAiPanel,
+                isCollectionMode = showEssayCollection,
                 grammarScore = grammarScore,
                 currentWordType = currentWordType
             )
@@ -211,60 +220,14 @@ private fun TitleTextField(
     Box(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // 主输入框
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = TextStyle(
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
-            ),
-            cursorBrush = SolidColor(Color(0xFF2563EB)),
-            readOnly = false,
-            modifier = Modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onLongPress = {
-                            showSwipeActions = true
-                            coroutineScope.launch {
-                                delay(3000)
-                                showSwipeActions = false
-                            }
-                        }
-                    )
-                },
-            decorationBox = { innerTextField ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = Color.White,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(16.dp)
-                ) {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFCBD5E1)
-                        )
-                    }
-                    innerTextField()
-                }
-            }
-        )
-
-        // 滑动操作按钮
+        // 滑动操作按钮（显示在下层）
         if (showSwipeActions) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(72.dp)
                     .background(
-                        color = Color(0xFFF1F5F9),
+                        color = Color(0xFFD1FAE5),  // 浅绿色背景
                         shape = RoundedCornerShape(12.dp)
                     )
                     .padding(horizontal = 8.dp),
@@ -315,6 +278,56 @@ private fun TitleTextField(
                     Text("保存", fontSize = 14.sp)
                 }
             }
+        }
+
+        // 主输入框（显示在上层）
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            showSwipeActions = true
+                            coroutineScope.launch {
+                                delay(3000)
+                                showSwipeActions = false
+                            }
+                        }
+                    )
+                }
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                ),
+                cursorBrush = SolidColor(Color(0xFF2563EB)),
+                readOnly = false,
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(16.dp)
+                    ) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFCBD5E1)
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
         }
     }
 }
