@@ -86,11 +86,8 @@ fun SettingsScreen() {
                     gemmaManager.resumeDownload()
                 },
                 onSwitchRoute = {
-                    scope.launch {
-                        gemmaManager.cancelDownload()
-                        // TODO: 重新开始下载并切换线路
-                        gemmaManager.downloadModel()
-                    }
+                    // 只切换线路显示，不启动下载
+                    // 用户点击下载按钮时会使用当前选择的线路
                 }
             )
         }
