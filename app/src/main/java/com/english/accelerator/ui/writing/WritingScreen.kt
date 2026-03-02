@@ -36,7 +36,8 @@ data class AiComment(
 
 @Composable
 fun WritingScreen(
-    onNavigateToSettings: () -> Unit = {}
+    onNavigateToSettings: () -> Unit = {},
+    onKeyboardVisibilityChanged: (Boolean) -> Unit = {}
 ) {
     var showSidebar by remember { mutableStateOf(false) }
     var showEssayCollection by remember { mutableStateOf(false) }
@@ -71,11 +72,12 @@ fun WritingScreen(
     val wordCount = content.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
     val charCount = content.length
 
-    // 禁用系统键盘
+    // 禁用系统键盘并通知导航栏状态
     LaunchedEffect(isKeyboardVisible) {
         if (isKeyboardVisible) {
             keyboardController?.hide()
         }
+        onKeyboardVisibilityChanged(isKeyboardVisible)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

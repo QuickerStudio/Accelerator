@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
 fun AcceleratorApp() {
     var currentRoute by rememberSaveable { mutableStateOf(Screen.Vocabulary.route) }
     var showInputArea by rememberSaveable { mutableStateOf(false) }
+    var hideBottomBar by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -80,11 +81,17 @@ fun AcceleratorApp() {
                     )
                 }
 
-                // 底部导航栏
-                BottomNavigationBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route -> currentRoute = route }
-                )
+                // 底部导航栏（带淡入淡出动画）
+                AnimatedVisibility(
+                    visible = !hideBottomBar,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    BottomNavigationBar(
+                        currentRoute = currentRoute,
+                        onNavigate = { route -> currentRoute = route }
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -95,7 +102,10 @@ fun AcceleratorApp() {
                 onNavigateToSettings = { currentRoute = Screen.Settings.route }
             )
             Screen.Writing.route -> WritingScreen(
-                onNavigateToSettings = { currentRoute = Screen.Settings.route }
+                onNavigateToSettings = { currentRoute = Screen.Settings.route },
+                onKeyboardVisibilityChanged = { isVisible ->
+                    hideBottomBar = isVisible
+                }
             )
             Screen.Speaking.route -> SpeakingScreen(
                 onNavigateToSettings = { currentRoute = Screen.Settings.route }
