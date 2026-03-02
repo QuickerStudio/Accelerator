@@ -33,12 +33,14 @@ fun VocabularyScreen(
     onToggleInputArea: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+
     // 流式加载：当前页和索引
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var currentIndexInPage by remember { mutableIntStateOf(0) }
 
     // 当前页的单词列表
-    var currentPageWords by remember { mutableStateOf(StreamingWordLoader.getPage(0)) }
+    var currentPageWords by remember { mutableStateOf(StreamingWordLoader.getPage(context, 0)) }
 
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
@@ -52,7 +54,6 @@ fun VocabularyScreen(
     var toastMessage by remember { mutableStateOf("") }
     var toastBackgroundColor by remember { mutableStateOf(Color.White) }
     var showToast by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
     // 动画：卡片底部内边距
@@ -111,14 +112,14 @@ fun VocabularyScreen(
 
                             // 预加载检查：滑到第 40 个时预加载下一页
                             if (currentIndexInPage == 40) {
-                                StreamingWordLoader.preloadNextPage(currentPageIndex)
+                                StreamingWordLoader.preloadNextPage(context, currentPageIndex)
                             }
 
                             // 换页检查：当前页学完了，加载下一页
                             if (currentIndexInPage >= currentPageWords.size) {
                                 currentPageIndex++
                                 currentIndexInPage = 0
-                                currentPageWords = StreamingWordLoader.getPage(currentPageIndex)
+                                currentPageWords = StreamingWordLoader.getPage(context, currentPageIndex)
                             }
                         }
                     },
@@ -134,14 +135,14 @@ fun VocabularyScreen(
 
                             // 预加载检查
                             if (currentIndexInPage == 40) {
-                                StreamingWordLoader.preloadNextPage(currentPageIndex)
+                                StreamingWordLoader.preloadNextPage(context, currentPageIndex)
                             }
 
                             // 换页检查
                             if (currentIndexInPage >= currentPageWords.size) {
                                 currentPageIndex++
                                 currentIndexInPage = 0
-                                currentPageWords = StreamingWordLoader.getPage(currentPageIndex)
+                                currentPageWords = StreamingWordLoader.getPage(context, currentPageIndex)
                             }
                         }
                     },

@@ -16,6 +16,7 @@ object WordRepository {
     private val allWords = ConcurrentHashMap<Int, Word>()
     private val gson = Gson()
     private var isInitialized = false
+    private lateinit var appContext: Context
 
     /**
      * 初始化词库
@@ -26,6 +27,7 @@ object WordRepository {
             return
         }
 
+        appContext = context.applicationContext
         Log.d(TAG, "init: 开始初始化词库")
         val startTime = System.currentTimeMillis()
 
@@ -43,21 +45,12 @@ object WordRepository {
      */
     private fun loadBuiltInWords() {
         Log.d(TAG, "loadBuiltInWords: 开始加载内置词库")
-        // 注意：不再使用 ecdictWords 合并列表（会导致 Method too large）
-        // 改为直接从 StreamingWordLoader 获取所有单词
-        val totalPages = StreamingWordLoader.getTotalPages()
-        Log.d(TAG, "loadBuiltInWords: 总共 $totalPages 页")
-
-        for (pageIndex in 0 until totalPages) {
-            val pageWords = StreamingWordLoader.getPage(pageIndex)
-            pageWords.forEach { word ->
-                allWords[word.id] = word
-            }
-            if (pageIndex % 20 == 0) {
-                Log.d(TAG, "loadBuiltInWords: 已加载 ${pageIndex + 1}/$totalPages 页")
-            }
+        // 使用 JsonWordLoader 直接加载所有单词
+        val words = JsonWordLoader.loadWords(appContext)
+        words.forEach { word ->
+            allWords[word.id] = word
         }
-        Log.d(TAG, "loadBuiltInWords: 加载完成")
+        Log.d(TAG, "loadBuiltInWords: 加载完成，共 ${allWords.size} 个单词")
     }
 
     /**

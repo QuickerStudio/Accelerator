@@ -1,5 +1,6 @@
 package com.english.accelerator.data
 
+import android.content.Context
 import android.util.LruCache
 import android.util.Log
 
@@ -82,11 +83,28 @@ object StreamingWordLoader {
     // 轻量级缓存：只缓存 2 页数据
     private val pageCache = LruCache<Int, List<Word>>(CACHE_SIZE)
 
+    // 所有单词数据（从 JSON 加载）
+    private var allWords: List<Word>? = null
+
+    /**
+     * 初始化加载器
+     */
+    fun init(context: Context) {
+        if (allWords == null) {
+            Log.d(TAG, "init: 开始加载单词数据")
+            allWords = JsonWordLoader.loadWords(context)
+            Log.d(TAG, "init: 加载完成，共 ${allWords?.size} 个单词")
+        }
+    }
+
     /**
      * 获取指定页的单词
      * @param pageIndex 页码（从 0 开始）
      */
-    fun getPage(pageIndex: Int): List<Word> {
+    fun getPage(context: Context, pageIndex: Int): List<Word> {
+        // 确保已初始化
+        init(context)
+
         Log.d(TAG, "getPage: 请求第 $pageIndex 页")
 
         // 先查缓存
@@ -97,72 +115,35 @@ object StreamingWordLoader {
 
         Log.d(TAG, "getPage: 缓存未命中，开始加载第 $pageIndex 页")
 
-        // 缓存未命中，从分块中加载
-        val startId = pageIndex * PAGE_SIZE + 1
-        val endId = minOf(startId + PAGE_SIZE - 1, 5000)
+        // 缓存未命中，从所有单词中获取
+        val words = allWords ?: emptyList()
+        val startIndex = pageIndex * PAGE_SIZE
+        val endIndex = minOf(startIndex + PAGE_SIZE, words.size)
 
-        val words = mutableListOf<Word>()
-        for (id in startId..endId) {
-            getWordFromChunk(id)?.let { words.add(it) }
+        val pageWords = if (startIndex < words.size) {
+            words.subList(startIndex, endIndex)
+        } else {
+            emptyList()
         }
 
-        Log.d(TAG, "getPage: 加载完成，第 $pageIndex 页共 ${words.size} 个单词")
+        Log.d(TAG, "getPage: 加载完成，第 $pageIndex 页共 ${pageWords.size} 个单词")
 
         // 放入缓存
-        pageCache.put(pageIndex, words)
-        return words
-    }
-
-    /**
-     * 从分块中获取单个单词
-     */
-    private fun getWordFromChunk(wordId: Int): Word? {
-        if (wordId < 1 || wordId > 5000) return null
-
-        val chunkIndex = (wordId - 1) / 200  // 每个分块 200 个单词
-        val chunk = when (chunkIndex) {
-            0 -> ecdictWordsChunk0
-            1 -> ecdictWordsChunk1
-            2 -> ecdictWordsChunk2
-            3 -> ecdictWordsChunk3
-            4 -> ecdictWordsChunk4
-            5 -> ecdictWordsChunk5
-            6 -> ecdictWordsChunk6
-            7 -> ecdictWordsChunk7
-            8 -> ecdictWordsChunk8
-            9 -> ecdictWordsChunk9
-            10 -> ecdictWordsChunk10
-            11 -> ecdictWordsChunk11
-            12 -> ecdictWordsChunk12
-            13 -> ecdictWordsChunk13
-            14 -> ecdictWordsChunk14
-            15 -> ecdictWordsChunk15
-            16 -> ecdictWordsChunk16
-            17 -> ecdictWordsChunk17
-            18 -> ecdictWordsChunk18
-            19 -> ecdictWordsChunk19
-            20 -> ecdictWordsChunk20
-            21 -> ecdictWordsChunk21
-            22 -> ecdictWordsChunk22
-            23 -> ecdictWordsChunk23
-            24 -> ecdictWordsChunk24
-            else -> return null
-        }
-
-        val indexInChunk = (wordId - 1) % 200
-        return chunk.getOrNull(indexInChunk)
+        pageCache.put(pageIndex, pageWords)
+        return pageWords
     }
 
     /**
      * 预加载下一页
      */
-    fun preloadNextPage(currentPageIndex: Int) {
+    fun preloadNextPage(context: Context, currentPageIndex: Int) {
         val nextPageIndex = currentPageIndex + 1
-        if (nextPageIndex * PAGE_SIZE < 5000) {
+        val totalWords = allWords?.size ?: 5000
+        if (nextPageIndex * PAGE_SIZE < totalWords) {
             Log.d(TAG, "preloadNextPage: 开始预加载第 $nextPageIndex 页")
             // 异步预加载，不阻塞当前线程
             Thread {
-                getPage(nextPageIndex)
+                getPage(context, nextPageIndex)
                 Log.d(TAG, "preloadNextPage: 第 $nextPageIndex 页预加载完成")
             }.start()
         } else {
@@ -181,7 +162,9 @@ object StreamingWordLoader {
     /**
      * 获取总页数
      */
-    fun getTotalPages(): Int {
-        return (5000 + PAGE_SIZE - 1) / PAGE_SIZE  // 向上取整
+    fun getTotalPages(context: Context): Int {
+        init(context)
+        val totalWords = allWords?.size ?: 0
+        return (totalWords + PAGE_SIZE - 1) / PAGE_SIZE  // 向上取整
     }
 }
