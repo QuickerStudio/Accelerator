@@ -1,9 +1,13 @@
 package com.english.accelerator.ui.speaking
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ui.sidebar.Sidebar
+import kotlinx.coroutines.withTimeoutOrNull
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -323,55 +328,63 @@ fun BottomInputArea(
 ) {
     var isRecording by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    var isFocused by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
-        // 背景容器和输入框
+        // 背景容器 - 纯装饰，不参与交互
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(28.dp))
-                .background(Color(0xFFE2E8F0))
+                .background(
+                    if (isRecording) Color(0xFFBFDBFE) else Color(0xFFE2E8F0)
+                )
                 .padding(
                     start = 52.dp,
                     end = 100.dp,
                     top = 8.dp,
                     bottom = 8.dp
                 )
+                .height(50.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            TextField(
+            // BasicTextField - 点击输入文字
+            BasicTextField(
                 value = inputText,
                 onValueChange = onInputChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                placeholder = {
-                    Text(
-                        text = if (isRecording) "正在录音..." else "发消息或按住说话...",
-                        color = Color(0xFF94A3B8),
-                        fontSize = 14.sp
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = Color(0xFF1E293B),
-                    unfocusedTextColor = Color(0xFF1E293B)
+                    .fillMaxHeight(),
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    fontSize = 14.sp,
+                    color = Color(0xFF1E293B)
                 ),
-                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                enabled = !isRecording,
                 maxLines = 2,
-                enabled = !isRecording
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (inputText.isEmpty()) {
+                            Text(
+                                text = if (isRecording) "正在录音..." else "发消息或按住说话...",
+                                color = Color(0xFF94A3B8),
+                                fontSize = 14.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
             )
         }
 
-        // Long press gesture detector overlay (only active when not recording)
-        // Transparent overlay that detects long press without blocking taps
-        if (!isRecording) {
+        // 长按手势检测层 - 只在未聚焦时激活
+        if (!isFocused && !isRecording) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -384,23 +397,32 @@ fun BottomInputArea(
                     )
                     .height(50.dp)
                     .pointerInput(Unit) {
-                        detectTapGestures(
-                            onLongPress = {
+                        awaitEachGesture {
+                            val down = awaitFirstDown()
+                            val longPressTimeout = 500L // 500ms 长按阈值
+                            val result = withTimeoutOrNull(longPressTimeout) {
+                                waitForUpOrCancellation()
+                            }
+
+                            if (result == null) {
+                                // 长按触发
                                 focusManager.clearFocus()
                                 isRecording = true
+                            } else {
+                                // 短按，让点击穿透到 TextField
+                                isFocused = true
                             }
-                        )
+                        }
                     }
             )
         }
 
-        // Recording indicator overlay (shows blue background when recording)
+        // 录音状态检测松开
         if (isRecording) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(28.dp))
-                    .background(Color(0xFFBFDBFE))
                     .padding(
                         start = 52.dp,
                         end = 100.dp,
@@ -409,18 +431,24 @@ fun BottomInputArea(
                     )
                     .height(50.dp)
                     .pointerInput(Unit) {
-                        detectTapGestures(
-                            onPress = {
-                                val pressed = tryAwaitRelease()
-                                if (pressed) {
-                                    isRecording = false
-                                    // TODO: Send voice message
-                                    onSend()
-                                }
+                        awaitEachGesture {
+                            awaitFirstDown()
+                            val up = waitForUpOrCancellation()
+                            if (up != null) {
+                                isRecording = false
+                                // TODO: Send voice message
+                                onSend()
                             }
-                        )
+                        }
                     }
             )
+        }
+
+        // 监听焦点变化
+        LaunchedEffect(inputText) {
+            if (inputText.isNotEmpty()) {
+                isFocused = true
+            }
         }
 
         // 悬浮按钮层
