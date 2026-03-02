@@ -30,9 +30,13 @@ object WordRepository {
      * 加载内置词库数据
      */
     private fun loadBuiltInWords() {
-        // 使用 ECDICT 高质量词库（5000个单词）
-        ecdictWords.forEach { word ->
-            allWords[word.id] = word
+        // 注意：不再使用 ecdictWords 合并列表（会导致 Method too large）
+        // 改为直接从 StreamingWordLoader 获取所有单词
+        for (pageIndex in 0 until StreamingWordLoader.getTotalPages()) {
+            val pageWords = StreamingWordLoader.getPage(pageIndex)
+            pageWords.forEach { word ->
+                allWords[word.id] = word
+            }
         }
     }
 

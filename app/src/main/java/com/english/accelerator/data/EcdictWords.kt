@@ -5036,17 +5036,5 @@ internal val ecdictWordsChunk9 = listOf(
     Word(5000, "ecumenical", "/,i:kju(:)'menikәl/", "一般的, 普遍的, 全基督教的, 泛基督教主义的", "Example sentence for ecumenical.", 12571, "GRE", "")
 )
 
-val ecdictWords: List<Word> by lazy {
-    listOf(
-        *ecdictWordsChunk0.toTypedArray(),
-        *ecdictWordsChunk1.toTypedArray(),
-        *ecdictWordsChunk2.toTypedArray(),
-        *ecdictWordsChunk3.toTypedArray(),
-        *ecdictWordsChunk4.toTypedArray(),
-        *ecdictWordsChunk5.toTypedArray(),
-        *ecdictWordsChunk6.toTypedArray(),
-        *ecdictWordsChunk7.toTypedArray(),
-        *ecdictWordsChunk8.toTypedArray(),
-        *ecdictWordsChunk9.toTypedArray()
-    )
-}
+// 注意：不要创建合并所有分块的 list，会导致 Method too large 错误
+// 请使用 StreamingWordLoader 按需加载单词
