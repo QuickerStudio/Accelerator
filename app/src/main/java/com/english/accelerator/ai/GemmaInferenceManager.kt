@@ -21,7 +21,7 @@ class GemmaInferenceManager private constructor(
 ) {
     private var llmInference: LlmInference? = null
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it.task")
+    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
 
     /**
      * Represents the current state of the model

@@ -12,10 +12,10 @@ import java.io.File
  */
 class ModelDownloadManager(private val context: Context) {
     // 下载线路
-    private val huggingFaceUrl = "https://huggingface.co/google/gemma-3n-E2B-it/resolve/main/gemma-3n-E2B-it.task"
-    private val modelScopeUrl = "https://www.modelscope.cn/models/google/gemma-3n-E2B-it/resolve/master/gemma-3n-E2B-it.task"
+    private val huggingFaceUrl = "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm"
+    private val modelScopeUrl = "https://www.modelscope.cn/models/google/gemma-3n-E2B-it-litert-lm/resolve/master/gemma-3n-E2B-it-int4.litertlm"
 
-    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it.task")
+    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
 
     // 下载引擎
     private val downloadEngine = DownloadEngine()
