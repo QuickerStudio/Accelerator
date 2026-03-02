@@ -20,7 +20,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,11 +66,17 @@ fun WritingScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     var isKeyboardVisible by remember { mutableStateOf(false) }
-    var enableKeyboardAssist by remember { mutableStateOf(false) }  // 键盘辅助开关
 
     // 统计信息
     val wordCount = content.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
     val charCount = content.length
+
+    // 禁用系统键盘
+    LaunchedEffect(isKeyboardVisible) {
+        if (isKeyboardVisible) {
+            keyboardController?.hide()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -161,7 +166,6 @@ fun WritingScreen(
                         },
                         placeholder = "Every word you write is a step forward. Start your English journey here!",
                         modifier = Modifier.weight(1f),
-                        enableKeyboardAssist = enableKeyboardAssist,
                         onFocusChanged = { hasFocus ->
                             isKeyboardVisible = hasFocus
                         }
@@ -237,64 +241,28 @@ fun WritingScreen(
             )
         }
 
-        // 关闭键盘按钮（跟随键盘顶部）
+        // 简易英文键盘
         if (isKeyboardVisible) {
-            Box(
+            SimpleEnglishKeyboard(
+                onKeyPress = { key ->
+                    content += key
+                },
+                onBackspace = {
+                    if (content.isNotEmpty()) {
+                        content = content.dropLast(1)
+                    }
+                },
+                onSpace = {
+                    content += " "
+                },
+                onClose = {
+                    focusManager.clearFocus()
+                    isKeyboardVisible = false
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .imePadding()  // 跟随键盘位置，避免被遮挡
-            ) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // 切换键盘辅助按钮
-                    Button(
-                        onClick = {
-                            enableKeyboardAssist = !enableKeyboardAssist
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (enableKeyboardAssist) Color(0xFF10B981) else Color(0xFF94A3B8)
-                        ),
-                        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (enableKeyboardAssist) Icons.Default.Check else Icons.Default.Close,
-                            contentDescription = "切换键盘辅助",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (enableKeyboardAssist) "辅助开" else "辅助关",
-                            fontSize = 14.sp
-                        )
-                    }
-
-                    // 关闭键盘按钮
-                    Button(
-                        onClick = {
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                            isKeyboardVisible = false
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF64748B)
-                        ),
-                        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "关闭键盘",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("关闭键盘", fontSize = 14.sp)
-                    }
-                }
-            }
+            )
         }
     }
 }
@@ -398,7 +366,6 @@ private fun ContentEditor(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
-    enableKeyboardAssist: Boolean = false,
     onFocusChanged: (Boolean) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
@@ -412,11 +379,7 @@ private fun ContentEditor(
             color = Color(0xFF1E293B)
         ),
         cursorBrush = SolidColor(Color(0xFF2563EB)),
-        keyboardOptions = KeyboardOptions(
-            capitalization = if (enableKeyboardAssist) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
-            autoCorrect = enableKeyboardAssist,  // 根据开关控制自动纠错
-            keyboardType = if (enableKeyboardAssist) KeyboardType.Text else KeyboardType.Ascii
-        ),
+        readOnly = true,  // 只读，使用自定义键盘输入
         modifier = modifier.onFocusChanged { focusState ->
             onFocusChanged(focusState.isFocused)
         },
