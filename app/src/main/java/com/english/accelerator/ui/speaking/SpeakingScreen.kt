@@ -352,7 +352,7 @@ fun BottomInputArea(
                     .background(Color(0xFFE2E8F0))
                     .padding(
                         start = 52.dp,
-                        end = 52.dp,  // 右侧留空间给发送按钮
+                        end = 16.dp,  // 右侧padding减小
                         top = 8.dp,
                         bottom = 8.dp
                     ),
@@ -401,27 +401,6 @@ fun BottomInputArea(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-
-                // 发送按钮（右侧悬浮在文本框内）
-                IconButton(
-                    onClick = onSend,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .align(Alignment.CenterEnd)
-                        .offset(x = 30.dp)  // 往右移动 30dp (18dp + 12dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
-                        ),
-                    enabled = inputText.isNotBlank()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "发送",
-                        tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
             }
 
             // 语音按钮区域 (30%)
@@ -458,6 +437,27 @@ fun BottomInputArea(
                     modifier = Modifier.size(24.dp)
                 )
             }
+        }
+
+        // 发送按钮（悬浮在文本框和语音按钮之间）
+        IconButton(
+            onClick = onSend,
+            modifier = Modifier
+                .size(36.dp)
+                .align(Alignment.CenterEnd)
+                .offset(x = (-4).dp)  // 微调位置，放在间隙中
+                .clip(CircleShape)
+                .background(
+                    if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
+                ),
+            enabled = inputText.isNotBlank()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Send,
+                contentDescription = "发送",
+                tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
