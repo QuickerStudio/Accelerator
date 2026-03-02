@@ -231,10 +231,12 @@ private fun ModelManagementCard(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            ModelInfoRow(label = "模型版本", value = "Gemma 3n E2B-it")
             ModelInfoRow(label = "模型大小", value = "~2-3 GB")
             ModelInfoRow(label = "上下文长度", value = "32K tokens")
             ModelInfoRow(label = "用途", value = "语法检查、写作建议")
             ModelInfoRow(label = "多模态支持", value = "文本、图像、音频、视频（即将推出）")
+            ModelInfoRow(label = "下载线路", value = "双线路（国际/国内）")
             ModelInfoRow(label = "运行方式", value = "设备端推理")
         }
 

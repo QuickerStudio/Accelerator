@@ -8,28 +8,61 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Manages downloading and storing the Gemma 3n E2B model
+ * Manages downloading and storing the Gemma 3n E2B-it model
+ * Supports dual-route download: Hugging Face (primary) and ModelScope (fallback)
  */
 class ModelDownloadManager(private val context: Context) {
-    // Gemma 3n E2B LiteRT model from Hugging Face
-    // Using language-model variant (text-only) for compatibility
-    private val modelUrl = "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-litert-lm.task"
-    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b.task")
+    // Gemma 3n E2B-it standard model (unified across all sources)
+    // Dual-route download support for better accessibility
+
+    private val primaryModelUrl = "https://huggingface.co/google/gemma-3n-E2B-it/resolve/main/gemma-3n-E2B-it.task"
+    private val fallbackModelUrl = "https://www.modelscope.cn/models/google/gemma-3n-E2B-it/resolve/master/gemma-3n-E2B-it.task"
+
+    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it.task")
 
     /**
-     * Download the model with progress tracking
+     * Download the model with progress tracking and automatic fallback
+     * Tries primary URL first, falls back to secondary if primary fails
      * @param onProgress Callback with download progress (0.0 to 1.0)
      * @return Result with the model file or error
      */
     suspend fun downloadModel(
         onProgress: (Float) -> Unit
     ): Result<File> = withContext(Dispatchers.IO) {
-        try {
-            // Create models directory if it doesn't exist
-            modelFile.parentFile?.mkdirs()
+        // Create models directory if it doesn't exist
+        modelFile.parentFile?.mkdirs()
 
-            val url = URL(modelUrl)
+        // Try primary URL first (Hugging Face)
+        val primaryResult = tryDownload(primaryModelUrl, onProgress)
+        if (primaryResult.isSuccess) {
+            return@withContext primaryResult
+        }
+
+        // If primary fails, try fallback URL (ModelScope)
+        val fallbackResult = tryDownload(fallbackModelUrl, onProgress)
+        if (fallbackResult.isSuccess) {
+            return@withContext fallbackResult
+        }
+
+        // Both failed, return the last error
+        Result.failure(
+            Exception("Download failed from both sources. Primary: ${primaryResult.exceptionOrNull()?.message}, Fallback: ${fallbackResult.exceptionOrNull()?.message}")
+        )
+    }
+
+    /**
+     * Attempt to download from a specific URL
+     */
+    private suspend fun tryDownload(
+        urlString: String,
+        onProgress: (Float) -> Unit
+    ): Result<File> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL(urlString)
             val connection = url.openConnection() as HttpURLConnection
+            connection.connectTimeout = 30000 // 30 seconds
+            connection.readTimeout = 30000
+
             val totalSize = connection.contentLength.toLong()
 
             connection.inputStream.use { input ->
@@ -41,13 +74,19 @@ class ModelDownloadManager(private val context: Context) {
                     while (input.read(buffer).also { bytes = it } != -1) {
                         output.write(buffer, 0, bytes)
                         downloaded += bytes
-                        onProgress(downloaded.toFloat() / totalSize)
+                        if (totalSize > 0) {
+                            onProgress(downloaded.toFloat() / totalSize)
+                        }
                     }
                 }
             }
 
             Result.success(modelFile)
         } catch (e: Exception) {
+            // Clean up partial download
+            if (modelFile.exists()) {
+                modelFile.delete()
+            }
             Result.failure(e)
         }
     }
