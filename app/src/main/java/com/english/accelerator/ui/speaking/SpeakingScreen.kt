@@ -301,7 +301,6 @@ fun SpeakingScreen(
                 }
             }
         }
-        }
 
         // Sidebar
         if (showSidebar) {
