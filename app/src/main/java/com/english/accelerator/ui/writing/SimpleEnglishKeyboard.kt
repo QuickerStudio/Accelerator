@@ -107,19 +107,26 @@ fun SimpleEnglishKeyboard(
             }
         }
 
-        // 第四行：标点符号 + 空格
+        // 第四行：标点符号 + 换行 + 空格
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // 常用标点
-            listOf(".", ",", "!", "?", "'", "\"").forEach { key ->
+            listOf("?", "!", "'", ",", ".").forEach { key ->
                 KeyButton(
                     text = key,
                     onClick = { onKeyPress(key) },
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            // 换行键
+            KeyButton(
+                text = "↵",
+                onClick = { onKeyPress("\n") },
+                modifier = Modifier.weight(1f)
+            )
 
             // 空格键
             Box(
