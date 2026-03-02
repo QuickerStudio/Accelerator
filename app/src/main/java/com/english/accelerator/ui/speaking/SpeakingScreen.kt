@@ -1,72 +1,414 @@
 package com.english.accelerator.ui.speaking
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.english.accelerator.ui.components.VocabularyTopBar
-import com.english.accelerator.ui.sidebar.Sidebar
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.*
 
+/**
+ * Speaking Screen - AI Conversation Practice
+ *
+ * White theme design with message bubbles
+ * Bottom input area aligned with vocabulary screen
+ */
+
+data class Message(
+    val id: String = UUID.randomUUID().toString(),
+    val content: String,
+    val isFromUser: Boolean,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpeakingScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
-    var showSidebar by remember { mutableStateOf(false) }
+    val messages = remember { mutableStateListOf<Message>() }
+    var inputText by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
 
-    // 编辑器状态持久化
-    var isEditorMode by remember { mutableStateOf(false) }
-    var editingNoteId by remember { mutableStateOf<Int?>(null) }
-    var editorTitle by remember { mutableStateOf("") }
-    var editorContent by remember { mutableStateOf("") }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 顶部栏
-            VocabularyTopBar(
-                onMenuClick = {
-                    showSidebar = true
-                },
-                onConversationClick = {
-                    // TODO: 对话模式
-                },
-                onBookmarkClick = {
-                    // TODO: 收藏本
-                }
+    // Initialize with welcome message
+    LaunchedEffect(Unit) {
+        messages.add(
+            Message(
+                content = "Hello! Let's practice English conversation. What would you like to talk about today?",
+                isFromUser = false
             )
+        )
+    }
 
-            // 内容区域
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("对话练习")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("对话", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
+                navigationIcon = {
+                    IconButton(onClick = { /* TODO: Open drawer */ }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* TODO: Voice call mode */ }) {
+                        Icon(Icons.Default.Phone, contentDescription = "Voice call")
+                    }
+                    IconButton(onClick = { /* TODO: More options */ }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = Color(0xFF1E293B),
+                    navigationIconContentColor = Color(0xFF64748B),
+                    actionIconContentColor = Color(0xFF64748B)
+                )
+            )
+        },
+        bottomBar = {
+            Column {
+                // Bottom input area (aligned with vocabulary screen)
+                BottomInputArea(
+                    inputText = inputText,
+                    onInputChange = { inputText = it },
+                    onSend = {
+                        if (inputText.isNotBlank()) {
+                            // Add user message
+                            messages.add(Message(content = inputText, isFromUser = true))
+                            inputText = ""
+
+                            // TODO: Send to AI and get response
+                            isLoading = true
+                        }
+                    },
+                    onCamera = { /* TODO: Open camera */ },
+                    onAttach = { /* TODO: Attach file */ }
+                )
+
+                // Bottom navigation bar
+                BottomNavigationBar(onNavigateToSettings = onNavigateToSettings)
             }
         }
+    ) { paddingValues ->
+        // Message list
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF8FAFC))
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
+        ) {
+            items(messages) { message ->
+                MessageBubble(message = message)
+            }
 
-        // 侧边栏
-        if (showSidebar) {
-            Sidebar(
-                isOpen = showSidebar,
-                onClose = { showSidebar = false },
-                onNavigateToSettings = onNavigateToSettings,
-                isEditorMode = isEditorMode,
-                onEditorModeChange = { isEditorMode = it },
-                editingNoteId = editingNoteId,
-                onEditingNoteIdChange = { editingNoteId = it },
-                editorTitle = editorTitle,
-                onEditorTitleChange = { editorTitle = it },
-                editorContent = editorContent,
-                onEditorContentChange = { editorContent = it }
-            )
+            // Loading indicator
+            if (isLoading) {
+                item {
+                    LoadingBubble()
+                }
+            }
         }
     }
 }
+
+@Composable
+fun MessageBubble(message: Message) {
+    val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (message.isFromUser) Arrangement.End else Arrangement.Start
+    ) {
+        if (!message.isFromUser) {
+            // AI avatar
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(Color(0xFF8B5CF6), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SmartToy,
+                    contentDescription = "AI",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        Column(
+            modifier = Modifier.widthIn(max = 280.dp),
+            horizontalAlignment = if (message.isFromUser) Alignment.End else Alignment.Start
+        ) {
+            // Message bubble
+            Surface(
+                shape = RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                    bottomStart = if (message.isFromUser) 16.dp else 4.dp,
+                    bottomEnd = if (message.isFromUser) 4.dp else 16.dp
+                ),
+                color = if (message.isFromUser) Color.Transparent else Color.White,
+                border = if (message.isFromUser) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                shadowElevation = if (message.isFromUser) 0.dp else 2.dp,
+                modifier = Modifier.then(
+                    if (message.isFromUser) {
+                        Modifier.background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
+                            ),
+                            shape = RoundedCornerShape(
+                                topStart = 16.dp,
+                                topEnd = 16.dp,
+                                bottomStart = 16.dp,
+                                bottomEnd = 4.dp
+                            )
+                        )
+                    } else Modifier
+                )
+            ) {
+                Text(
+                    text = message.content,
+                    fontSize = 16.sp,
+                    color = if (message.isFromUser) Color.White else Color(0xFF1E293B),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
+
+            // Timestamp
+            Text(
+                text = timeFormat.format(Date(message.timestamp)),
+                fontSize = 12.sp,
+                color = Color(0xFF94A3B8),
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp, end = 4.dp)
+            )
+        }
+
+        if (message.isFromUser) {
+            Spacer(modifier = Modifier.width(48.dp))
+        } else {
+            Spacer(modifier = Modifier.width(48.dp))
+        }
+    }
+}
+
+@Composable
+fun LoadingBubble() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        // AI avatar
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(Color(0xFF8B5CF6), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.SmartToy,
+                contentDescription = "AI",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Surface(
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp, bottomStart = 4.dp),
+            color = Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+            shadowElevation = 2.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                repeat(3) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(Color(0xFF94A3B8), CircleShape)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomInputArea(
+    inputText: String,
+    onInputChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onCamera: () -> Unit,
+    onAttach: () -> Unit
+) {
+    Surface(
+        color = Color.White,
+        shadowElevation = 8.dp
+    ) {
+        Column {
+            Divider(color = Color(0xFFE2E8F0), thickness = 1.dp)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Camera button
+                IconButton(
+                    onClick = onCamera,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "Camera",
+                        tint = Color(0xFF64748B)
+                    )
+                }
+
+                // Text input
+                TextField(
+                    value = inputText,
+                    onValueChange = onInputChange,
+                    placeholder = { Text("发消息或按住说话...") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF1F5F9),
+                        unfocusedContainerColor = Color(0xFFF1F5F9),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = Color(0xFF1E293B),
+                        unfocusedTextColor = Color(0xFF1E293B)
+                    ),
+                    maxLines = 4
+                )
+
+                // Attach button
+                IconButton(
+                    onClick = onAttach,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Attach",
+                        tint = Color(0xFF64748B)
+                    )
+                }
+
+                // Send button
+                IconButton(
+                    onClick = onSend,
+                    modifier = Modifier.size(40.dp),
+                    enabled = inputText.isNotBlank()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "Send",
+                        tint = if (inputText.isNotBlank()) Color(0xFF8B5CF6) else Color(0xFF94A3B8)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomNavigationBar(onNavigateToSettings: () -> Unit) {
+    Surface(
+        color = Color.White,
+        shadowElevation = 8.dp
+    ) {
+        Column {
+            Divider(color = Color(0xFFE2E8F0), thickness = 1.dp)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                NavigationItem(
+                    icon = Icons.Default.Book,
+                    label = "单词",
+                    selected = false,
+                    onClick = { /* TODO: Navigate to vocabulary */ }
+                )
+                NavigationItem(
+                    icon = Icons.Default.Edit,
+                    label = "写作",
+                    selected = false,
+                    onClick = { /* TODO: Navigate to writing */ }
+                )
+                NavigationItem(
+                    icon = Icons.Default.Chat,
+                    label = "对话",
+                    selected = true,
+                    onClick = { }
+                )
+                NavigationItem(
+                    icon = Icons.Default.Settings,
+                    label = "设置",
+                    selected = false,
+                    onClick = onNavigateToSettings
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NavigationItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(80.dp)
+            .fillMaxHeight()
+            .padding(vertical = 4.dp)
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (selected) Color(0xFF8B5CF6) else Color(0xFF94A3B8),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = if (selected) Color(0xFF8B5CF6) else Color(0xFF94A3B8)
+        )
+    }
+}
+
