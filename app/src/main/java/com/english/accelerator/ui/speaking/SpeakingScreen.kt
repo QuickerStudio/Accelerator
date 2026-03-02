@@ -331,8 +331,8 @@ fun BottomInputArea(
     modifier: Modifier = Modifier
 ) {
     var isRecording by remember { mutableStateOf(false) }
+    var isVoiceMode by remember { mutableStateOf(false) }  // 语音模式开关
     val focusManager = LocalFocusManager.current
-    val interactionSource = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
@@ -369,7 +369,6 @@ fun BottomInputArea(
                 ),
                 enabled = !isRecording,
                 maxLines = 2,
-                interactionSource = interactionSource,
                 decorationBox = { innerTextField ->
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -388,53 +387,55 @@ fun BottomInputArea(
             )
         }
 
-        // 长按手势检测层 - 始终存在，覆盖在 TextField 上方
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(28.dp))
-                .padding(
-                    start = 52.dp,
-                    end = 100.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
-                )
-                .height(50.dp)
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        Log.d("VoiceInput", "Gesture started")
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        Log.d("VoiceInput", "Down detected")
-                        val longPressTimeout = 500L // 500ms 长按阈值
-                        val result = withTimeoutOrNull(longPressTimeout) {
-                            waitForUpOrCancellation()
-                        }
-
-                        if (result == null) {
-                            // 长按触发录音
-                            Log.d("VoiceInput", "Long press detected, starting recording")
-                            down.consume()  // 消费事件，阻止 TextField 接收
-                            focusManager.clearFocus()
-                            isRecording = true
-
-                            // 继续等待松开手势
-                            Log.d("VoiceInput", "Waiting for release...")
-                            val up = waitForUpOrCancellation()
-                            Log.d("VoiceInput", "Release detected: ${up != null}")
-                            if (up != null) {
-                                // 松开发送语音
-                                Log.d("VoiceInput", "Sending voice message")
-                                up.consume()
-                                isRecording = false
-                                onSend()
+        // 语音模式下的长按手势检测层
+        if (isVoiceMode) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(28.dp))
+                    .padding(
+                        start = 52.dp,
+                        end = 100.dp,
+                        top = 8.dp,
+                        bottom = 8.dp
+                    )
+                    .height(50.dp)
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            Log.d("VoiceInput", "Gesture started")
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            Log.d("VoiceInput", "Down detected")
+                            val longPressTimeout = 500L // 500ms 长按阈值
+                            val result = withTimeoutOrNull(longPressTimeout) {
+                                waitForUpOrCancellation()
                             }
-                        } else {
-                            // 短按，不消费事件，让 TextField 接收
-                            Log.d("VoiceInput", "Short press detected, passing to TextField")
+
+                            if (result == null) {
+                                // 长按触发录音
+                                Log.d("VoiceInput", "Long press detected, starting recording")
+                                down.consume()  // 消费事件，阻止 TextField 接收
+                                focusManager.clearFocus()
+                                isRecording = true
+
+                                // 继续等待松开手势
+                                Log.d("VoiceInput", "Waiting for release...")
+                                val up = waitForUpOrCancellation()
+                                Log.d("VoiceInput", "Release detected: ${up != null}")
+                                if (up != null) {
+                                    // 松开发送语音
+                                    Log.d("VoiceInput", "Sending voice message")
+                                    up.consume()
+                                    isRecording = false
+                                    onSend()
+                                }
+                            } else {
+                                // 短按，不消费事件，让 TextField 接收
+                                Log.d("VoiceInput", "Short press detected, passing to TextField")
+                            }
                         }
                     }
-                }
-        )
+            )
+        }
 
         // 悬浮按钮层
         Row(
@@ -461,15 +462,15 @@ fun BottomInputArea(
             // 占位空间
             Box(modifier = Modifier.weight(1f))
 
-            // 上传按钮（右侧悬浮）
+            // 语音/文字模式切换按钮（右侧悬浮）
             IconButton(
-                onClick = onAttach,
+                onClick = { isVoiceMode = !isVoiceMode },
                 modifier = Modifier.size(36.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "上传",
-                    tint = Color(0xFF64748B),
+                    imageVector = if (isVoiceMode) Icons.Default.Keyboard else Icons.Default.Mic,
+                    contentDescription = if (isVoiceMode) "切换到文字" else "切换到语音",
+                    tint = if (isVoiceMode) Color(0xFF8B5CF6) else Color(0xFF64748B),
                     modifier = Modifier.size(20.dp)
                 )
             }
