@@ -792,13 +792,28 @@ private fun LearningLogsSection() {
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "单词",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E293B),
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "单词",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+
+            // 总数统计
+            val totalWords = pinnedWords.size + todayWords.size + thisWeekWords.size + earlierWords.size
+            Text(
+                text = "${totalWords}个",
+                fontSize = 14.sp,
+                color = Color(0xFF64748B)
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
