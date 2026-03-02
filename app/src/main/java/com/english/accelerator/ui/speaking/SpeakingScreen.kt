@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -285,74 +286,105 @@ fun BottomInputArea(
     onCamera: () -> Unit,
     onAttach: () -> Unit
 ) {
-    Surface(
-        color = Color.White,
-        shadowElevation = 8.dp
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
-        Column {
-            Divider(color = Color(0xFFE2E8F0), thickness = 1.dp)
-
-            Row(
+        // 背景容器和输入框
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(28.dp))
+                .background(Color(0xFFE2E8F0))
+                .padding(
+                    start = 52.dp,
+                    end = 100.dp,
+                    top = 8.dp,
+                    bottom = 8.dp
+                )
+        ) {
+            TextField(
+                value = inputText,
+                onValueChange = onInputChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .height(50.dp),
+                placeholder = {
+                    Text(
+                        text = "发消息或按住说话...",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 14.sp
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedTextColor = Color(0xFF1E293B),
+                    unfocusedTextColor = Color(0xFF1E293B)
+                ),
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                maxLines = 2
+            )
+        }
+
+        // 悬浮按钮层
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.CenterStart)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(15.dp)
+        ) {
+            // 相机按钮（左侧悬浮）
+            IconButton(
+                onClick = onCamera,
+                modifier = Modifier.size(36.dp)
             ) {
-                // Camera button
-                IconButton(
-                    onClick = onCamera,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Camera",
-                        tint = Color(0xFF64748B)
-                    )
-                }
-
-                // Text input
-                TextField(
-                    value = inputText,
-                    onValueChange = onInputChange,
-                    placeholder = { Text("发消息或按住说话...") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFFF1F5F9),
-                        unfocusedContainerColor = Color(0xFFF1F5F9),
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color(0xFF1E293B),
-                        unfocusedTextColor = Color(0xFF1E293B)
-                    ),
-                    maxLines = 4
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "相机",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier.size(20.dp)
                 )
+            }
 
-                // Attach button
-                IconButton(
-                    onClick = onAttach,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Attach",
-                        tint = Color(0xFF64748B)
-                    )
-                }
+            // 占位空间
+            Box(modifier = Modifier.weight(1f))
 
-                // Send button
-                IconButton(
-                    onClick = onSend,
-                    modifier = Modifier.size(40.dp),
-                    enabled = inputText.isNotBlank()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Send",
-                        tint = if (inputText.isNotBlank()) Color(0xFF8B5CF6) else Color(0xFF94A3B8)
-                    )
-                }
+            // 上传按钮（右侧悬浮）
+            IconButton(
+                onClick = onAttach,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "上传",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // 发送按钮（右侧悬浮）
+            IconButton(
+                onClick = onSend,
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
+                    ),
+                enabled = inputText.isNotBlank()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "发送",
+                    tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
