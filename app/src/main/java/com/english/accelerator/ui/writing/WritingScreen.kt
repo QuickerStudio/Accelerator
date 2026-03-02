@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,6 +20,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.data.EssayCollectionManager
@@ -379,6 +382,11 @@ private fun ContentEditor(
             color = Color(0xFF1E293B)
         ),
         cursorBrush = SolidColor(Color(0xFF2563EB)),
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.None,  // 禁用自动大写
+            autoCorrect = false,  // 禁用自动纠错
+            keyboardType = KeyboardType.Ascii  // 使用 ASCII 键盘，减少推荐
+        ),
         modifier = modifier.onFocusChanged { focusState ->
             onFocusChanged(focusState.isFocused)
         },
