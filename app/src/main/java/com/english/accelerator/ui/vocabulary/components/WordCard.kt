@@ -7,6 +7,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -48,67 +50,76 @@ fun WordCard(
                     onLongPress()
                 }
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 8.dp
+            defaultElevation = 4.dp
         )
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFAFAFA),
+                            Color.White
+                        )
+                    )
+                )
         ) {
             Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.Center
             ) {
-                // 单词文本
+                // 单词文本 - 主要焦点
                 Text(
                     text = word.word,
-                    fontSize = 32.sp,
+                    fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B),
-                    textAlign = TextAlign.Center
+                    color = Color(0xFF2563EB),
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 1.sp
                 )
 
-                // 音标
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 音标 - 辅助信息
                 Text(
                     text = word.phonetic,
-                    fontSize = 16.sp,
-                    color = Color(0xFF64748B),
-                    textAlign = TextAlign.Center
-                )
-
-                // 分隔线
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.3f)
-                        .height(1.dp)
-                        .background(Color(0xFF94A3B8).copy(alpha = 0.3f))
-                )
-
-                // 中文释义
-                Text(
-                    text = word.translation,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1E293B),
-                    textAlign = TextAlign.Center
-                )
-
-                // 例句
-                Text(
-                    text = word.example,
-                    fontSize = 14.sp,
+                    fontSize = 18.sp,
                     color = Color(0xFF64748B),
                     textAlign = TextAlign.Center,
-                    lineHeight = 20.sp,
-                    modifier = Modifier.padding(top = 16.dp)
+                    fontWeight = FontWeight.Medium
                 )
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                // 中文释义 - 核心理解
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFFF1F5F9),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(24.dp)
+                ) {
+                    Text(
+                        text = word.translation.replace("\\n", "\n"),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF1E293B),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 32.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
