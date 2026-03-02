@@ -283,20 +283,23 @@ private fun TitleTextField(
                 color = Color(0xFF1E293B)
             ),
             cursorBrush = SolidColor(Color(0xFF2563EB)),
+            singleLine = true,  // 单行，不换行
             modifier = Modifier
                 .weight(1f)
+                .height(56.dp)  // 固定高度，与按钮一致
                 .onFocusChanged { focusState ->
                     onFocusChanged(focusState.isFocused)
                 },
             decorationBox = { innerTextField ->
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .background(
                             color = Color.White,
                             shape = RoundedCornerShape(12.dp)
                         )
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     if (value.isEmpty()) {
                         Text(
