@@ -1,8 +1,11 @@
 package com.english.accelerator.ui.speaking
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -319,6 +323,44 @@ fun BottomInputArea(
     onAttach: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isRecording by remember { mutableStateOf(false) }
+    var recordingProgress by remember { mutableFloatStateOf(0f) }
+    val focusManager = LocalFocusManager.current
+
+    // Recording animation
+    val infiniteTransition = rememberInfiniteTransition(label = "recording")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    val waveOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "waveOffset"
+    )
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            // Simulate recording progress
+            for (i in 0..100) {
+                recordingProgress = i / 100f
+                kotlinx.coroutines.delay(20)
+            }
+        } else {
+            recordingProgress = 0f
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -329,7 +371,9 @@ fun BottomInputArea(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(28.dp))
-                .background(Color(0xFFE2E8F0))
+                .background(
+                    if (isRecording) Color(0xFFBFDBFE) else Color(0xFFE2E8F0)
+                )
                 .padding(
                     start = 52.dp,
                     end = 100.dp,
@@ -345,7 +389,7 @@ fun BottomInputArea(
                     .height(50.dp),
                 placeholder = {
                     Text(
-                        text = "发消息或按住说话...",
+                        text = if (isRecording) "正在录音..." else "发消息或按住说话...",
                         color = Color(0xFF94A3B8),
                         fontSize = 14.sp
                     )
@@ -359,8 +403,85 @@ fun BottomInputArea(
                     unfocusedTextColor = Color(0xFF1E293B)
                 ),
                 textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
-                maxLines = 2
+                maxLines = 2,
+                enabled = !isRecording
             )
+
+            // Long press gesture detector overlay
+            if (!isRecording) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    focusManager.clearFocus()
+                                    isRecording = true
+                                },
+                                onPress = {
+                                    val pressed = tryAwaitRelease()
+                                    if (isRecording && pressed) {
+                                        isRecording = false
+                                        // TODO: Send voice message
+                                        onSend()
+                                    }
+                                }
+                            )
+                        }
+                )
+            }
+        }
+
+        // Recording animation overlay
+        if (isRecording) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = (-60).dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Pulsing circle animation
+                Box(
+                    modifier = Modifier
+                        .size((60 * pulseScale).dp)
+                        .background(
+                            Color(0xFF3B82F6).copy(alpha = 0.3f),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0xFF3B82F6), CircleShape)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Wave animation
+                Canvas(
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(30.dp)
+                ) {
+                    val waveHeight = 15.dp.toPx()
+                    val waveWidth = size.width / 5
+
+                    for (i in 0..5) {
+                        val x = i * waveWidth + (waveOffset % waveWidth)
+                        val height = waveHeight * kotlin.math.sin((i + waveOffset / 60) * kotlin.math.PI / 2).toFloat()
+
+                        drawLine(
+                            color = androidx.compose.ui.graphics.Color(0xFF3B82F6),
+                            start = androidx.compose.ui.geometry.Offset(x, size.height / 2),
+                            end = androidx.compose.ui.geometry.Offset(x, size.height / 2 - height),
+                            strokeWidth = 4.dp.toPx(),
+                            cap = androidx.compose.ui.graphics.StrokeCap.Round
+                        )
+                    }
+                }
+            }
         }
 
         // 悬浮按钮层
