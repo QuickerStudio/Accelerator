@@ -358,9 +358,6 @@ private fun ContentEditor(
     onFocusChanged: (Boolean) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
-    val lines = remember(value) {
-        if (value.isEmpty()) listOf("") else value.split("\n")
-    }
 
     BasicTextField(
         value = value,
@@ -382,46 +379,18 @@ private fun ContentEditor(
                         color = Color.White,
                         shape = RoundedCornerShape(12.dp)
                     )
+                    .verticalScroll(scrollState)
+                    .padding(16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // 行号区域
-                    Column(
-                        modifier = Modifier
-                            .background(Color(0xFFF8FAFC))
-                            .padding(horizontal = 12.dp, vertical = 16.dp)
-                            .verticalScroll(scrollState)
-                    ) {
-                        lines.forEachIndexed { index, _ ->
-                            Text(
-                                text = "${index + 1}",
-                                fontSize = 16.sp,
-                                lineHeight = 28.sp,
-                                color = Color(0xFF94A3B8),
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                        }
-                    }
-
-                    // 内容区域
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(scrollState)
-                            .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
-                    ) {
-                        if (value.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                fontSize = 18.sp,
-                                lineHeight = 28.sp,
-                                color = Color(0xFFCBD5E1)
-                            )
-                        }
-                        innerTextField()
-                    }
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        fontSize = 18.sp,
+                        lineHeight = 28.sp,
+                        color = Color(0xFFCBD5E1)
+                    )
                 }
+                innerTextField()
             }
         }
     )
