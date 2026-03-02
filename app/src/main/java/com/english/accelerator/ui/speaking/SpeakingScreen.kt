@@ -331,7 +331,6 @@ fun BottomInputArea(
     modifier: Modifier = Modifier
 ) {
     var isRecording by remember { mutableStateOf(false) }
-    var isVoiceMode by remember { mutableStateOf(false) }  // 语音模式开关
     val focusManager = LocalFocusManager.current
 
     Box(
@@ -339,160 +338,126 @@ fun BottomInputArea(
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
-        // 背景容器 - 纯装饰，不参与交互
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(28.dp))
-                .background(
-                    if (isRecording) Color(0xFFBFDBFE) else Color(0xFFE2E8F0)
-                )
-                .padding(
-                    start = 52.dp,
-                    end = 100.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
-                )
-                .height(50.dp),
-            contentAlignment = Alignment.CenterStart
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // BasicTextField - 点击输入文字
-            BasicTextField(
-                value = inputText,
-                onValueChange = onInputChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(),
-                textStyle = androidx.compose.ui.text.TextStyle(
-                    fontSize = 14.sp,
-                    color = Color(0xFF1E293B)
-                ),
-                enabled = !isRecording,
-                maxLines = 2,
-                decorationBox = { innerTextField ->
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        if (inputText.isEmpty()) {
-                            Text(
-                                text = if (isRecording) "正在录音..." else "发消息或按住说话...",
-                                color = Color(0xFF94A3B8),
-                                fontSize = 14.sp
-                            )
-                        }
-                        innerTextField()
-                    }
-                }
-            )
-        }
-
-        // 语音模式下的长按手势检测层
-        if (isVoiceMode) {
+            // 文本输入框区域 (60%)
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(0.6f)
                     .clip(RoundedCornerShape(28.dp))
+                    .background(Color(0xFFE2E8F0))
                     .padding(
                         start = 52.dp,
-                        end = 100.dp,
+                        end = 16.dp,
                         top = 8.dp,
                         bottom = 8.dp
+                    )
+                    .height(50.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                BasicTextField(
+                    value = inputText,
+                    onValueChange = onInputChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontSize = 14.sp,
+                        color = Color(0xFF1E293B)
+                    ),
+                    maxLines = 2,
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            if (inputText.isEmpty()) {
+                                Text(
+                                    text = "发消息",
+                                    color = Color(0xFF94A3B8),
+                                    fontSize = 14.sp
+                                )
+                            }
+                            innerTextField()
+                        }
+                    }
+                )
+
+                // 相机按钮（左侧悬浮在文本框内）
+                IconButton(
+                    onClick = onCamera,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .align(Alignment.CenterStart)
+                        .offset(x = (-44).dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "相机",
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            // 语音按钮区域 (40%)
+            Box(
+                modifier = Modifier
+                    .weight(0.4f)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        if (isRecording) Color(0xFFBFDBFE) else Color(0xFFE2E8F0)
                     )
                     .height(50.dp)
                     .pointerInput(Unit) {
                         awaitEachGesture {
-                            Log.d("VoiceInput", "Gesture started")
-                            val down = awaitFirstDown(requireUnconsumed = false)
-                            Log.d("VoiceInput", "Down detected")
-                            val longPressTimeout = 500L // 500ms 长按阈值
-                            val result = withTimeoutOrNull(longPressTimeout) {
-                                waitForUpOrCancellation()
-                            }
+                            Log.d("VoiceInput", "Voice button pressed")
+                            val down = awaitFirstDown()
+                            isRecording = true
+                            focusManager.clearFocus()
 
-                            if (result == null) {
-                                // 长按触发录音
-                                Log.d("VoiceInput", "Long press detected, starting recording")
-                                down.consume()  // 消费事件，阻止 TextField 接收
-                                focusManager.clearFocus()
-                                isRecording = true
-
-                                // 继续等待松开手势
-                                Log.d("VoiceInput", "Waiting for release...")
-                                val up = waitForUpOrCancellation()
-                                Log.d("VoiceInput", "Release detected: ${up != null}")
-                                if (up != null) {
-                                    // 松开发送语音
-                                    Log.d("VoiceInput", "Sending voice message")
-                                    up.consume()
-                                    isRecording = false
-                                    onSend()
-                                }
-                            } else {
-                                // 短按，不消费事件，让 TextField 接收
-                                Log.d("VoiceInput", "Short press detected, passing to TextField")
+                            // 等待松开
+                            val up = waitForUpOrCancellation()
+                            if (up != null) {
+                                Log.d("VoiceInput", "Voice button released, sending")
+                                isRecording = false
+                                onSend()
                             }
                         }
-                    }
-            )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = "按住说话",
+                    tint = if (isRecording) Color(0xFF8B5CF6) else Color(0xFF64748B),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
-        // 悬浮按钮层
-        Row(
+        // 发送按钮（悬浮在右侧）
+        IconButton(
+            onClick = onSend,
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterStart)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(15.dp)
+                .size(36.dp)
+                .align(Alignment.CenterEnd)
+                .offset(x = (-8).dp)
+                .clip(CircleShape)
+                .background(
+                    if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
+                ),
+            enabled = inputText.isNotBlank()
         ) {
-            // 相机按钮（左侧悬浮）
-            IconButton(
-                onClick = onCamera,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "相机",
-                    tint = Color(0xFF64748B),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            // 占位空间
-            Box(modifier = Modifier.weight(1f))
-
-            // 语音/文字模式切换按钮（右侧悬浮）
-            IconButton(
-                onClick = { isVoiceMode = !isVoiceMode },
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = if (isVoiceMode) Icons.Default.Keyboard else Icons.Default.Mic,
-                    contentDescription = if (isVoiceMode) "切换到文字" else "切换到语音",
-                    tint = if (isVoiceMode) Color(0xFF8B5CF6) else Color(0xFF64748B),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            // 发送按钮（右侧悬浮）
-            IconButton(
-                onClick = onSend,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
-                    ),
-                enabled = inputText.isNotBlank()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "发送",
-                    tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Send,
+                contentDescription = "发送",
+                tint = if (inputText.isNotEmpty()) Color.White else Color(0xFF94A3B8),
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
