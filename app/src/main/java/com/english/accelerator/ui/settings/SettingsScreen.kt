@@ -160,98 +160,115 @@ private fun ModelManagementCard(
     onDelete: () -> Unit,
     onInitialize: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .clickable(
-                enabled = modelState is GemmaInferenceManager.ModelState.NotDownloaded,
-                onClick = onDownload
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 左侧：标题 + 状态
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "AI 模型",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = when (modelState) {
-                    is GemmaInferenceManager.ModelState.NotDownloaded -> "点击下载"
-                    is GemmaInferenceManager.ModelState.Downloading -> "下载中 ${(modelState.progress * 100).toInt()}%"
-                    is GemmaInferenceManager.ModelState.Ready -> "Gemma 3n E2B"
-                    is GemmaInferenceManager.ModelState.Error -> "下载失败"
-                },
-                fontSize = 14.sp,
-                color = when (modelState) {
-                    is GemmaInferenceManager.ModelState.Ready -> Color(0xFF10B981)
-                    is GemmaInferenceManager.ModelState.Error -> Color(0xFFEF4444)
-                    else -> Color(0xFF64748B)
-                }
-            )
-        }
-
-        // 右侧：状态图标
-        Box(
-            modifier = Modifier.size(40.dp),
-            contentAlignment = Alignment.Center
+        // 主行：标题 + 状态 + 图标
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    enabled = modelState is GemmaInferenceManager.ModelState.NotDownloaded,
+                    onClick = onDownload
+                ),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            when (modelState) {
-                is GemmaInferenceManager.ModelState.NotDownloaded -> {
-                    // 云朵图标（未下载）
-                    Icon(
-                        imageVector = Icons.Default.CloudDownload,
-                        contentDescription = "下载模型",
-                        tint = Color(0xFF8B5CF6),
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-                is GemmaInferenceManager.ModelState.Downloading -> {
-                    // 下载进度圆环
-                    CircularProgressIndicator(
-                        progress = modelState.progress,
-                        modifier = Modifier.size(32.dp),
-                        color = Color(0xFF8B5CF6),
-                        strokeWidth = 3.dp
-                    )
-                }
-                is GemmaInferenceManager.ModelState.Ready -> {
-                    // 绿色圆形背景 + 对号
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(Color(0xFF10B981), shape = androidx.compose.foundation.shape.CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
+            // 左侧：标题 + 状态
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "AI 模型",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = when (modelState) {
+                        is GemmaInferenceManager.ModelState.NotDownloaded -> "点击下载"
+                        is GemmaInferenceManager.ModelState.Downloading -> "下载中 ${(modelState.progress * 100).toInt()}%"
+                        is GemmaInferenceManager.ModelState.Ready -> "Gemma 3n E2B"
+                        is GemmaInferenceManager.ModelState.Error -> "下载失败"
+                    },
+                    fontSize = 14.sp,
+                    color = when (modelState) {
+                        is GemmaInferenceManager.ModelState.Ready -> Color(0xFF10B981)
+                        is GemmaInferenceManager.ModelState.Error -> Color(0xFFEF4444)
+                        else -> Color(0xFF64748B)
+                    }
+                )
+            }
+
+            // 右侧：状态图标
+            Box(
+                modifier = Modifier.size(40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                when (modelState) {
+                    is GemmaInferenceManager.ModelState.NotDownloaded -> {
+                        // 云朵图标（未下载）
                         Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "已下载",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = "下载模型",
+                            tint = Color(0xFF8B5CF6),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    is GemmaInferenceManager.ModelState.Downloading -> {
+                        // 下载进度圆环
+                        CircularProgressIndicator(
+                            progress = modelState.progress,
+                            modifier = Modifier.size(32.dp),
+                            color = Color(0xFF8B5CF6),
+                            strokeWidth = 3.dp
+                        )
+                    }
+                    is GemmaInferenceManager.ModelState.Ready -> {
+                        // 绿色圆形背景 + 对号
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(Color(0xFF10B981), shape = CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "已下载",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    is GemmaInferenceManager.ModelState.Error -> {
+                        // 错误图标
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "下载失败",
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }
-                is GemmaInferenceManager.ModelState.Error -> {
-                    // 错误图标
-                    Icon(
-                        imageVector = Icons.Default.Error,
-                        contentDescription = "下载失败",
-                        tint = Color(0xFFEF4444),
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
             }
+        }
+
+        // 下载进度条（仅在下载时显示）
+        if (modelState is GemmaInferenceManager.ModelState.Downloading) {
+            LinearProgressIndicator(
+                progress = modelState.progress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp),
+                color = Color(0xFF8B5CF6),
+                trackColor = Color(0xFFE2E8F0)
+            )
         }
     }
 }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("下载中...")
+
                 }
             }
             is GemmaInferenceManager.ModelState.Ready -> {
