@@ -212,91 +212,31 @@ fun SpeakingScreen(
                 }
             }
         ) { paddingValues ->
-            // 模型状态提示
-            if (modelState is ModelState.NotDownloaded || modelState is ModelState.Downloading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFFF8FAFC))
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+            // Message list
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF8FAFC))
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudDownload,
-                            contentDescription = "下载模型",
-                            modifier = Modifier.size(64.dp),
-                            tint = Color(0xFF8B5CF6)
-                        )
-
-                        when (modelState) {
-                            is ModelState.NotDownloaded -> {
-                                Text(
-                                    text = "需要下载 AI 模型才能开始对话",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF64748B)
-                                )
-                                Button(
-                                    onClick = onNavigateToSettings,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF8B5CF6)
-                                    )
-                                ) {
-                                    Text("前往设置下载")
-                                }
-                            }
-                            is ModelState.Downloading -> {
-                                val progress = (modelState as ModelState.Downloading).progress
-                                Text(
-                                    text = "正在下载模型...",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF64748B)
-                                )
-                                LinearProgressIndicator(
-                                    progress = { progress },
-                                    modifier = Modifier.width(200.dp),
-                                    color = Color(0xFF8B5CF6)
-                                )
-                                Text(
-                                    text = "${(progress * 100).toInt()}%",
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF94A3B8)
-                                )
-                            }
-                            else -> {}
-                        }
-                    }
+                        focusManager.clearFocus()
+                    },
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 16.dp)
+            ) {
+                items(messages) { message ->
+                    MessageBubble(message = message)
                 }
-            } else {
-                // Message list
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFFF8FAFC))
-                        .padding(paddingValues)
-                        .padding(horizontal = 16.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            focusManager.clearFocus()
-                        },
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp)
-                ) {
-                    items(messages) { message ->
-                        MessageBubble(message = message)
-                    }
 
-                    // Loading indicator
-                    if (isLoading) {
-                        item {
-                            LoadingBubble()
-                        }
+                // Loading indicator
+                if (isLoading) {
+                    item {
+                        LoadingBubble()
                     }
                 }
             }

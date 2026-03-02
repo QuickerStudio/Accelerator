@@ -40,10 +40,18 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen() {
     val scrollState = rememberScrollState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val gemmaManager = remember { GemmaInferenceManager.getInstance() }
     val modelState by gemmaManager.modelState.collectAsState()
+    val modelDownloadManager = remember { com.english.accelerator.ai.ModelDownloadManager(context) }
     val scope = rememberCoroutineScope()
-    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    var isDownloading by remember { mutableStateOf(false) }
+    var isPaused by remember { mutableStateOf(false) }
+    var isError by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableStateOf(0f) }
+    var downloadSpeed by remember { mutableStateOf(0L) }
+    var currentRoute by remember { mutableStateOf(modelDownloadManager.getCurrentRouteName()) }
 
     Column(
         modifier = Modifier
@@ -64,30 +72,67 @@ fun SettingsScreen() {
 
         // AI 模型管理部分
         SettingsSection(title = "AI 模型管理") {
-            ModelManagementCard(
-                modelState = modelState,
-                onDownload = {
-                    scope.launch {
-                        gemmaManager.downloadModel()
+            ModelDownloadCard(
+                isDownloaded = modelDownloadManager.isModelDownloaded(),
+                isDownloading = isDownloading,
+                isPaused = isPaused,
+                isError = isError,
+                downloadProgress = downloadProgress,
+                downloadSpeed = downloadSpeed,
+                currentRoute = currentRoute,
+                onDownloadClick = {
+                    when {
+                        isError -> {
+                            // 重试
+                            isError = false
+                            scope.launch {
+                                isDownloading = true
+                                modelDownloadManager.downloadModel { downloaded, total, speed ->
+                                    downloadProgress = downloaded.toFloat() / total
+                                    downloadSpeed = speed
+                                }.onSuccess {
+                                    isDownloading = false
+                                    gemmaManager.initialize()
+                                }.onFailure {
+                                    isDownloading = false
+                                    isError = true
+                                }
+                            }
+                        }
+                        isPaused -> {
+                            // 继续
+                            modelDownloadManager.resumeDownload()
+                            isPaused = false
+                        }
+                        isDownloading -> {
+                            // 暂停
+                            modelDownloadManager.pauseDownload()
+                            isPaused = true
+                        }
+                        else -> {
+                            // 开始下载
+                            scope.launch {
+                                isDownloading = true
+                                modelDownloadManager.downloadModel { downloaded, total, speed ->
+                                    downloadProgress = downloaded.toFloat() / total
+                                    downloadSpeed = speed
+                                }.onSuccess {
+                                    isDownloading = false
+                                    gemmaManager.initialize()
+                                }.onFailure {
+                                    isDownloading = false
+                                    isError = true
+                                }
+                            }
+                        }
                     }
-                },
-                onDelete = {
-                    showDeleteDialog = true
-                },
-                onInitialize = {
-                    scope.launch {
-                        gemmaManager.initialize()
-                    }
-                },
-                onPause = {
-                    gemmaManager.pauseDownload()
-                },
-                onResume = {
-                    gemmaManager.resumeDownload()
                 },
                 onSwitchRoute = {
-                    // 只切换线路显示，不启动下载
-                    // 用户点击下载按钮时会使用当前选择的线路
+                    modelDownloadManager.switchRoute()
+                    currentRoute = modelDownloadManager.getCurrentRouteName()
+                },
+                onDelete = {
+                    modelDownloadManager.deleteModel()
                 }
             )
         }
@@ -125,30 +170,6 @@ fun SettingsScreen() {
                 onClick = { /* TODO: 显示许可信息 */ }
             )
         }
-    }
-
-    // 删除确认对话框
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("删除模型") },
-            text = { Text("确定要删除 AI 模型吗？删除后需要重新下载才能使用 AI 功能。") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        // TODO: 实现删除功能
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text("删除", color = Color(0xFFEF4444))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("取消")
-                }
-            }
-        )
     }
 }
 

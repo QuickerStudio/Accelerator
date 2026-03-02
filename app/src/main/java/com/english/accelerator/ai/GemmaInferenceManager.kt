@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import java.io.File
 
 /**
  * Singleton manager for gemma-3n-E2B-it-litert-lm LLM inference
@@ -20,17 +21,13 @@ class GemmaInferenceManager private constructor(
 ) {
     private var llmInference: LlmInference? = null
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val modelDownloadManager = ModelDownloadManager(context)
+    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it.task")
 
     /**
      * Represents the current state of the model
      */
     sealed class ModelState {
         object NotDownloaded : ModelState()
-        data class Downloading(
-            val progress: Float,
-            val speed: Long = 0L  // 下载速度 (bytes/sec)
-        ) : ModelState()
         object Ready : ModelState()
         data class Error(val message: String) : ModelState()
     }
@@ -68,7 +65,7 @@ class GemmaInferenceManager private constructor(
 
     init {
         // Check if model is already downloaded
-        if (modelDownloadManager.isModelDownloaded()) {
+        if (isModelDownloaded()) {
             _modelState.value = ModelState.Ready
         }
     }
@@ -87,12 +84,17 @@ class GemmaInferenceManager private constructor(
     }
 
     /**
+     * Check if the model is already downloaded
+     */
+    fun isModelDownloaded(): Boolean = modelFile.exists() && modelFile.length() > 0
+
+    /**
      * Initialize the LLM inference engine
      * Should be called after model is downloaded
      */
     suspend fun initialize() = withContext(Dispatchers.IO) {
         try {
-            if (!modelDownloadManager.isModelDownloaded()) {
+            if (!isModelDownloaded()) {
                 _modelState.value = ModelState.Error("Model not downloaded")
                 return@withContext
             }
@@ -104,8 +106,8 @@ class GemmaInferenceManager private constructor(
             }
 
             val options = LlmInference.LlmInferenceOptions.builder()
-                .setModelPath(modelDownloadManager.getModelPath())
-                .setMaxTokens(2048)  // Increased from 512 for Gemma 3n E2B
+                .setModelPath(modelFile.absolutePath)
+                .setMaxTokens(2048)
                 .setTemperature(0.3f)
                 .setTopK(40)
                 .setRandomSeed(0)
@@ -116,49 +118,6 @@ class GemmaInferenceManager private constructor(
         } catch (e: Exception) {
             _modelState.value = ModelState.Error("Failed to initialize model: ${e.message}")
         }
-    }
-
-    /**
-     * Download the model with progress tracking
-     */
-    suspend fun downloadModel() = withContext(Dispatchers.IO) {
-        try {
-            _modelState.value = ModelState.Downloading(0f, 0L)
-
-            modelDownloadManager.downloadModel(
-                onProgress = { progress: Float, speed: Long ->
-                    _modelState.value = ModelState.Downloading(progress, speed)
-                }
-            ).onSuccess {
-                initialize()
-            }.onFailure { error ->
-                _modelState.value = ModelState.Error("Download failed: ${error.message}")
-            }
-        } catch (e: Exception) {
-            _modelState.value = ModelState.Error("Download error: ${e.message}")
-        }
-    }
-
-    /**
-     * Pause the current download
-     */
-    fun pauseDownload() {
-        modelDownloadManager.pauseDownload()
-    }
-
-    /**
-     * Resume the paused download
-     */
-    fun resumeDownload() {
-        modelDownloadManager.resumeDownload()
-    }
-
-    /**
-     * Cancel the current download
-     */
-    fun cancelDownload() {
-        modelDownloadManager.cancelDownload()
-        _modelState.value = ModelState.NotDownloaded
     }
 
     /**

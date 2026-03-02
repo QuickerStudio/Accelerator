@@ -239,9 +239,8 @@ fun WritingScreen(
                             }
                         },
                         onDownloadModel = {
-                            scope.launch {
-                                gemmaManager.downloadModel()
-                            }
+                            // 下载功能已移除，跳转到设置页面
+                            onNavigateToSettings()
                         },
                         onApplySuggestion = { suggestion ->
                             // 应用建议到内容
@@ -595,9 +594,6 @@ private fun AiAssistPanel(
         when (modelState) {
             is GemmaInferenceManager.ModelState.NotDownloaded -> {
                 ModelDownloadPrompt(onDownload = onDownloadModel)
-            }
-            is GemmaInferenceManager.ModelState.Downloading -> {
-                DownloadProgress(progress = modelState.progress)
             }
             is GemmaInferenceManager.ModelState.Ready -> {
                 // 控制按钮
