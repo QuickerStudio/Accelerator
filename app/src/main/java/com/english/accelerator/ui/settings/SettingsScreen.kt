@@ -1,5 +1,21 @@
 package com.english.accelerator.ui.settings
 
+/**
+ * Settings Screen
+ *
+ * TODO:
+ * - Add more settings sections (Learning, Notifications, etc.)
+ * - Implement settings persistence with DataStore
+ * - Add settings search functionality
+ * - Add settings backup/restore
+ *
+ * Design:
+ * - Clean, minimal design following Material Design 3
+ * - Grouped settings with section titles
+ * - AI Model Management Card extracted to separate file for better maintainability
+ * - Future: Support for multiple models, model versioning, and advanced download options
+ */
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -152,191 +168,6 @@ private fun SettingsSection(
         }
     }
 }
-
-@Composable
-private fun ModelManagementCard(
-    modelState: GemmaInferenceManager.ModelState,
-    onDownload: () -> Unit,
-    onDelete: () -> Unit,
-    onInitialize: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // 主行：标题 + 状态 + 图标
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    enabled = modelState is GemmaInferenceManager.ModelState.NotDownloaded,
-                    onClick = onDownload
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 左侧：标题 + 状态
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "AI 模型",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = when (modelState) {
-                        is GemmaInferenceManager.ModelState.NotDownloaded -> "点击下载"
-                        is GemmaInferenceManager.ModelState.Downloading -> "下载中 ${(modelState.progress * 100).toInt()}%"
-                        is GemmaInferenceManager.ModelState.Ready -> "Gemma 3n E2B"
-                        is GemmaInferenceManager.ModelState.Error -> "下载失败"
-                    },
-                    fontSize = 14.sp,
-                    color = when (modelState) {
-                        is GemmaInferenceManager.ModelState.Ready -> Color(0xFF10B981)
-                        is GemmaInferenceManager.ModelState.Error -> Color(0xFFEF4444)
-                        else -> Color(0xFF64748B)
-                    }
-                )
-            }
-
-            // 右侧：状态图标
-            Box(
-                modifier = Modifier.size(40.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                when (modelState) {
-                    is GemmaInferenceManager.ModelState.NotDownloaded -> {
-                        // 云朵图标（未下载）
-                        Icon(
-                            imageVector = Icons.Default.CloudDownload,
-                            contentDescription = "下载模型",
-                            tint = Color(0xFF8B5CF6),
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    is GemmaInferenceManager.ModelState.Downloading -> {
-                        // 下载进度圆环
-                        CircularProgressIndicator(
-                            progress = modelState.progress,
-                            modifier = Modifier.size(32.dp),
-                            color = Color(0xFF8B5CF6),
-                            strokeWidth = 3.dp
-                        )
-                    }
-                    is GemmaInferenceManager.ModelState.Ready -> {
-                        // 绿色圆形背景 + 对号
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .background(Color(0xFF10B981), shape = CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "已下载",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                    is GemmaInferenceManager.ModelState.Error -> {
-                        // 错误图标
-                        Icon(
-                            imageVector = Icons.Default.Error,
-                            contentDescription = "下载失败",
-                            tint = Color(0xFFEF4444),
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        // 下载进度条（仅在下载时显示）
-        if (modelState is GemmaInferenceManager.ModelState.Downloading) {
-            LinearProgressIndicator(
-                progress = modelState.progress,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                color = Color(0xFF8B5CF6),
-                trackColor = Color(0xFFE2E8F0)
-            )
-        }
-    }
-}
-
-                }
-            }
-            is GemmaInferenceManager.ModelState.Ready -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onDelete,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFEF4444)
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("删除")
-                    }
-                    Button(
-                        onClick = onInitialize,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF10B981)
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("重新初始化")
-                    }
-                }
-            }
-            is GemmaInferenceManager.ModelState.Error -> {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "错误: ${modelState.message}",
-                        fontSize = 12.sp,
-                        color = Color(0xFFEF4444)
-                    )
-                    Button(
-                        onClick = onDownload,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B5CF6)
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("重试下载")
-                    }
-                }
-            }
-        }
-    }
 
 @Composable
 private fun SettingsItem(
