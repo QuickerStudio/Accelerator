@@ -265,14 +265,14 @@ private fun TitleTextField(
             modifier = Modifier
                 .size(56.dp)
                 .background(
-                    color = Color(0xFFEF4444),
+                    color = Color(0xFFFEE2E2),  // 浅红色
                     shape = RoundedCornerShape(12.dp)
                 )
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "清空全部",
-                tint = Color.White,
+                tint = Color(0xFFDC2626),  // 深红色图标
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -283,14 +283,14 @@ private fun TitleTextField(
             modifier = Modifier
                 .size(56.dp)
                 .background(
-                    color = Color(0xFF10B981),
+                    color = Color(0xFFD1FAE5),  // 浅绿色
                     shape = RoundedCornerShape(12.dp)
                 )
         ) {
             Icon(
                 imageVector = Icons.Default.Book,
                 contentDescription = "保存到收藏库",
-                tint = Color.White,
+                tint = Color(0xFF059669),  // 深绿色图标
                 modifier = Modifier.size(24.dp)
             )
         }
