@@ -1,7 +1,6 @@
 package com.english.accelerator.ui.writing
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,8 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
@@ -27,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
-import kotlinx.coroutines.launch
 
 // AI 评论数据类
 data class AiComment(
@@ -413,7 +409,7 @@ private fun ContentEditor(
                         modifier = Modifier
                             .weight(1f)
                             .verticalScroll(scrollState)
-                            .padding(start = 8.dp, top = 16.dp, end = 8.dp, bottom = 16.dp)
+                            .padding(start = 8.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
                     ) {
                         if (value.isEmpty()) {
                             Text(
@@ -425,69 +421,12 @@ private fun ContentEditor(
                         }
                         innerTextField()
                     }
-
-                    // 滚动条
-                    VerticalScrollbar(
-                        scrollState = scrollState,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(vertical = 16.dp, horizontal = 4.dp)
-                    )
                 }
             }
         }
     )
 }
 
-@Composable
-private fun VerticalScrollbar(
-    scrollState: androidx.compose.foundation.ScrollState,
-    modifier: Modifier = Modifier
-) {
-    val maxScroll = scrollState.maxValue
-    val currentScroll = scrollState.value
-    val coroutineScope = rememberCoroutineScope()
-
-    if (maxScroll > 0) {
-        BoxWithConstraints(
-            modifier = modifier
-                .width(12.dp)  // 增加宽度便于拖拽
-                .background(Color(0xFFF1F5F9), RoundedCornerShape(6.dp))
-                .pointerInput(maxScroll) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        val scrollbarHeight = size.height.toFloat()
-                        val thumbHeight = 0.3f
-                        val scrollableHeight = scrollbarHeight * (1f - thumbHeight)
-
-                        // 计算拖拽对应的滚动距离
-                        val dragRatio = dragAmount.y / scrollableHeight
-                        val scrollDelta = (maxScroll * dragRatio).toInt()
-
-                        coroutineScope.launch {
-                            val newScroll = (currentScroll + scrollDelta).coerceIn(0, maxScroll)
-                            scrollState.scrollTo(newScroll)
-                        }
-                    }
-                }
-        ) {
-            val containerHeight = constraints.maxHeight.toFloat()
-            val thumbHeight = 0.3f // 滚动条高度比例
-            val thumbOffset = if (maxScroll > 0) {
-                (currentScroll.toFloat() / maxScroll) * (1f - thumbHeight)
-            } else 0f
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(thumbHeight)
-                    .align(Alignment.TopCenter)
-                    .offset(y = (thumbOffset * containerHeight).dp)
-                    .background(Color(0xFF94A3B8), RoundedCornerShape(6.dp))
-            )
-        }
-    }
-}
 
 @Composable
 private fun EditorToolbar(
