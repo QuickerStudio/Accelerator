@@ -408,7 +408,7 @@ fun BottomInputArea(
                     modifier = Modifier
                         .size(36.dp)
                         .align(Alignment.CenterEnd)
-                        .offset(x = 8.dp)
+                        .offset(x = 18.dp)  // 往右移动 18dp (原来是 8dp，增加 10dp)
                         .clip(CircleShape)
                         .background(
                             if (inputText.isNotEmpty()) Color(0xFF3B82F6) else Color(0xFFCBD5E1)
