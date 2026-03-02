@@ -767,29 +767,18 @@ private fun LearningLogsSection() {
     var todayExpanded by remember { mutableStateOf(true) }
     var thisWeekExpanded by remember { mutableStateOf(false) }
 
-    // 模拟单词学习数据（单词 + 记忆状态）
-    val pinnedWords = listOf(
-        Pair("Vocabulary", true),
-        Pair("Accelerate", false)
-    )
+    // 从 WordLearningManager 获取真实数据
+    val pinnedWords = com.english.accelerator.data.WordLearningManager.getImportantWords()
+        .map { Pair(it.word, it.isMemorized) }
 
-    val todayWords = listOf(
-        Pair("Practice", true),
-        Pair("Fluent", true),
-        Pair("Grammar", false),
-        Pair("Pronunciation", false)
-    )
+    val todayWords = com.english.accelerator.data.WordLearningManager.getTodayRecords()
+        .map { Pair(it.word, it.isMemorized) }
 
-    val thisWeekWords = listOf(
-        Pair("Comprehension", true),
-        Pair("Expression", false),
-        Pair("Idiom", true)
-    )
+    val thisWeekWords = com.english.accelerator.data.WordLearningManager.getThisWeekRecords()
+        .map { Pair(it.word, it.isMemorized) }
 
-    val earlierWords = listOf(
-        Pair("Dialect", true),
-        Pair("Accent", false)
-    )
+    val earlierWords = com.english.accelerator.data.WordLearningManager.getEarlierRecords()
+        .map { Pair(it.word, it.isMemorized) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(

@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.data.BookmarkManager
+import com.english.accelerator.data.WordLearningManager
 import com.english.accelerator.data.sampleWords
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
@@ -95,6 +96,8 @@ fun VocabularyScreen(
                     onSwipeLeft = {
                         // 标记为"未记住"
                         if (currentIndex < sampleWords.size - 1) {
+                            val currentWord = sampleWords[currentIndex]
+                            WordLearningManager.recordWord(currentWord.id, currentWord.word, false)
                             currentIndex++
                             toastMessage = "未记住"
                             toastBackgroundColor = Color(0xFFFEE2E2) // 浅红色
@@ -104,6 +107,8 @@ fun VocabularyScreen(
                     onSwipeRight = {
                         // 标记为"已记住"
                         if (currentIndex < sampleWords.size - 1) {
+                            val currentWord = sampleWords[currentIndex]
+                            WordLearningManager.recordWord(currentWord.id, currentWord.word, true)
                             currentIndex++
                             toastMessage = "已记住"
                             toastBackgroundColor = Color(0xFFDCFCE7) // 浅绿色
