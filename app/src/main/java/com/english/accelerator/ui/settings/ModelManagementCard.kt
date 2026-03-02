@@ -135,7 +135,11 @@ fun ModelManagementCard(
                 Text(
                     text = when (modelState) {
                         is GemmaInferenceManager.ModelState.NotDownloaded -> "点击下载"
-                        is GemmaInferenceManager.ModelState.Downloading -> "下载中 ${(modelState.progress * 100).toInt()}%"
+                        is GemmaInferenceManager.ModelState.Downloading -> {
+                            val percent = (modelState.progress * 100).toInt()
+                            val speedText = formatSpeed(modelState.speed)
+                            "下载中 $percent% ($speedText)"
+                        }
                         is GemmaInferenceManager.ModelState.Ready -> "Gemma 3n E2B"
                         is GemmaInferenceManager.ModelState.Error -> "下载失败"
                     },
@@ -220,14 +224,29 @@ fun ModelManagementCard(
 
         // 下载进度条（仅在下载时显示）
         if (modelState is GemmaInferenceManager.ModelState.Downloading) {
-            LinearProgressIndicator(
-                progress = modelState.progress,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                color = Color(0xFF8B5CF6),
-                trackColor = Color(0xFFE2E8F0)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LinearProgressIndicator(
+                    progress = { modelState.progress },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp),
+                    color = Color(0xFF8B5CF6),
+                    trackColor = Color(0xFFE2E8F0)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = formatSpeed(modelState.speed),
+                    fontSize = 12.sp,
+                    color = Color(0xFF64748B),
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
             // 下载控制按钮
             Row(
@@ -305,5 +324,18 @@ fun ModelManagementCard(
                 }
             }
         )
+    }
+}
+
+/**
+ * 格式化下载速度
+ * @param bytesPerSecond 字节/秒
+ * @return 格式化的速度字符串 (如 "2.5 MB/s")
+ */
+private fun formatSpeed(bytesPerSecond: Long): String {
+    return when {
+        bytesPerSecond < 1024 -> "${bytesPerSecond} B/s"
+        bytesPerSecond < 1024 * 1024 -> String.format("%.1f KB/s", bytesPerSecond / 1024.0)
+        else -> String.format("%.1f MB/s", bytesPerSecond / (1024.0 * 1024.0))
     }
 }

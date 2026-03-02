@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 /**
- * Singleton manager for Gemma-2B LLM inference
+ * Singleton manager for gemma-3n-E2B-it-litert-lm LLM inference
  * Handles model initialization, inference requests, and lifecycle management
  */
 class GemmaInferenceManager private constructor(
@@ -27,7 +27,10 @@ class GemmaInferenceManager private constructor(
      */
     sealed class ModelState {
         object NotDownloaded : ModelState()
-        data class Downloading(val progress: Float) : ModelState()
+        data class Downloading(
+            val progress: Float,
+            val speed: Long = 0L  // 下载速度 (bytes/sec)
+        ) : ModelState()
         object Ready : ModelState()
         data class Error(val message: String) : ModelState()
     }
@@ -71,7 +74,7 @@ class GemmaInferenceManager private constructor(
     }
 
     /**
-     * Check if device has sufficient memory for Gemma 3n E2B
+     * Check if device has sufficient memory for gemma-3n-E2B-it-litert-lm
      */
     private fun checkMemoryAvailability(): Boolean {
         val runtime = Runtime.getRuntime()
@@ -120,10 +123,10 @@ class GemmaInferenceManager private constructor(
      */
     suspend fun downloadModel() = withContext(Dispatchers.IO) {
         try {
-            _modelState.value = ModelState.Downloading(0f)
+            _modelState.value = ModelState.Downloading(0f, 0L)
 
-            modelDownloadManager.downloadModel { progress ->
-                _modelState.value = ModelState.Downloading(progress)
+            modelDownloadManager.downloadModel { progress, speed ->
+                _modelState.value = ModelState.Downloading(progress, speed)
             }.onSuccess {
                 initialize()
             }.onFailure { error ->

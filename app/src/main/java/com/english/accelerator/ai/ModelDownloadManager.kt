@@ -81,14 +81,14 @@ class ModelDownloadManager(private val context: Context) {
      * - Checks if model already exists (skip download)
      * - Pings both routes and selects faster one
      * - Falls back to alternative route if download fails
-     * - Supports pause/resume
+     * - Supports pause/resume with resume capability
      *
-     * @param onProgress Callback with download progress (0.0 to 1.0)
+     * @param onProgress Callback with download progress (0.0 to 1.0) and speed (bytes/sec)
      * @param forceRoute Optional: force a specific download route
      * @return Result with the model file or error
      */
     suspend fun downloadModel(
-        onProgress: (Float) -> Unit,
+        onProgress: (Float, Long) -> Unit,
         forceRoute: DownloadRoute? = null
     ): Result<File> = withContext(Dispatchers.IO) {
         // Reset control flags
@@ -184,11 +184,11 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     /**
-     * Attempt to download from a specific URL
+     * Attempt to download from a specific URL with resume support
      */
     private suspend fun tryDownload(
         urlString: String,
-        onProgress: (Float) -> Unit
+        onProgress: (Float, Long) -> Unit
     ): Result<File> = withContext(Dispatchers.IO) {
         try {
             val url = URL(urlString)
@@ -196,13 +196,31 @@ class ModelDownloadManager(private val context: Context) {
             connection.connectTimeout = 30000 // 30 seconds
             connection.readTimeout = 30000
 
-            val totalSize = connection.contentLength.toLong()
+            // Check if partial file exists for resume
+            val existingSize = if (modelFile.exists()) modelFile.length() else 0L
+            if (existingSize > 0) {
+                connection.setRequestProperty("Range", "bytes=$existingSize-")
+            }
+
+            connection.connect()
+
+            val responseCode = connection.responseCode
+            val totalSize = if (responseCode == HttpURLConnection.HTTP_PARTIAL) {
+                // Resume download
+                existingSize + connection.contentLength.toLong()
+            } else {
+                // Fresh download
+                connection.contentLength.toLong()
+            }
 
             connection.inputStream.use { input ->
-                modelFile.outputStream().use { output ->
+                modelFile.outputStream(responseCode == HttpURLConnection.HTTP_PARTIAL).use { output ->
                     val buffer = ByteArray(8192)
-                    var downloaded = 0L
+                    var downloaded = existingSize
                     var bytes: Int
+                    var lastUpdateTime = System.currentTimeMillis()
+                    var lastDownloaded = downloaded
+                    var speed = 0L
 
                     while (input.read(buffer).also { bytes = it } != -1) {
                         // Check if cancelled
@@ -217,8 +235,17 @@ class ModelDownloadManager(private val context: Context) {
 
                         output.write(buffer, 0, bytes)
                         downloaded += bytes
+
+                        // Calculate speed every second
+                        val currentTime = System.currentTimeMillis()
+                        if (currentTime - lastUpdateTime >= 1000) {
+                            speed = ((downloaded - lastDownloaded) * 1000) / (currentTime - lastUpdateTime)
+                            lastUpdateTime = currentTime
+                            lastDownloaded = downloaded
+                        }
+
                         if (totalSize > 0) {
-                            onProgress(downloaded.toFloat() / totalSize)
+                            onProgress(downloaded.toFloat() / totalSize, speed)
                         }
                     }
                 }
@@ -226,7 +253,7 @@ class ModelDownloadManager(private val context: Context) {
 
             Result.success(modelFile)
         } catch (e: Exception) {
-            // Clean up partial download only if cancelled
+            // Keep partial download for resume (don't delete unless cancelled)
             if (isCancelled && modelFile.exists()) {
                 modelFile.delete()
             }
