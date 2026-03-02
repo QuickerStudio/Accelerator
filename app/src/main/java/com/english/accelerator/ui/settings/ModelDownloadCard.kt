@@ -80,21 +80,51 @@ fun ModelDownloadCard(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 动画标题
-        Text(
-            text = currentTitle,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF8B5CF6),
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-
-        // 按钮区域
+        // 第一行：动画标题 + 线路切换按钮 + 下载按钮/对勾按钮
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 左侧：动画标题 + 线路切换按钮
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 动画标题
+                Text(
+                    text = currentTitle,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF8B5CF6)
+                )
+
+                // 线路切换按钮（下载完成后隐藏）
+                if (!isDownloaded) {
+                    TextButton(
+                        onClick = onSwitchRoute,
+                        enabled = !isDownloading || isPaused,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color(0xFF8B5CF6),
+                            disabledContentColor = Color(0xFF94A3B8)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = "切换线路",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = currentRoute,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+
+            // 右侧：下载按钮或对勾按钮
             when {
                 // 已下载：显示绿色对勾按钮
                 isDownloaded -> {
@@ -128,54 +158,55 @@ fun ModelDownloadCard(
                     }
                 }
 
-                // 下载中或暂停：显示下载按钮 + 线路切换按钮
+                // 未下载或下载中：显示下载按钮
                 else -> {
-                    // 下载按钮
-                    IconButton(
-                        onClick = onDownloadClick,
-                        modifier = Modifier.size(48.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = when {
-                                isError -> Icons.Default.Refresh
-                                isPaused -> Icons.Default.PlayArrow
-                                isDownloading -> Icons.Default.Pause
-                                else -> Icons.Default.CloudDownload
-                            },
-                            contentDescription = when {
-                                isError -> "重试"
-                                isPaused -> "继续"
-                                isDownloading -> "暂停"
-                                else -> "下载"
-                            },
-                            tint = when {
-                                isError -> Color(0xFFEF4444)
-                                isPaused -> Color(0xFF10B981)
-                                isDownloading -> Color(0xFFF59E0B)
-                                else -> Color(0xFF8B5CF6)
-                            },
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
+                        IconButton(
+                            onClick = onDownloadClick,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = when {
+                                    isError -> Icons.Default.Refresh
+                                    isPaused -> Icons.Default.PlayArrow
+                                    isDownloading -> Icons.Default.Pause
+                                    else -> Icons.Default.CloudDownload
+                                },
+                                contentDescription = when {
+                                    isError -> "重试"
+                                    isPaused -> "继续"
+                                    isDownloading -> "暂停"
+                                    else -> "下载"
+                                },
+                                tint = when {
+                                    isError -> Color(0xFFEF4444)
+                                    isPaused -> Color(0xFF10B981)
+                                    isDownloading -> Color(0xFFF59E0B)
+                                    else -> Color(0xFF8B5CF6)
+                                },
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
 
-                    // 线路切换按钮
-                    TextButton(
-                        onClick = onSwitchRoute,
-                        enabled = !isDownloading || isPaused,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = Color(0xFF8B5CF6),
-                            disabledContentColor = Color(0xFF94A3B8)
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SwapHoriz,
-                            contentDescription = "切换线路",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        // 状态文本
                         Text(
-                            text = currentRoute,
-                            fontSize = 12.sp
+                            text = when {
+                                isDownloaded -> "已就绪"
+                                isError -> "请重试"
+                                isPaused -> "已暂停"
+                                isDownloading -> "正在下载..."
+                                else -> "开始下载"
+                            },
+                            fontSize = 14.sp,
+                            color = when {
+                                isDownloaded -> Color(0xFF10B981)
+                                isError -> Color(0xFFEF4444)
+                                else -> Color(0xFF64748B)
+                            },
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -213,23 +244,6 @@ fun ModelDownloadCard(
                 }
             }
         }
-
-        // 状态文本
-        Text(
-            text = when {
-                isDownloaded -> "模型已就绪"
-                isError -> "下载失败，点击重试"
-                isPaused -> "下载已暂停"
-                isDownloading -> "正在下载..."
-                else -> "点击下载按钮开始"
-            },
-            fontSize = 13.sp,
-            color = when {
-                isDownloaded -> Color(0xFF10B981)
-                isError -> Color(0xFFEF4444)
-                else -> Color(0xFF64748B)
-            }
-        )
     }
 }
 
