@@ -1,9 +1,6 @@
 package com.english.accelerator.ui.writing
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,11 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,8 +21,6 @@ import androidx.compose.ui.unit.sp
 import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 // AI 评论数据类
 data class AiComment(
@@ -218,147 +210,78 @@ private fun TitleTextField(
     onClearContent: () -> Unit,
     onSaveToCollection: () -> Unit
 ) {
-    var showSwipeActions by remember { mutableStateOf(false) }
-    var dragOffset by remember { mutableStateOf(0f) }
-    val coroutineScope = rememberCoroutineScope()
-    val focusRequester = remember { FocusRequester() }
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // 滑动操作按钮（显示在上方，不被遮挡）
-        if (showSwipeActions) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
-                    .background(
-                        color = Color(0xFFD1FAE5),  // 浅绿色背景
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 8.dp)
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures(
-                            onDragEnd = {
-                                if (dragOffset < -100) {
-                                    // 向左滑动：清空内容
-                                    onClearContent()
-                                    showSwipeActions = false
-                                } else if (dragOffset > 100) {
-                                    // 向右滑动：保存
-                                    onSaveToCollection()
-                                    showSwipeActions = false
-                                }
-                                dragOffset = 0f
-                            },
-                            onHorizontalDrag = { _, dragAmount ->
-                                dragOffset += dragAmount
-                            }
+        // 标题输入框
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = TextStyle(
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            ),
+            cursorBrush = SolidColor(Color(0xFF2563EB)),
+            modifier = Modifier.weight(1f),
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color.White,
+                            shape = RoundedCornerShape(12.dp)
                         )
-                    },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 左侧：清空内容区域
-                Button(
-                    onClick = {
-                        onClearContent()
-                        showSwipeActions = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFEF4444)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.weight(1f)
+                        .padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "清空内容",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("← 清空内容", fontSize = 14.sp)
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // 右侧：保存到收藏库
-                Button(
-                    onClick = {
-                        onSaveToCollection()
-                        showSwipeActions = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF10B981)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("保存 →", fontSize = 14.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.Book,
-                        contentDescription = "保存到收藏库",
-                        modifier = Modifier.size(18.dp)
-                    )
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFCBD5E1)
+                        )
+                    }
+                    innerTextField()
                 }
             }
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        // 主输入框
-        Box(
+        // 清空按钮
+        IconButton(
+            onClick = onClearContent,
             modifier = Modifier
-                .fillMaxWidth()
-                .combinedClickable(
-                    onClick = {
-                        // 点击：聚焦光标
-                        if (!showSwipeActions) {
-                            focusRequester.requestFocus()
-                        }
-                    },
-                    onLongClick = {
-                        // 长按：显示滑动控制按钮
-                        showSwipeActions = true
-                        coroutineScope.launch {
-                            delay(5000)  // 5秒后自动隐藏
-                            showSwipeActions = false
-                        }
-                    }
+                .size(56.dp)
+                .background(
+                    color = Color(0xFFEF4444),
+                    shape = RoundedCornerShape(12.dp)
                 )
         ) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                textStyle = TextStyle(
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
-                ),
-                cursorBrush = SolidColor(Color(0xFF2563EB)),
-                modifier = Modifier.focusRequester(focusRequester),
-                decorationBox = { innerTextField ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                color = Color.White,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(16.dp)
-                    ) {
-                        if (value.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFCBD5E1)
-                            )
-                        }
-                        innerTextField()
-                    }
-                }
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "清空内容",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        // 保存按钮
+        IconButton(
+            onClick = onSaveToCollection,
+            modifier = Modifier
+                .size(56.dp)
+                .background(
+                    color = Color(0xFF10B981),
+                    shape = RoundedCornerShape(12.dp)
+                )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Book,
+                contentDescription = "保存到收藏库",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
             )
         }
     }
