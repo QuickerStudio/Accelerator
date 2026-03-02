@@ -32,6 +32,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ui.sidebar.Sidebar
+import com.english.accelerator.ai.GemmaInferenceManager
+import com.english.accelerator.ai.GemmaInferenceManager.ModelState
+import com.english.accelerator.ai.InferenceResult
+import com.english.accelerator.ai.SuggestionType
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.SimpleDateFormat
 import java.util.*
@@ -50,6 +55,27 @@ data class Message(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+/**
+ * 解析对话响应
+ * 格式：
+ * RESPONSE: [AI 的回复]
+ * FEEDBACK: [语法和表达反馈]
+ */
+private fun parseConversationResponse(rawResponse: String): String {
+    val lines = rawResponse.lines()
+    val responseLine = lines.find { it.startsWith("RESPONSE:") }
+    val feedbackLine = lines.find { it.startsWith("FEEDBACK:") }
+
+    val response = responseLine?.removePrefix("RESPONSE:")?.trim() ?: rawResponse
+    val feedback = feedbackLine?.removePrefix("FEEDBACK:")?.trim()
+
+    return if (feedback != null && feedback.isNotBlank()) {
+        "$response\n\n💡 反馈：$feedback"
+    } else {
+        response
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpeakingScreen(
@@ -64,14 +90,21 @@ fun SpeakingScreen(
     var showHistoryScreen by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
-    // Initialize with welcome message
-    LaunchedEffect(Unit) {
-        messages.add(
-            Message(
-                content = "Hello! Let's practice English conversation. What would you like to talk about today?",
-                isFromUser = false
+    // AI 集成
+    val gemmaManager = remember { GemmaInferenceManager.getInstance() }
+    val modelState by gemmaManager.modelState.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    // 初始化欢迎消息（仅在模型就绪时）
+    LaunchedEffect(modelState) {
+        if (modelState is ModelState.Ready && messages.isEmpty()) {
+            messages.add(
+                Message(
+                    content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
+                    isFromUser = false
+                )
             )
-        )
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -113,16 +146,59 @@ fun SpeakingScreen(
                         inputText = inputText,
                         onInputChange = { inputText = it },
                         onSend = {
-                            // 模拟语音消息发送
-                            messages.add(Message(content = "[语音消息 ${System.currentTimeMillis() % 1000}]", isFromUser = true))
-
                             if (inputText.isNotBlank()) {
-                                // Add user message
-                                messages.add(Message(content = inputText, isFromUser = true))
+                                // 添加用户消息
+                                val userMessage = inputText
+                                messages.add(Message(content = userMessage, isFromUser = true))
                                 inputText = ""
+                                focusManager.clearFocus()
 
-                                // TODO: Send to AI and get response
+                                // 滚动到底部
+                                scope.launch {
+                                    listState.animateScrollToItem(messages.size)
+                                }
+
+                                // 生成 AI 响应
                                 isLoading = true
+                                scope.launch {
+                                    try {
+                                        val result = gemmaManager.generateSuggestions(
+                                            text = userMessage,
+                                            type = SuggestionType.CONVERSATION_PRACTICE
+                                        )
+
+                                        when (result) {
+                                            is InferenceResult.Success -> {
+                                                // 解析响应和反馈
+                                                val response = parseConversationResponse(result.rawResponse)
+                                                messages.add(Message(content = response, isFromUser = false))
+
+                                                // 滚动到底部
+                                                listState.animateScrollToItem(messages.size)
+                                            }
+                                            is InferenceResult.Error -> {
+                                                messages.add(
+                                                    Message(
+                                                        content = "抱歉，我遇到了一些问题：${result.message}",
+                                                        isFromUser = false
+                                                    )
+                                                )
+                                            }
+                                            InferenceResult.Loading -> {
+                                                // 保持加载状态
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        messages.add(
+                                            Message(
+                                                content = "抱歉，发生了错误。请稍后再试。",
+                                                isFromUser = false
+                                            )
+                                        )
+                                    } finally {
+                                        isLoading = false
+                                    }
+                                }
                             }
                         },
                         onCamera = { /* TODO: Open camera */ },
@@ -136,34 +212,95 @@ fun SpeakingScreen(
                 }
             }
         ) { paddingValues ->
-            // Message list
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFF8FAFC))
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
+            // 模型状态提示
+            if (modelState is ModelState.NotDownloaded || modelState is ModelState.Downloading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFF8FAFC))
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        focusManager.clearFocus()
-                    },
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
-            ) {
-                items(messages) { message ->
-                    MessageBubble(message = message)
-                }
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = "下载模型",
+                            modifier = Modifier.size(64.dp),
+                            tint = Color(0xFF8B5CF6)
+                        )
 
-                // Loading indicator
-                if (isLoading) {
-                    item {
-                        LoadingBubble()
+                        when (modelState) {
+                            is ModelState.NotDownloaded -> {
+                                Text(
+                                    text = "需要下载 AI 模型才能开始对话",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                                Button(
+                                    onClick = onNavigateToSettings,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF8B5CF6)
+                                    )
+                                ) {
+                                    Text("前往设置下载")
+                                }
+                            }
+                            is ModelState.Downloading -> {
+                                val progress = (modelState as ModelState.Downloading).progress
+                                Text(
+                                    text = "正在下载模型...",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                                LinearProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier.width(200.dp),
+                                    color = Color(0xFF8B5CF6)
+                                )
+                                Text(
+                                    text = "${(progress * 100).toInt()}%",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF94A3B8)
+                                )
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+            } else {
+                // Message list
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFF8FAFC))
+                        .padding(paddingValues)
+                        .padding(horizontal = 16.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            focusManager.clearFocus()
+                        },
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp)
+                ) {
+                    items(messages) { message ->
+                        MessageBubble(message = message)
+                    }
+
+                    // Loading indicator
+                    if (isLoading) {
+                        item {
+                            LoadingBubble()
+                        }
                     }
                 }
             }
+        }
         }
 
         // Sidebar
