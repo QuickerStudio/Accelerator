@@ -763,22 +763,22 @@ private fun NoteGroupCard(
 
 @Composable
 private fun LearningLogsSection() {
-    var pinnedExpanded by remember { mutableStateOf(true) }
+    var pinnedExpanded by remember { mutableStateOf(false) }  // 默认折叠
     var todayExpanded by remember { mutableStateOf(true) }
     var thisWeekExpanded by remember { mutableStateOf(false) }
 
     // 从 WordLearningManager 获取真实数据
     val pinnedWords = com.english.accelerator.data.WordLearningManager.getImportantWords()
-        .map { Pair(it.word, it.isMemorized) }
+        .map { Triple(it.wordId, it.word, it.isMemorized) }
 
     val todayWords = com.english.accelerator.data.WordLearningManager.getTodayRecords()
-        .map { Pair(it.word, it.isMemorized) }
+        .map { Triple(it.wordId, it.word, it.isMemorized) }
 
     val thisWeekWords = com.english.accelerator.data.WordLearningManager.getThisWeekRecords()
-        .map { Pair(it.word, it.isMemorized) }
+        .map { Triple(it.wordId, it.word, it.isMemorized) }
 
     val earlierWords = com.english.accelerator.data.WordLearningManager.getEarlierRecords()
-        .map { Pair(it.word, it.isMemorized) }
+        .map { Triple(it.wordId, it.word, it.isMemorized) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -813,7 +813,8 @@ private fun LearningLogsSection() {
             words = pinnedWords,
             isExpanded = pinnedExpanded,
             onToggle = { pinnedExpanded = !pinnedExpanded },
-            hasBackground = true
+            hasBackground = true,
+            isImportantSection = true  // 标记为重点单词区域
         )
 
         WordLogCategorySection(
@@ -850,11 +851,12 @@ private fun LearningLogsSection() {
 private fun WordLogCategorySection(
     icon: String,
     title: String,
-    words: List<Pair<String, Boolean>>, // Pair<单词, 是否已记住>
+    words: List<Triple<Int, String, Boolean>>, // Triple<单词ID, 单词, 是否已记住>
     isExpanded: Boolean,
     onToggle: () -> Unit,
     hasBackground: Boolean,
-    showToggle: Boolean = true
+    showToggle: Boolean = true,
+    isImportantSection: Boolean = false  // 是否为重点单词区域
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         // 分组标题
@@ -862,7 +864,11 @@ private fun WordLogCategorySection(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .background(if (hasBackground) Color(0xFFF8FAFC) else Color.Transparent)
+                .background(
+                    if (isImportantSection) Color(0xFFDEEDFF)  // 重点单词区域用淡蓝色
+                    else if (hasBackground) Color(0xFFF8FAFC)
+                    else Color.Transparent
+                )
                 .clickable(enabled = showToggle) { onToggle() }
                 .padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -896,19 +902,37 @@ private fun WordLogCategorySection(
 
         // 单词列表（可折叠）
         if (isExpanded) {
-            words.forEach { (word, isMemorized) ->
-                WordLogItem(word = word, isMemorized = isMemorized)
+            words.forEach { (wordId, word, isMemorized) ->
+                WordLogItem(
+                    wordId = wordId,
+                    word = word,
+                    isMemorized = isMemorized
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun WordLogItem(word: String, isMemorized: Boolean) {
+private fun WordLogItem(wordId: Int, word: String, isMemorized: Boolean) {
+    var isImportant by remember { mutableStateOf(com.english.accelerator.data.WordLearningManager.isImportant(wordId)) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
+            .background(
+                if (isImportant) Color(0xFFDEEDFF) else Color.Transparent  // 重点单词背景为淡蓝色
+            )
+            .combinedClickable(
+                onClick = { /* 普通点击不做任何操作 */ },
+                onLongClick = {
+                    // 长按切换重点标记
+                    com.english.accelerator.data.WordLearningManager.toggleImportant(wordId)
+                    isImportant = !isImportant  // 更新本地状态触发重组
+                }
+            )
             .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

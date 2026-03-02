@@ -7,7 +7,8 @@ data class WordLearningRecord(
     val wordId: Int,
     val word: String,
     val isMemorized: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isImportant: Boolean = false  // 是否标记为重点单词
 )
 
 object WordLearningManager {
@@ -18,12 +19,31 @@ object WordLearningManager {
      * 记录单词学习状态
      */
     fun recordWord(wordId: Int, word: String, isMemorized: Boolean) {
+        val existingRecord = learningRecords[wordId]
         learningRecords[wordId] = WordLearningRecord(
             wordId = wordId,
             word = word,
             isMemorized = isMemorized,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            isImportant = existingRecord?.isImportant ?: false  // 保留重点标记
         )
+    }
+
+    /**
+     * 切换单词的重点标记
+     */
+    fun toggleImportant(wordId: Int) {
+        val record = learningRecords[wordId]
+        if (record != null) {
+            learningRecords[wordId] = record.copy(isImportant = !record.isImportant)
+        }
+    }
+
+    /**
+     * 检查单词是否被标记为重点
+     */
+    fun isImportant(wordId: Int): Boolean {
+        return learningRecords[wordId]?.isImportant ?: false
     }
 
     /**
@@ -65,11 +85,11 @@ object WordLearningManager {
     }
 
     /**
-     * 获取重点单词（未记住的单词）
+     * 获取重点单词（手动标记的单词）
      */
     fun getImportantWords(): List<WordLearningRecord> {
         return learningRecords.values
-            .filter { !it.isMemorized }
+            .filter { it.isImportant }
             .sortedByDescending { it.timestamp }
     }
 
