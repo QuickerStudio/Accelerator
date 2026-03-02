@@ -547,87 +547,108 @@ private fun NoteGroupsSection(
     val groups = if (isReversed) allGroups.reversed() else allGroups
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
+        // 标题栏和输入框
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .height(48.dp)
+                .padding(horizontal = 20.dp)
         ) {
             Row(
+                modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "笔记分组",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
-                )
+                // 标题文字（逐字消失动画）
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    val titleText = "笔记分组"
+                    titleText.forEachIndexed { index, char ->
+                        val delay = if (isAddGroupMode) {
+                            (titleText.length - 1 - index) * 50
+                        } else {
+                            index * 50
+                        }
 
-                // 排序切换按钮
+                        val alpha by animateFloatAsState(
+                            targetValue = if (isAddGroupMode) 0f else 1f,
+                            animationSpec = tween(
+                                durationMillis = 200,
+                                delayMillis = delay
+                            ),
+                            label = "charAlpha_$index"
+                        )
+
+                        Text(
+                            text = char.toString(),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B).copy(alpha = alpha)
+                        )
+                    }
+
+                    // 排序切换按钮
+                    IconButton(
+                        onClick = { isReversed = !isReversed },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowRight,
+                            contentDescription = if (isReversed) "倒序" else "正序",
+                            tint = Color(0xFF64748B),
+                            modifier = Modifier
+                                .size(20.dp)
+                                .rotate(if (isReversed) 180f else 0f)
+                        )
+                    }
+                }
+
+                // 添加分组按钮
                 IconButton(
-                    onClick = { isReversed = !isReversed },
-                    modifier = Modifier.size(32.dp)
+                    onClick = {
+                        if (groupNameText.isNotEmpty()) {
+                            // 有内容时：创建分组并清空
+                            com.english.accelerator.data.NoteGroupManager.addGroup(groupNameText)
+                            groupNameText = ""
+                        } else {
+                            // 无内容时：切换输入模式
+                            isAddGroupMode = !isAddGroupMode
+                        }
+                    },
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            color = if (groupNameText.isNotEmpty()) Color(0xFFDCFCE7) else Color.Transparent,
+                            shape = CircleShape
+                        )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.KeyboardArrowRight,
-                        contentDescription = if (isReversed) "倒序" else "正序",
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "添加分组",
                         tint = Color(0xFF64748B),
-                        modifier = Modifier
-                            .size(20.dp)
-                            .rotate(if (isReversed) 180f else 0f)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
-            // 添加分组按钮
-            IconButton(
-                onClick = {
-                    if (groupNameText.isNotEmpty()) {
-                        // 有内容时：创建分组并清空
-                        com.english.accelerator.data.NoteGroupManager.addGroup(groupNameText)
-                        groupNameText = ""
-                    } else {
-                        // 无内容时：切换输入模式
-                        isAddGroupMode = !isAddGroupMode
-                    }
-                },
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        color = if (groupNameText.isNotEmpty()) Color(0xFFDCFCE7) else Color.Transparent,
-                        shape = CircleShape
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "添加分组",
-                    tint = Color(0xFF64748B),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
+            // 输入框（从右向左滑入）
+            val inputBoxOffset by animateDpAsState(
+                targetValue = if (isAddGroupMode) 0.dp else 300.dp,
+                animationSpec = tween(durationMillis = 600),
+                label = "inputBoxOffset"
+            )
 
-        // 输入框（从右向左滑入）
-        val inputBoxOffset by animateDpAsState(
-            targetValue = if (isAddGroupMode) 0.dp else 300.dp,
-            animationSpec = tween(durationMillis = 600),
-            label = "inputBoxOffset"
-        )
-
-        if (isAddGroupMode || inputBoxOffset < 300.dp) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-            ) {
+            if (isAddGroupMode || inputBoxOffset < 300.dp) {
                 TextField(
                     value = groupNameText,
                     onValueChange = { newValue -> groupNameText = newValue },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(40.dp)
+                        .align(Alignment.Center)
                         .offset(x = inputBoxOffset)
                         .padding(end = 48.dp),
                     placeholder = {
