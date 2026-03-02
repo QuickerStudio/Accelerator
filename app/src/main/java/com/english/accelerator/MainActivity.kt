@@ -25,6 +25,7 @@ import com.english.accelerator.ui.navigation.BottomNavigationBar
 import com.english.accelerator.ui.navigation.Screen
 import com.english.accelerator.ui.settings.SettingsScreen
 import com.english.accelerator.ui.speaking.SpeakingScreen
+import com.english.accelerator.ui.speaking.VoiceInputTestScreen
 import com.english.accelerator.ui.theme.AcceleratorTheme
 import com.english.accelerator.ui.vocabulary.VocabularyScreen
 import com.english.accelerator.ui.writing.WritingScreen
@@ -78,6 +79,14 @@ fun AcceleratorApp() {
     var currentRoute by rememberSaveable { mutableStateOf(Screen.Vocabulary.route) }
     var showInputArea by rememberSaveable { mutableStateOf(false) }
     var hideBottomBar by rememberSaveable { mutableStateOf(false) }
+
+    // 临时测试模式 - 设置为 true 启用测试界面
+    val testMode = false
+
+    if (testMode) {
+        VoiceInputTestScreen()
+        return
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

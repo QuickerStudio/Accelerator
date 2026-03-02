@@ -1,5 +1,6 @@
 package com.english.accelerator.ui.speaking
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.clickable
@@ -111,6 +112,9 @@ fun SpeakingScreen(
                         inputText = inputText,
                         onInputChange = { inputText = it },
                         onSend = {
+                            // 模拟语音消息发送
+                            messages.add(Message(content = "[语音消息 ${System.currentTimeMillis() % 1000}]", isFromUser = true))
+
                             if (inputText.isNotBlank()) {
                                 // Add user message
                                 messages.add(Message(content = inputText, isFromUser = true))
@@ -328,7 +332,7 @@ fun BottomInputArea(
 ) {
     var isRecording by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    var isFocused by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
@@ -365,6 +369,7 @@ fun BottomInputArea(
                 ),
                 enabled = !isRecording,
                 maxLines = 2,
+                interactionSource = interactionSource,
                 decorationBox = { innerTextField ->
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -383,73 +388,53 @@ fun BottomInputArea(
             )
         }
 
-        // 长按手势检测层 - 只在未聚焦时激活
-        if (!isFocused && !isRecording) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
-                    .padding(
-                        start = 52.dp,
-                        end = 100.dp,
-                        top = 8.dp,
-                        bottom = 8.dp
-                    )
-                    .height(50.dp)
-                    .pointerInput(Unit) {
-                        awaitEachGesture {
-                            val down = awaitFirstDown()
-                            val longPressTimeout = 500L // 500ms 长按阈值
-                            val result = withTimeoutOrNull(longPressTimeout) {
-                                waitForUpOrCancellation()
-                            }
-
-                            if (result == null) {
-                                // 长按触发
-                                focusManager.clearFocus()
-                                isRecording = true
-                            } else {
-                                // 短按，让点击穿透到 TextField
-                                isFocused = true
-                            }
+        // 长按手势检测层 - 始终存在，覆盖在 TextField 上方
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(28.dp))
+                .padding(
+                    start = 52.dp,
+                    end = 100.dp,
+                    top = 8.dp,
+                    bottom = 8.dp
+                )
+                .height(50.dp)
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        Log.d("VoiceInput", "Gesture started")
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        Log.d("VoiceInput", "Down detected")
+                        val longPressTimeout = 500L // 500ms 长按阈值
+                        val result = withTimeoutOrNull(longPressTimeout) {
+                            waitForUpOrCancellation()
                         }
-                    }
-            )
-        }
 
-        // 录音状态检测松开
-        if (isRecording) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
-                    .padding(
-                        start = 52.dp,
-                        end = 100.dp,
-                        top = 8.dp,
-                        bottom = 8.dp
-                    )
-                    .height(50.dp)
-                    .pointerInput(Unit) {
-                        awaitEachGesture {
-                            awaitFirstDown()
+                        if (result == null) {
+                            // 长按触发录音
+                            Log.d("VoiceInput", "Long press detected, starting recording")
+                            down.consume()  // 消费事件，阻止 TextField 接收
+                            focusManager.clearFocus()
+                            isRecording = true
+
+                            // 继续等待松开手势
+                            Log.d("VoiceInput", "Waiting for release...")
                             val up = waitForUpOrCancellation()
+                            Log.d("VoiceInput", "Release detected: ${up != null}")
                             if (up != null) {
+                                // 松开发送语音
+                                Log.d("VoiceInput", "Sending voice message")
+                                up.consume()
                                 isRecording = false
-                                // TODO: Send voice message
                                 onSend()
                             }
+                        } else {
+                            // 短按，不消费事件，让 TextField 接收
+                            Log.d("VoiceInput", "Short press detected, passing to TextField")
                         }
                     }
-            )
-        }
-
-        // 监听焦点变化
-        LaunchedEffect(inputText) {
-            if (inputText.isNotEmpty()) {
-                isFocused = true
-            }
-        }
+                }
+        )
 
         // 悬浮按钮层
         Row(
