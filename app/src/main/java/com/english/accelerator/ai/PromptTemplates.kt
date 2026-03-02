@@ -2,19 +2,22 @@ package com.english.accelerator.ai
 
 /**
  * Prompt templates for different LLM inference tasks
+ * Optimized for Gemma 3n E2B's enhanced capabilities
  */
 object PromptTemplates {
     /**
      * Generate a prompt for grammar checking
+     * Leverages Gemma 3n E2B's improved context understanding
      */
     fun grammarCheck(text: String): String = """
-You are a grammar correction assistant. Analyze the following text and provide corrections.
+You are an advanced grammar correction assistant powered by Gemma 3n E2B.
+Analyze the following text with deep understanding of context and nuance.
 
 Text: "$text"
 
 Provide corrections in this exact format:
 CORRECTIONS:
-- [original phrase] → [corrected phrase]: [brief reason]
+- [original phrase] → [corrected phrase]: [detailed reason with context]
 
 If no corrections needed, respond with: "No corrections needed."
 """.trimIndent()

@@ -71,6 +71,19 @@ class GemmaInferenceManager private constructor(
     }
 
     /**
+     * Check if device has sufficient memory for Gemma 3n E2B
+     */
+    private fun checkMemoryAvailability(): Boolean {
+        val runtime = Runtime.getRuntime()
+        val maxMemory = runtime.maxMemory()
+        val usedMemory = runtime.totalMemory() - runtime.freeMemory()
+        val availableMemory = maxMemory - usedMemory
+
+        // Require at least 3.5GB free for Gemma 3n E2B
+        return availableMemory > 3_500_000_000L
+    }
+
+    /**
      * Initialize the LLM inference engine
      * Should be called after model is downloaded
      */
@@ -81,9 +94,15 @@ class GemmaInferenceManager private constructor(
                 return@withContext
             }
 
+            // Check memory availability
+            if (!checkMemoryAvailability()) {
+                _modelState.value = ModelState.Error("内存不足。请关闭其他应用后重试。")
+                return@withContext
+            }
+
             val options = LlmInference.LlmInferenceOptions.builder()
                 .setModelPath(modelDownloadManager.getModelPath())
-                .setMaxTokens(512)
+                .setMaxTokens(2048)  // Increased from 512 for Gemma 3n E2B
                 .setTemperature(0.3f)
                 .setTopK(40)
                 .setRandomSeed(0)

@@ -173,7 +173,7 @@ private fun ModelManagementCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Gemma-2B 模型",
+                    text = "Gemma 3n E2B 模型",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E293B)
@@ -231,8 +231,10 @@ private fun ModelManagementCard(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ModelInfoRow(label = "模型大小", value = "~1-2 GB")
+            ModelInfoRow(label = "模型大小", value = "~2-3 GB")
+            ModelInfoRow(label = "上下文长度", value = "32K tokens")
             ModelInfoRow(label = "用途", value = "语法检查、写作建议")
+            ModelInfoRow(label = "多模态支持", value = "文本、图像、音频、视频（即将推出）")
             ModelInfoRow(label = "运行方式", value = "设备端推理")
         }
 

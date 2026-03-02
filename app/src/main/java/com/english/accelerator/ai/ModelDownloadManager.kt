@@ -8,11 +8,13 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Manages downloading and storing the Gemma-2B model
+ * Manages downloading and storing the Gemma 3n E2B model
  */
 class ModelDownloadManager(private val context: Context) {
-    private val modelUrl = "https://storage.googleapis.com/mediapipe-models/llm/gemma-2b-it-gpu-int4.bin"
-    private val modelFile = File(context.filesDir, "models/gemma-2b.bin")
+    // Gemma 3n E2B LiteRT model from Hugging Face
+    // Using language-model variant (text-only) for compatibility
+    private val modelUrl = "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-litert-lm.task"
+    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b.task")
 
     /**
      * Download the model with progress tracking
