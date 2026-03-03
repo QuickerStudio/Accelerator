@@ -157,48 +157,49 @@ fun DataManagementCard(
                         }
                     )
 
-                Divider(color = Color(0xFFE2E8F0))
+                    Divider(color = Color(0xFFE2E8F0))
 
-                // 清除缓存
-                DataManagementItem(
-                    icon = Icons.Default.CleaningServices,
-                    title = "清除缓存",
-                    subtitle = "清除应用缓存数据",
-                    onClick = { /* TODO: 清除缓存 */ }
-                )
+                    // 清除缓存
+                    DataManagementItem(
+                        icon = Icons.Default.CleaningServices,
+                        title = "清除缓存",
+                        subtitle = "清除应用缓存数据",
+                        onClick = { /* TODO: 清除缓存 */ }
+                    )
 
-                Divider(color = Color(0xFFE2E8F0))
+                    Divider(color = Color(0xFFE2E8F0))
 
-                // 打开模型文件夹
-                DataManagementItem(
-                    icon = Icons.Default.FolderOpen,
-                    title = "打开模型文件夹",
-                    subtitle = "查看 AI 模型文件",
-                    showArrow = false,
-                    onClick = onOpenModelDirectory
-                )
+                    // 打开用户数据文件夹
+                    DataManagementItem(
+                        icon = Icons.Default.FolderOpen,
+                        title = "打开用户数据文件夹",
+                        subtitle = "查看应用数据文件",
+                        showArrow = false,
+                        onClick = onOpenModelDirectory
+                    )
 
-                Divider(color = Color(0xFFE2E8F0))
+                    Divider(color = Color(0xFFE2E8F0))
 
-                // 清除模型缓存
-                DataManagementItemWithButton(
-                    icon = Icons.Default.DeleteOutline,
-                    title = "清除模型缓存",
-                    subtitle = "清除未完成的模型下载缓存",
-                    buttonText = "清除",
-                    onButtonClick = { showClearCacheDialog = true }
-                )
+                    // 清除模型缓存
+                    DataManagementItemWithButton(
+                        icon = Icons.Default.DeleteOutline,
+                        title = "清除模型缓存",
+                        subtitle = "清除未完成的模型下载缓存",
+                        buttonText = "清除",
+                        onButtonClick = { showClearCacheDialog = true }
+                    )
 
-                Divider(color = Color(0xFFE2E8F0))
+                    Divider(color = Color(0xFFE2E8F0))
 
-                // 重置应用
-                DataManagementItem(
-                    icon = Icons.Default.RestartAlt,
-                    title = "重置应用",
-                    subtitle = "恢复应用到初始状态",
-                    textColor = Color(0xFFEF4444),
-                    onClick = { /* TODO: 重置应用 */ }
-                )
+                    // 重置应用
+                    DataManagementItem(
+                        icon = Icons.Default.RestartAlt,
+                        title = "重置应用",
+                        subtitle = "恢复应用到初始状态",
+                        textColor = Color(0xFFEF4444),
+                        onClick = { /* TODO: 重置应用 */ }
+                    )
+                }
             }
         }
 

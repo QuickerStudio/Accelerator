@@ -100,17 +100,6 @@ fun AboutCard() {
         )
     }
 
-    // Toast 提示
-    if (showToast) {
-        androidx.compose.material3.Snackbar(
-            modifier = Modifier.padding(16.dp),
-            containerColor = toastColor,
-            contentColor = Color(0xFF1E293B)
-        ) {
-            Text(toastMessage)
-        }
-    }
-
     // 版本历史对话框
     if (showVersionDialog) {
         AlertDialog(

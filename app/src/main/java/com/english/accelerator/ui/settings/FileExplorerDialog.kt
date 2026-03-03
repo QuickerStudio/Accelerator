@@ -1,5 +1,8 @@
 package com.english.accelerator.ui.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,9 +35,11 @@ fun FileExplorerDialog(
     rootPath: String,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     var currentPath by remember { mutableStateOf(File(rootPath)) }
     var files by remember { mutableStateOf(listOf<File>()) }
     var showDeleteConfirm by remember { mutableStateOf<File?>(null) }
+    var showCopyToast by remember { mutableStateOf(false) }
 
     // 加载当前目录的文件
     LaunchedEffect(currentPath) {
@@ -92,20 +98,42 @@ fun FileExplorerDialog(
                 ) {
                     Row(
                         modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Folder,
-                            contentDescription = null,
-                            tint = Color(0xFF8B5CF6),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = currentPath.absolutePath,
-                            fontSize = 12.sp,
-                            color = Color(0xFF475569)
-                        )
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Folder,
+                                contentDescription = null,
+                                tint = Color(0xFF8B5CF6),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = currentPath.absolutePath,
+                                fontSize = 12.sp,
+                                color = Color(0xFF475569)
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText("path", currentPath.absolutePath)
+                                clipboard.setPrimaryClip(clip)
+                                showCopyToast = true
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "复制路径",
+                                tint = Color(0xFF8B5CF6),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
 
@@ -168,6 +196,26 @@ fun FileExplorerDialog(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // 复制成功提示
+    if (showCopyToast) {
+        LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(2000)
+            showCopyToast = false
+        }
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Snackbar(
+                modifier = Modifier.padding(16.dp),
+                containerColor = Color(0xFFDCFCE7),
+                contentColor = Color(0xFF1E293B)
+            ) {
+                Text("路径已复制到剪贴板")
             }
         }
     }
