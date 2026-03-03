@@ -26,12 +26,14 @@ class DEngine {
      * @param url 下载地址
      * @param targetFile 目标文件
      * @param onProgress 进度回调 (已下载字节, 总字节, 速度 bytes/sec)
+     * @param onRangeSupportDetected 断点续传支持检测回调 (url, supportsRange)
      * @return 下载结果
      */
     suspend fun download(
         url: String,
         targetFile: File,
-        onProgress: (downloaded: Long, total: Long, speed: Long) -> Unit
+        onProgress: (downloaded: Long, total: Long, speed: Long) -> Unit,
+        onRangeSupportDetected: ((String, Boolean) -> Unit)? = null
     ): Result<File> = withContext(Dispatchers.IO) {
         try {
             // 重置状态
@@ -54,17 +56,56 @@ class DEngine {
             connection.connect()
 
             val responseCode = connection.responseCode
-            val totalSize = if (responseCode == HttpURLConnection.HTTP_PARTIAL) {
-                existingSize + connection.contentLength.toLong()
-            } else {
-                connection.contentLength.toLong()
+
+            // 🔧 修复：检查服务器是否支持断点续传
+            val supportsRange: Boolean
+            val totalSize: Long
+            val append: Boolean
+            val startOffset: Long
+
+            when (responseCode) {
+                HttpURLConnection.HTTP_PARTIAL -> {
+                    // 206 Partial Content - 服务器支持断点续传
+                    supportsRange = true
+                    totalSize = existingSize + connection.contentLength.toLong()
+                    append = true
+                    startOffset = existingSize
+
+                    // 可选：验证 Content-Range 响应头
+                    val contentRange = connection.getHeaderField("Content-Range")
+                    if (contentRange != null) {
+                        // 格式：bytes <start>-<end>/<total>
+                        // 例如：bytes 1024-3655827455/3655827456
+                        println("Content-Range: $contentRange")
+                    }
+                }
+                HttpURLConnection.HTTP_OK -> {
+                    // 200 OK - 服务器不支持断点续传或返回完整内容
+                    if (existingSize > 0) {
+                        // 服务器不支持 Range，需要删除旧文件重新下载
+                        supportsRange = false
+                        targetFile.delete()
+                        println("⚠️ 服务器不支持断点续传，删除旧文件重新下载")
+                    } else {
+                        // 全新下载
+                        supportsRange = true  // 无法判断，假设支持
+                    }
+                    totalSize = connection.contentLength.toLong()
+                    append = false
+                    startOffset = 0L
+                }
+                else -> {
+                    throw Exception("下载失败: HTTP $responseCode")
+                }
             }
 
+            // 通知调用者服务器是否支持断点续传
+            onRangeSupportDetected?.invoke(url, supportsRange)
+
             connection.inputStream.use { input ->
-                val append = responseCode == HttpURLConnection.HTTP_PARTIAL
                 java.io.FileOutputStream(targetFile, append).use { output ->
                     val buffer = ByteArray(8192)
-                    var downloaded = existingSize
+                    var downloaded = startOffset
                     var bytes: Int
                     var lastUpdateTime = System.currentTimeMillis()
                     var lastDownloaded = downloaded

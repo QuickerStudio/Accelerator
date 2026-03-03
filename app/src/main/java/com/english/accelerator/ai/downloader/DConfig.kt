@@ -71,11 +71,15 @@ class DConfig(private val context: Context) {
                             addProperty("name", "MODELSCOPE")
                             addProperty("displayName", "魔塔社区")
                             addProperty("url", "https://www.modelscope.cn/models/google/gemma-3n-E2B-it-litert-lm/resolve/master/gemma-3n-E2B-it-int4.litertlm")
+                            addProperty("supportsRange", true)  // 默认假设支持
+                            addProperty("rangeChecked", false)  // 是否已检测
                         })
                         add(JsonObject().apply {
                             addProperty("name", "HUGGINGFACE")
                             addProperty("displayName", "HuggingFace")
                             addProperty("url", "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm")
+                            addProperty("supportsRange", true)  // 默认假设支持
+                            addProperty("rangeChecked", false)  // 是否已检测
                         })
                     })
                 })
@@ -316,12 +320,63 @@ class DConfig(private val context: Context) {
                 DRoute(
                     name = route.get("name")?.asString ?: "",
                     displayName = route.get("displayName")?.asString ?: "",
-                    url = route.get("url")?.asString ?: ""
+                    url = route.get("url")?.asString ?: "",
+                    supportsRange = route.get("supportsRange")?.asBoolean ?: true,
+                    rangeChecked = route.get("rangeChecked")?.asBoolean ?: false
                 )
             } ?: emptyList()
         } catch (e: Exception) {
             AppLogger.error(TAG, "Failed to get download routes", e)
             emptyList()
+        }
+    }
+
+    /**
+     * 更新指定线路的断点续传支持状态
+     */
+    fun updateRouteRangeSupport(url: String, supportsRange: Boolean) {
+        try {
+            val download = config?.getAsJsonObject("download")
+            val routes = download?.getAsJsonArray("routes")
+
+            routes?.forEach { routeElement ->
+                val route = routeElement.asJsonObject
+                if (route.get("url")?.asString == url) {
+                    route.addProperty("supportsRange", supportsRange)
+                    route.addProperty("rangeChecked", true)
+                    saveConfig()
+                    AppLogger.info(TAG, "Updated Range support for $url: $supportsRange")
+                    return
+                }
+            }
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to update route Range support", e)
+        }
+    }
+
+    /**
+     * 检查指定线路是否支持断点续传
+     */
+    fun isRangeSupportedByUrl(url: String): Boolean? {
+        return try {
+            val download = config?.getAsJsonObject("download")
+            val routes = download?.getAsJsonArray("routes")
+
+            routes?.forEach { routeElement ->
+                val route = routeElement.asJsonObject
+                if (route.get("url")?.asString == url) {
+                    val checked = route.get("rangeChecked")?.asBoolean ?: false
+                    return if (checked) {
+                        route.get("supportsRange")?.asBoolean ?: true
+                    } else {
+                        null  // 未检测过，返回 null
+                    }
+                }
+            }
+            null
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to check Range support", e)
+            null
         }
     }
 }

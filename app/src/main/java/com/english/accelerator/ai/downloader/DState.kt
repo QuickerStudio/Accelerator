@@ -24,7 +24,9 @@ data class DState(
 data class DRoute(
     val name: String,
     val displayName: String,
-    val url: String
+    val url: String,
+    val supportsRange: Boolean = true,  // 是否支持断点续传
+    val rangeChecked: Boolean = false   // 是否已检测过
 )
 
 /**
@@ -41,9 +43,11 @@ enum class DStatus {
  *
  * 负责监视下载文件目录的状态，并返回各种必要的状态信息给下载管理器
  */
-class DStateMonitor(private val context: Context) {
+class DStateMonitor(
+    private val context: Context,
+    private val configManager: DConfig  // 接收 DManager 传递的配置实例
+) {
 
-    private val configManager = DConfig(context)
     private val modelFile: File
         get() = File(context.filesDir, "models/${configManager.getModelFileName()}")
 
