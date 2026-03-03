@@ -297,15 +297,14 @@ fun LearningPlanScreen(
 }
 
 /**
- * 月度日历网格组件
+ * 月度日历网格组件（固定31天）
  */
 @Composable
 private fun MonthCalendarGrid(
     selectedDays: Set<Int>,
     onDayClick: (Int) -> Unit
 ) {
-    val currentMonth = remember { YearMonth.now() }
-    val daysInMonth = currentMonth.lengthOfMonth()
+    val today = remember { LocalDate.now().dayOfMonth }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -328,7 +327,7 @@ private fun MonthCalendarGrid(
             }
         }
 
-        // 日期网格
+        // 日期网格（固定31天）
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             modifier = Modifier
@@ -337,50 +336,56 @@ private fun MonthCalendarGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // 计算第一天是星期几
-            val firstDayOfMonth = LocalDate.of(currentMonth.year, currentMonth.month, 1)
-            val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // 0=周日, 1=周一...
-
-            // 添加空白占位
-            items(firstDayOfWeek) {
-                Box(modifier = Modifier.aspectRatio(1f))
-            }
-
-            // 添加日期
-            items(daysInMonth) { index ->
+            // 添加日期（1-31）
+            items(31) { index ->
                 val day = index + 1
                 val isSelected = selectedDays.contains(day)
-                val isToday = day == LocalDate.now().dayOfMonth
+                val isToday = day == today
 
                 Box(
                     modifier = Modifier
                         .aspectRatio(1f)
-                        .clip(CircleShape)
-                        .background(
-                            when {
-                                isSelected -> Color(0xFF8B5CF6)
-                                isToday -> Color(0xFFE9D5FF)
-                                else -> Color.Transparent
-                            }
-                        )
-                        .border(
-                            width = if (isToday && !isSelected) 1.dp else 0.dp,
-                            color = Color(0xFF8B5CF6),
-                            shape = CircleShape
-                        )
-                        .clickable { onDayClick(day) },
+                        .padding(if (isToday) 3.dp else 0.dp), // 为今天的外圈留出空间
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = day.toString(),
-                        fontSize = 14.sp,
-                        fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
-                        color = when {
-                            isSelected -> Color.White
-                            isToday -> Color(0xFF8B5CF6)
-                            else -> Color(0xFF1E293B)
-                        }
-                    )
+                    // 今天的外圈
+                    if (isToday) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .border(
+                                    width = 2.dp,
+                                    color = Color(0xFF8B5CF6),
+                                    shape = CircleShape
+                                )
+                        )
+                    }
+
+                    // 日期圆形背景
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(if (isToday) 0.75f else 1f) // 今天的圆形缩小
+                            .clip(CircleShape)
+                            .background(
+                                when {
+                                    isSelected -> Color(0xFF8B5CF6)
+                                    else -> Color.Transparent
+                                }
+                            )
+                            .clickable { onDayClick(day) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = day.toString(),
+                            fontSize = 14.sp,
+                            fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
+                            color = when {
+                                isSelected -> Color.White
+                                isToday -> Color(0xFF8B5CF6)
+                                else -> Color(0xFF1E293B)
+                            }
+                        )
+                    }
                 }
             }
         }
