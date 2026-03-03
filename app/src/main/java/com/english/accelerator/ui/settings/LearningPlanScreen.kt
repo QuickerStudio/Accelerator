@@ -245,18 +245,30 @@ fun LearningPlanScreen(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "$dailyWordGoal 个",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF8B5CF6)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = if (dailyWordGoal == 0) "不限制" else "$dailyWordGoal 个",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF8B5CF6)
+                            )
+                            if (dailyWordGoal == 0) {
+                                Text(
+                                    text = "（默认模式）",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
 
                         Slider(
                             value = dailyWordGoal.toFloat(),
                             onValueChange = { dailyWordGoal = it.toInt() },
-                            valueRange = 20f..200f,
-                            steps = 17,
+                            valueRange = 0f..200f,
+                            steps = 19,
                             colors = SliderDefaults.colors(
                                 thumbColor = Color(0xFF8B5CF6),
                                 activeTrackColor = Color(0xFF8B5CF6),
@@ -269,7 +281,7 @@ fun LearningPlanScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "20个",
+                                text = "0（不限制）",
                                 fontSize = 12.sp,
                                 color = Color(0xFF64748B)
                             )
