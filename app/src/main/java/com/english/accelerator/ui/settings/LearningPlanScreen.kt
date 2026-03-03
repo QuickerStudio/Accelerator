@@ -42,6 +42,7 @@ fun LearningPlanScreen(
     var reminderHour by remember { mutableStateOf(20) }
     var reminderMinute by remember { mutableStateOf(0) }
     var dailyGoalMinutes by remember { mutableStateOf(30) }
+    var dailyWordGoal by remember { mutableStateOf(100) } // 新增：每日学习单词数
 
     // 对话框状态
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -153,6 +154,7 @@ fun LearningPlanScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // 学习时长
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -205,6 +207,67 @@ fun LearningPlanScreen(
                             )
                             Text(
                                 text = "120分钟",
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
+                    }
+
+                    Divider(color = Color(0xFFE2E8F0))
+
+                    // 每日学习单词数
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MenuBook,
+                            contentDescription = null,
+                            tint = Color(0xFF8B5CF6),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "每日学习单词数",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF1E293B)
+                        )
+                    }
+
+                    // 单词数滑块
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "$dailyWordGoal 个",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF8B5CF6)
+                        )
+
+                        Slider(
+                            value = dailyWordGoal.toFloat(),
+                            onValueChange = { dailyWordGoal = it.toInt() },
+                            valueRange = 20f..200f,
+                            steps = 17,
+                            colors = SliderDefaults.colors(
+                                thumbColor = Color(0xFF8B5CF6),
+                                activeTrackColor = Color(0xFF8B5CF6),
+                                inactiveTrackColor = Color(0xFFE2E8F0)
+                            )
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "20个",
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B)
+                            )
+                            Text(
+                                text = "200个",
                                 fontSize = 12.sp,
                                 color = Color(0xFF64748B)
                             )
