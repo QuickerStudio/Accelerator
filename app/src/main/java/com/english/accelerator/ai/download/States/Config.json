@@ -22,5 +22,18 @@
       }
     ]
   },
+  "state": {
+    "currentDownload": {
+      "modelPath": "",
+      "downloadedBytes": 0,
+      "totalBytes": 1932735488,
+      "isComplete": false,
+      "isPaused": false,
+      "lastUpdateTime": 0,
+      "downloadRoute": "HUGGINGFACE",
+      "errorMessage": null
+    },
+    "history": []
+  },
   "version": "1.0.0"
 }
