@@ -101,7 +101,7 @@ fun LearningPlanScreen(
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "启用系统通知",
+                                text = "学习提醒信息",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color(0xFF1E293B)
