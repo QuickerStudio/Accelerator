@@ -55,7 +55,7 @@ class ConfigManager(private val context: Context) {
                 // Model config
                 add("model", JsonObject().apply {
                     addProperty("name", "gemma-3n-e2b-it-int4")
-                    addProperty("expectedSize", 1_932_735_488L)
+                    addProperty("expectedSize", 3_655_827_456L)
                     addProperty("sizeTolerance", 1024 * 1024)
                     addProperty("fileName", "gemma-3n-e2b-it-int4.litertlm")
                 })
@@ -85,7 +85,7 @@ class ConfigManager(private val context: Context) {
                     add("currentDownload", JsonObject().apply {
                         addProperty("modelPath", "")
                         addProperty("downloadedBytes", 0L)
-                        addProperty("totalBytes", 1_932_735_488L)
+                        addProperty("totalBytes", 3_655_827_456L)
                         addProperty("isComplete", false)
                         addProperty("isPaused", false)
                         addProperty("lastUpdateTime", 0L)
@@ -250,7 +250,7 @@ class ConfigManager(private val context: Context) {
         updateDownloadState(
             modelPath = "",
             downloadedBytes = 0L,
-            totalBytes = 1_932_735_488L,
+            totalBytes = 3_655_827_456L,
             isComplete = false,
             isPaused = false,
             downloadRoute = "MODELSCOPE",
@@ -264,9 +264,9 @@ class ConfigManager(private val context: Context) {
      */
     fun getExpectedModelSize(): Long {
         return try {
-            config?.getAsJsonObject("model")?.get("expectedSize")?.asLong ?: 1_932_735_488L
+            config?.getAsJsonObject("model")?.get("expectedSize")?.asLong ?: 3_655_827_456L
         } catch (e: Exception) {
-            1_932_735_488L
+            3_655_827_456L
         }
     }
 
