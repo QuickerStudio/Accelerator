@@ -1,5 +1,8 @@
 package com.english.accelerator.ui.settings
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -13,17 +16,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.utils.DataExportImportHelper
+import kotlinx.coroutines.launch
 
 /**
  * 数据管理卡片 - 自包含组件（可折叠）
  *
  * 功能：
+ * - 数据备份/恢复
  * - AI 模型数据管理
- * - 数据备份
- * - 数据恢复
  * - 清除缓存
  * - 重置应用
  */
@@ -32,68 +37,125 @@ fun DataManagementCard(
     onOpenModelDirectory: () -> Unit = {},
     onClearModelCache: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var isExpanded by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
+    var showToast by remember { mutableStateOf(false) }
+    var toastMessage by remember { mutableStateOf("") }
+    var toastColor by remember { mutableStateOf(Color.White) }
+    val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // 折叠/展开标题
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isExpanded = !isExpanded }
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Storage,
-                contentDescription = null,
-                tint = Color(0xFF8B5CF6),
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                text = "数据管理",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF1E293B),
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = null,
-                tint = Color(0xFF94A3B8),
-                modifier = Modifier.size(20.dp)
-            )
+    // 文件选择器 - 导入数据
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                val result = DataExportImportHelper.importData(context, it)
+                result.onSuccess { message ->
+                    toastMessage = message
+                    toastColor = Color(0xFFDCFCE7)
+                    showToast = true
+                }.onFailure { error ->
+                    toastMessage = "导入失败: ${error.message}"
+                    toastColor = Color(0xFFFEE2E2)
+                    showToast = true
+                }
+            }
         }
+    }
 
-        // 可折叠内容
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = expandVertically(),
-            exit = shrinkVertically()
+    // 文件创建器 - 导出数据
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                val result = DataExportImportHelper.exportData(context)
+                result.onSuccess { file ->
+                    // 复制文件到用户选择的位置
+                    context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                        file.inputStream().use { inputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
+                    }
+                    toastMessage = "数据导出成功"
+                    toastColor = Color(0xFFDCFCE7)
+                    showToast = true
+                }.onFailure { error ->
+                    toastMessage = "导出失败: ${error.message}"
+                    toastColor = Color(0xFFFEE2E2)
+                    showToast = true
+                }
+            }
+        }
+    }
+
+    Box {
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column {
-                Divider(color = Color(0xFFE2E8F0))
-
-                // 数据备份
-                DataManagementItem(
-                    icon = Icons.Default.Backup,
-                    title = "数据备份",
-                    subtitle = "备份学习数据到本地",
-                    onClick = { /* TODO: 执行数据备份 */ }
+            // 折叠/展开标题
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Storage,
+                    contentDescription = null,
+                    tint = Color(0xFF8B5CF6),
+                    modifier = Modifier.size(24.dp)
                 )
-
-                Divider(color = Color(0xFFE2E8F0))
-
-                // 数据恢复
-                DataManagementItem(
-                    icon = Icons.Default.RestorePage,
-                    title = "数据恢复",
-                    subtitle = "从备份恢复学习数据",
-                    onClick = { /* TODO: 执行数据恢复 */ }
+                Text(
+                    text = "数据管理",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF1E293B),
+                    modifier = Modifier.weight(1f)
                 )
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = Color(0xFF94A3B8),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // 可折叠内容
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column {
+                    Divider(color = Color(0xFFE2E8F0))
+
+                    // 数据备份
+                    DataManagementItem(
+                        icon = Icons.Default.Backup,
+                        title = "数据备份",
+                        subtitle = "备份学习数据到本地",
+                        onClick = {
+                            val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                            exportLauncher.launch("Accelerator_Backup_$timestamp.Accele")
+                        }
+                    )
+
+                    Divider(color = Color(0xFFE2E8F0))
+
+                    // 数据恢复
+                    DataManagementItem(
+                        icon = Icons.Default.RestorePage,
+                        title = "数据恢复",
+                        subtitle = "从备份恢复学习数据",
+                        onClick = {
+                            importLauncher.launch("*/*")
+                        }
+                    )
 
                 Divider(color = Color(0xFFE2E8F0))
 
@@ -137,6 +199,17 @@ fun DataManagementCard(
                     textColor = Color(0xFFEF4444),
                     onClick = { /* TODO: 重置应用 */ }
                 )
+            }
+        }
+
+        // Toast 提示
+        if (showToast) {
+            androidx.compose.material3.Snackbar(
+                modifier = Modifier.padding(16.dp),
+                containerColor = toastColor,
+                contentColor = Color(0xFF1E293B)
+            ) {
+                Text(toastMessage)
             }
         }
     }
