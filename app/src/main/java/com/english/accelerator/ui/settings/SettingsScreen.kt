@@ -69,6 +69,9 @@ fun SettingsScreen() {
     var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDStatus()) }
     val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.DStatus.COMPLETE
 
+    // 文件浏览器对话框状态
+    var showFileExplorer by remember { mutableStateOf(false) }
+
     // 🔧 新增：定时轮询文件大小来更新进度（每秒一次）
     LaunchedEffect(isDownloading, isPaused) {
         if (isDownloading || isPaused) {
@@ -187,26 +190,17 @@ fun SettingsScreen() {
                     }
                 },
                 onOpenDirectory = {
-                    // 🔧 临时：打开缓存目录
-                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                    val uri = androidx.core.content.FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        context.filesDir
-                    )
-                    intent.setDataAndType(uri, "resource/folder")
-                    intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    try {
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        // 如果无法打开文件管理器，使用 Toast 提示路径
-                        android.widget.Toast.makeText(
-                            context,
-                            "缓存目录: ${context.filesDir.absolutePath}",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                    }
+                    // 🔧 临时：打开内部文件浏览器
+                    showFileExplorer = true
                 }
+            )
+        }
+
+        // 文件浏览器对话框
+        if (showFileExplorer) {
+            FileExplorerDialog(
+                rootPath = context.filesDir.absolutePath,
+                onDismiss = { showFileExplorer = false }
             )
         }
 
