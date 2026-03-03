@@ -408,14 +408,16 @@ private fun MonthCalendarGrid(
                 },
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 8.dp)
-                    .size(56.dp),
+                    .offset(y = 100.dp)
+                    .width(200.dp)
+                    .height(40.dp),
                 containerColor = Color(0xFFF1F5F9),
-                contentColor = Color(0xFF64748B)
+                contentColor = Color(0xFF64748B),
+                shape = RoundedCornerShape(30.dp)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
@@ -423,8 +425,8 @@ private fun MonthCalendarGrid(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "重置",
-                        fontSize = 11.sp
+                        text = "重置所有选择日期",
+                        fontSize = 14.sp
                     )
                 }
             }
