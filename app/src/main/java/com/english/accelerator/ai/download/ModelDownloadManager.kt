@@ -82,17 +82,23 @@ class ModelDownloadManager(private val context: Context) {
     suspend fun downloadModel(
         onProgress: (downloaded: Long, total: Long, speed: Long) -> Unit
     ): Result<File> = withContext(Dispatchers.IO) {
-        // 检查模型是否已存在
-        if (isModelDownloaded()) {
+        // 检查模型是否已完整下载
+        if (isModelComplete()) {
             return@withContext Result.success(modelFile)
         }
 
         // 使用当前选择的线路下载
         val result = downloadEngine.download(getSelectedUrl(), modelFile, onProgress)
 
-        // 下载成功后保存配置
+        // 下载成功后验证完整性并保存配置
         if (result.isSuccess) {
-            modelConfig.markModelDownloaded(modelFile.absolutePath, modelFile.length())
+            if (isModelComplete()) {
+                modelConfig.markModelDownloaded(modelFile.absolutePath, modelFile.length())
+            } else {
+                return@withContext Result.failure(
+                    Exception("下载完成但文件大小不匹配。预期: ${EXPECTED_MODEL_SIZE / (1024 * 1024)}MB, 实际: ${modelFile.length() / (1024 * 1024)}MB")
+                )
+            }
         }
 
         result
