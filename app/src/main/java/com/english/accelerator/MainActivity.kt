@@ -29,8 +29,14 @@ import com.english.accelerator.ui.speaking.VoiceInputTestScreen
 import com.english.accelerator.ui.theme.AcceleratorTheme
 import com.english.accelerator.ui.vocabulary.VocabularyScreen
 import com.english.accelerator.ui.writing.WritingScreen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -54,6 +60,14 @@ class MainActivity : ComponentActivity() {
 
         // 初始化 GemmaInferenceManager
         com.english.accelerator.ai.GemmaInferenceManager.init(this)
+
+        // 自动初始化模型（如果已下载）
+        scope.launch {
+            val gemmaManager = com.english.accelerator.ai.GemmaInferenceManager.getInstance()
+            if (gemmaManager.isModelDownloaded()) {
+                gemmaManager.initialize()
+            }
+        }
 
         enableEdgeToEdge()
         setContent {
