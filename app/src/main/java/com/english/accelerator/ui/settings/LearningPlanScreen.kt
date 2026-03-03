@@ -331,65 +331,104 @@ private fun MonthCalendarGrid(
             }
         }
 
-        // 日期网格（固定31天）
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(7),
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 300.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        // 日期网格和重置按钮
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 添加日期（1-31）
-            items(31) { index ->
-                val day = index + 1
-                val isSelected = selectedDays.contains(day)
-                val isToday = day == today
+            // 日期网格（固定31天）
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(7),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(max = 300.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // 添加日期（1-31）
+                items(31) { index ->
+                    val day = index + 1
+                    val isSelected = selectedDays.contains(day)
+                    val isToday = day == today
 
-                Box(
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(if (isToday) 3.dp else 0.dp), // 为今天的外圈留出空间
-                    contentAlignment = Alignment.Center
-                ) {
-                    // 今天的外圈
-                    if (isToday) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .border(
-                                    width = 2.dp,
-                                    color = Color(0xFF8B5CF6),
-                                    shape = CircleShape
-                                )
-                        )
-                    }
-
-                    // 日期圆形背景
                     Box(
                         modifier = Modifier
-                            .fillMaxSize(if (isToday) 0.75f else 1f) // 今天的圆形缩小
-                            .clip(CircleShape)
-                            .background(
-                                when {
-                                    isSelected -> Color(0xFF8B5CF6)
-                                    else -> Color.Transparent
-                                }
-                            )
-                            .clickable { onDayClick(day) },
+                            .aspectRatio(1f)
+                            .padding(if (isToday) 3.dp else 0.dp), // 为今天的外圈留出空间
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = day.toString(),
-                            fontSize = 14.sp,
-                            fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
-                            color = when {
-                                isSelected -> Color.White
-                                isToday -> Color(0xFF8B5CF6)
-                                else -> Color(0xFF1E293B)
-                            }
-                        )
+                        // 今天的外圈
+                        if (isToday) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .border(
+                                        width = 2.dp,
+                                        color = Color(0xFF8B5CF6),
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+
+                        // 日期圆形背景
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(if (isToday) 0.75f else 1f) // 今天的圆形缩小
+                                .clip(CircleShape)
+                                .background(
+                                    when {
+                                        isSelected -> Color(0xFF8B5CF6)
+                                        else -> Color.Transparent
+                                    }
+                                )
+                                .clickable { onDayClick(day) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = day.toString(),
+                                fontSize = 14.sp,
+                                fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
+                                color = when {
+                                    isSelected -> Color.White
+                                    isToday -> Color(0xFF8B5CF6)
+                                    else -> Color(0xFF1E293B)
+                                }
+                            )
+                        }
                     }
+                }
+            }
+
+            // 重置按钮
+            Button(
+                onClick = {
+                    // 清空所有选中的日期
+                    selectedDays.forEach { day ->
+                        onDayClick(day)
+                    }
+                },
+                modifier = Modifier
+                    .width(80.dp)
+                    .align(Alignment.CenterVertically),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF1F5F9),
+                    contentColor = Color(0xFF64748B)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "重置",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "重置",
+                        fontSize = 12.sp
+                    )
                 }
             }
         }
