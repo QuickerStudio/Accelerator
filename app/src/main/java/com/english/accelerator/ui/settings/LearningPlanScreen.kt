@@ -1,9 +1,13 @@
 package com.english.accelerator.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -12,18 +16,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.time.LocalDate
+import java.time.YearMonth
 
 /**
  * 学习计划设置页面
  *
  * 功能：
- * - 每日开始时间设置（使用专业时间选择器）
- * - 每日结束时间设置（使用专业时间选择器）
- * - 学习提醒时间设置
+ * - 学习提醒总开关
+ * - 提醒时间设置
+ * - 日历选择提醒日期
+ * - 每日学习时间段设置
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,18 +42,19 @@ fun LearningPlanScreen(
     val scrollState = rememberScrollState()
 
     // 状态管理
+    var reminderEnabled by remember { mutableStateOf(true) }
+    var reminderHour by remember { mutableStateOf(20) }
+    var reminderMinute by remember { mutableStateOf(0) }
+    var selectedDays by remember { mutableStateOf(setOf<Int>()) } // 选中的日期
     var dailyStartHour by remember { mutableStateOf(9) }
     var dailyStartMinute by remember { mutableStateOf(0) }
     var dailyEndHour by remember { mutableStateOf(22) }
     var dailyEndMinute by remember { mutableStateOf(0) }
-    var reminderEnabled by remember { mutableStateOf(true) }
-    var reminderHour by remember { mutableStateOf(20) }
-    var reminderMinute by remember { mutableStateOf(0) }
 
     // 对话框状态
+    var showReminderTimePicker by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
-    var showReminderTimePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -72,33 +82,10 @@ fun LearningPlanScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 每日学习时间段
-            SettingsCard(title = "每日学习时间段") {
-                Column {
-                    // 开始时间
-                    TimeSettingItem(
-                        icon = Icons.Default.WbSunny,
-                        title = "每日开始时间",
-                        time = TimeFormatter.format(dailyStartHour, dailyStartMinute),
-                        onClick = { showStartTimePicker = true }
-                    )
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    // 结束时间
-                    TimeSettingItem(
-                        icon = Icons.Default.NightsStay,
-                        title = "每日结束时间",
-                        time = TimeFormatter.format(dailyEndHour, dailyEndMinute),
-                        onClick = { showEndTimePicker = true }
-                    )
-                }
-            }
-
-            // 学习提醒
+            // 学习提醒（总开关）
             SettingsCard(title = "学习提醒") {
                 Column {
-                    // 提醒开关
+                    // 提醒总开关
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -141,10 +128,94 @@ fun LearningPlanScreen(
                             time = TimeFormatter.format(reminderHour, reminderMinute),
                             onClick = { showReminderTimePicker = true }
                         )
+
+                        Divider(color = Color(0xFFE2E8F0))
+
+                        // 提醒日期选择（日历）
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    tint = Color(0xFF8B5CF6),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = "选择提醒日期",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF1E293B)
+                                )
+                            }
+
+                            // 日历网格
+                            MonthCalendarGrid(
+                                selectedDays = selectedDays,
+                                onDayClick = { day ->
+                                    selectedDays = if (selectedDays.contains(day)) {
+                                        selectedDays - day
+                                    } else {
+                                        selectedDays + day
+                                    }
+                                }
+                            )
+
+                            // 提示文本
+                            Text(
+                                text = if (selectedDays.isEmpty()) {
+                                    "点击日期选择提醒日"
+                                } else {
+                                    "已选择 ${selectedDays.size} 天"
+                                },
+                                fontSize = 13.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
                     }
                 }
             }
 
+            // 每日学习时间段
+            SettingsCard(title = "每日学习时间段") {
+                Column {
+                    // 开始时间
+                    TimeSettingItem(
+                        icon = Icons.Default.WbSunny,
+                        title = "每日开始时间",
+                        time = TimeFormatter.format(dailyStartHour, dailyStartMinute),
+                        onClick = { showStartTimePicker = true }
+                    )
+
+                    Divider(color = Color(0xFFE2E8F0))
+
+                    // 结束时间
+                    TimeSettingItem(
+                        icon = Icons.Default.NightsStay,
+                        title = "每日结束时间",
+                        time = TimeFormatter.format(dailyEndHour, dailyEndMinute),
+                        onClick = { showEndTimePicker = true }
+                    )
+                }
+            }
+
+            // 提示信息
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFF1F5F9)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
@@ -154,7 +225,7 @@ fun LearningPlanScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "系统会在设定的时间段内提醒你学习，帮助你养成良好的学习习惯。",
+                        text = "系统会在选定的日期和时间提醒你学习，帮助你养成良好的学习习惯。",
                         fontSize = 13.sp,
                         color = Color(0xFF64748B),
                         lineHeight = 18.sp
@@ -165,34 +236,6 @@ fun LearningPlanScreen(
     }
 
     // 时间选择器对话框
-    if (showStartTimePicker) {
-        TimePickerDialog(
-            title = "选择每日开始时间",
-            initialHour = dailyStartHour,
-            initialMinute = dailyStartMinute,
-            onDismiss = { showStartTimePicker = false },
-            onConfirm = { hour, minute ->
-                dailyStartHour = hour
-                dailyStartMinute = minute
-                showStartTimePicker = false
-            }
-        )
-    }
-
-    if (showEndTimePicker) {
-        TimePickerDialog(
-            title = "选择每日结束时间",
-            initialHour = dailyEndHour,
-            initialMinute = dailyEndMinute,
-            onDismiss = { showEndTimePicker = false },
-            onConfirm = { hour, minute ->
-                dailyEndHour = hour
-                dailyEndMinute = minute
-                showEndTimePicker = false
-            }
-        )
-    }
-
     if (showReminderTimePicker) {
         TimePickerDialog(
             title = "选择提醒时间",
@@ -206,8 +249,130 @@ fun LearningPlanScreen(
             }
         )
     }
+
+    if (showStartTimePicker) {
+        TimePickerDialog(
+            title = "选择开始时间",
+            initialHour = dailyStartHour,
+            initialMinute = dailyStartMinute,
+            onDismiss = { showStartTimePicker = false },
+            onConfirm = { hour, minute ->
+                dailyStartHour = hour
+                dailyStartMinute = minute
+                showStartTimePicker = false
+            }
+        )
+    }
+
+    if (showEndTimePicker) {
+        TimePickerDialog(
+            title = "选择结束时间",
+            initialHour = dailyEndHour,
+            initialMinute = dailyEndMinute,
+            onDismiss = { showEndTimePicker = false },
+            onConfirm = { hour, minute ->
+                dailyEndHour = hour
+                dailyEndMinute = minute
+                showEndTimePicker = false
+            }
+        )
+    }
 }
 
+/**
+ * 月度日历网格组件
+ */
+@Composable
+private fun MonthCalendarGrid(
+    selectedDays: Set<Int>,
+    onDayClick: (Int) -> Unit
+) {
+    val currentMonth = remember { YearMonth.now() }
+    val daysInMonth = currentMonth.lengthOfMonth()
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // 星期标题
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            listOf("日", "一", "二", "三", "四", "五", "六").forEach { day ->
+                Text(
+                    text = day,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF64748B),
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // 日期网格
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 300.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // 计算第一天是星期几
+            val firstDayOfMonth = LocalDate.of(currentMonth.year, currentMonth.month, 1)
+            val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // 0=周日, 1=周一...
+
+            // 添加空白占位
+            items(firstDayOfWeek) {
+                Box(modifier = Modifier.aspectRatio(1f))
+            }
+
+            // 添加日期
+            items(daysInMonth) { index ->
+                val day = index + 1
+                val isSelected = selectedDays.contains(day)
+                val isToday = day == LocalDate.now().dayOfMonth
+
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isSelected -> Color(0xFF8B5CF6)
+                                isToday -> Color(0xFFE9D5FF)
+                                else -> Color.Transparent
+                            }
+                        )
+                        .border(
+                            width = if (isToday && !isSelected) 1.dp else 0.dp,
+                            color = Color(0xFF8B5CF6),
+                            shape = CircleShape
+                        )
+                        .clickable { onDayClick(day) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = day.toString(),
+                        fontSize = 14.sp,
+                        fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
+                        color = when {
+                            isSelected -> Color.White
+                            isToday -> Color(0xFF8B5CF6)
+                            else -> Color(0xFF1E293B)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 设置卡片容器
+ */
 @Composable
 private fun SettingsCard(
     title: String,
@@ -235,6 +400,9 @@ private fun SettingsCard(
     }
 }
 
+/**
+ * 时间设置项
+ */
 @Composable
 private fun TimeSettingItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -275,5 +443,14 @@ private fun TimeSettingItem(
             tint = Color(0xFF94A3B8),
             modifier = Modifier.size(20.dp)
         )
+    }
+}
+
+/**
+ * 时间格式化工具
+ */
+object TimeFormatter {
+    fun format(hour: Int, minute: Int): String {
+        return String.format("%02d:%02d", hour, minute)
     }
 }
