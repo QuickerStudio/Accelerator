@@ -84,6 +84,7 @@ fun SettingsScreen() {
                 downloadProgress = downloadProgress,
                 downloadSpeed = downloadSpeed,
                 currentRoute = currentRoute,
+                hasCache = downloadProgress > 0f || downloadStatus == com.english.accelerator.ai.downloader.DStatus.PARTIAL,
                 onDownloadClick = {
                     when {
                         isError -> {
