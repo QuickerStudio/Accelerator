@@ -117,10 +117,27 @@ fun SettingsScreen() {
 
                         try {
                             gemmaManager.initialize()
-                            toastMessage = "模型加载成功！"
-                            toastBackgroundColor = Color(0xFFDCFCE7)
+
+                            // 检查模型状态
+                            delay(1000) // 等待状态更新
+                            val currentState = gemmaManager.modelState.value
+
+                            when (currentState) {
+                                is GemmaInferenceManager.ModelState.Ready -> {
+                                    toastMessage = "模型加载成功！"
+                                    toastBackgroundColor = Color(0xFFDCFCE7)
+                                }
+                                is GemmaInferenceManager.ModelState.Error -> {
+                                    toastMessage = "模型加载失败: ${currentState.message}"
+                                    toastBackgroundColor = Color(0xFFFEE2E2)
+                                }
+                                else -> {
+                                    toastMessage = "模型状态未知"
+                                    toastBackgroundColor = Color(0xFFFEE2E2)
+                                }
+                            }
                         } catch (e: Exception) {
-                            toastMessage = "模型加载失败: ${e.message}"
+                            toastMessage = "模型加载异常: ${e.message}\n${e.stackTraceToString().take(200)}"
                             toastBackgroundColor = Color(0xFFFEE2E2)
                         } finally {
                             isLoadingModel = false
