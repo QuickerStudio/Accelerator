@@ -29,6 +29,7 @@ import com.english.accelerator.ui.speaking.VoiceInputTestScreen
 import com.english.accelerator.ui.theme.AcceleratorTheme
 import com.english.accelerator.ui.vocabulary.VocabularyScreen
 import com.english.accelerator.ui.writing.WritingScreen
+import com.english.accelerator.ai.model.GemmaInferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -59,11 +60,11 @@ class MainActivity : ComponentActivity() {
         com.english.accelerator.data.EssayCollectionManager.init(this)
 
         // 初始化 GemmaInferenceManager
-        com.english.accelerator.ai.GemmaInferenceManager.init(this)
+        com.english.accelerator.ai.model.GemmaInferenceManager.init(this)
 
         // 自动初始化模型（如果已下载）
         scope.launch {
-            val gemmaManager = com.english.accelerator.ai.GemmaInferenceManager.getInstance()
+            val gemmaManager = com.english.accelerator.ai.model.GemmaInferenceManager.getInstance()
             if (gemmaManager.isModelDownloaded()) {
                 gemmaManager.initialize()
             }
@@ -79,12 +80,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onLowMemory() {
         super.onLowMemory()
-        com.english.accelerator.ai.GemmaInferenceManager.getInstance().onLowMemory()
+        com.english.accelerator.ai.model.GemmaInferenceManager.getInstance().onLowMemory()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        com.english.accelerator.ai.GemmaInferenceManager.getInstance().cleanup()
+        com.english.accelerator.ai.model.GemmaInferenceManager.getInstance().cleanup()
     }
 }
 

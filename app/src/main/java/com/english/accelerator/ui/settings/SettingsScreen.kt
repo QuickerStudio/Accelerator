@@ -43,7 +43,7 @@ fun SettingsScreen() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val gemmaManager = remember { GemmaInferenceManager.getInstance() }
     val modelState by gemmaManager.modelState.collectAsState()
-    val modelDownloadManager = remember { com.english.accelerator.ai.ModelDownloadManager(context) }
+    val modelDownloadManager = remember { com.english.accelerator.ai.download.ModelDownloadManager(context) }
     val scope = rememberCoroutineScope()
 
     var isDownloading by remember { mutableStateOf(false) }
