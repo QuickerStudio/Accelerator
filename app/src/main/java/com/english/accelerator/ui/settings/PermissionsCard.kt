@@ -5,7 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.compose.foundation.clickable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -45,6 +46,37 @@ fun PermissionsCard() {
         mutableStateOf(checkMicrophonePermission(context))
     }
 
+    // 存储权限请求启动器
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        storagePermissionGranted = isGranted
+        if (!isGranted) {
+            // 如果拒绝，打开设置页面
+            openAppSettings(context)
+        }
+    }
+
+    // 通知权限请求启动器
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        notificationPermissionGranted = isGranted
+        if (!isGranted) {
+            openAppSettings(context)
+        }
+    }
+
+    // 麦克风权限请求启动器
+    val microphonePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        microphonePermissionGranted = isGranted
+        if (!isGranted) {
+            openAppSettings(context)
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -56,9 +88,16 @@ fun PermissionsCard() {
             checked = storagePermissionGranted,
             onCheckedChange = { enabled ->
                 if (enabled) {
-                    openAppSettings(context)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        // Android 11+ 需要特殊权限
+                        openManageStorageSettings(context)
+                    } else {
+                        // 请求传统存储权限
+                        storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    }
                 } else {
-                    storagePermissionGranted = false
+                    // 关闭时跳转到设置页面让用户手动关闭
+                    openAppSettings(context)
                 }
             }
         )
@@ -73,9 +112,11 @@ fun PermissionsCard() {
             checked = notificationPermissionGranted,
             onCheckedChange = { enabled ->
                 if (enabled) {
-                    openAppSettings(context)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
                 } else {
-                    notificationPermissionGranted = false
+                    openAppSettings(context)
                 }
             }
         )
@@ -90,9 +131,9 @@ fun PermissionsCard() {
             checked = microphonePermissionGranted,
             onCheckedChange = { enabled ->
                 if (enabled) {
-                    openAppSettings(context)
+                    microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 } else {
-                    microphonePermissionGranted = false
+                    openAppSettings(context)
                 }
             }
         )
@@ -149,6 +190,19 @@ private fun openAppSettings(context: android.content.Context) {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
     }
     context.startActivity(intent)
+}
+
+/**
+ * 打开管理存储权限设置页面 (Android 11+)
+ */
+private fun openManageStorageSettings(context: android.content.Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
+    }
 }
 
 @Composable
