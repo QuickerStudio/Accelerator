@@ -1,0 +1,26 @@
+{
+  "model": {
+    "name": "gemma-3n-e2b-it-int4",
+    "expectedSize": 1932735488,
+    "sizeTolerance": 1048576,
+    "fileName": "gemma-3n-e2b-it-int4.litertlm"
+  },
+  "download": {
+    "chunkSize": 8192,
+    "maxRetries": 3,
+    "timeoutMs": 30000,
+    "routes": [
+      {
+        "name": "HUGGINGFACE",
+        "displayName": "HuggingFace",
+        "url": "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm"
+      },
+      {
+        "name": "MODELSCOPE",
+        "displayName": "魔塔社区",
+        "url": "https://www.modelscope.cn/models/google/gemma-3n-E2B-it-litert-lm/resolve/master/gemma-3n-E2B-it-int4.litertlm"
+      }
+    ]
+  },
+  "version": "1.0.0"
+}
