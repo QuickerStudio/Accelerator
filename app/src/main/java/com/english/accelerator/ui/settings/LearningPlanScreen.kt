@@ -82,10 +82,10 @@ fun LearningPlanScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 学习提醒（总开关）
-            SettingsCard(title = "学习提醒") {
+            // 学习提醒设置
+            SettingsCard(title = "学习提醒设置") {
                 Column {
-                    // 提醒总开关
+                    // 系统通知开关
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -99,13 +99,19 @@ fun LearningPlanScreen(
                             tint = Color(0xFF8B5CF6),
                             modifier = Modifier.size(24.dp)
                         )
-                        Text(
-                            text = "启用学习提醒",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF1E293B),
-                            modifier = Modifier.weight(1f)
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "启用系统通知",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF1E293B)
+                            )
+                            Text(
+                                text = "发送系统消息通知",
+                                fontSize = 13.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
                         Switch(
                             checked = reminderEnabled,
                             onCheckedChange = { reminderEnabled = it },
