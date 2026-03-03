@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.ui.components.BottomInputArea
 import com.english.accelerator.ui.components.CustomToast
+import com.english.accelerator.ui.components.ScreenshotNotification
 import com.english.accelerator.ui.navigation.BottomNavigationBar
 import com.english.accelerator.ui.navigation.Screen
 import com.english.accelerator.ui.settings.SettingsScreen
@@ -39,6 +40,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.io.File
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Close
 
 class MainActivity : ComponentActivity() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -114,6 +122,10 @@ fun AcceleratorApp() {
     var toastBackgroundColor by remember { mutableStateOf(Color.White) }
     var showToast by remember { mutableStateOf(false) }
 
+    // 截图通知状态
+    var screenshotFile by remember { mutableStateOf<File?>(null) }
+    var showImageViewer by remember { mutableStateOf(false) }
+
     // 临时测试模式 - 设置为 true 启用测试界面
     val testMode = false
 
@@ -138,6 +150,9 @@ fun AcceleratorApp() {
                             toastMessage = message
                             toastBackgroundColor = color
                             showToast = true
+                        },
+                        onScreenshotCaptured = { file ->
+                            screenshotFile = file
                         }
                     )
                 }
@@ -192,6 +207,79 @@ fun AcceleratorApp() {
                         .align(Alignment.TopCenter)
                         .padding(top = 80.dp)
                 )
+            }
+
+            // 截图通知（仅在单词页面显示）
+            if (currentRoute == Screen.Vocabulary.route && screenshotFile != null) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                ScreenshotNotification(
+                    imageFile = screenshotFile!!,
+                    onDismiss = { screenshotFile = null },
+                    onOpenImage = {
+                        showImageViewer = true
+                    },
+                    context = context
+                )
+            }
+
+            // 图片查看器
+            if (showImageViewer && screenshotFile != null) {
+                ImageViewDialog(
+                    imageFile = screenshotFile!!,
+                    onDismiss = {
+                        showImageViewer = false
+                        screenshotFile = null
+                    }
+                )
+            }
+        }
+    }
+}
+@Composable
+private fun ImageViewDialog(
+    imageFile: File,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        androidx.compose.material3.Surface(
+            modifier = Modifier
+                .fillMaxSize(),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            color = Color(0xFF1E293B)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                val bitmap = remember(imageFile) {
+                    try {
+                        android.graphics.BitmapFactory.decodeFile(imageFile.absolutePath)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (bitmap != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = imageFile.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                    )
+                }
+
+                // 关闭按钮
+                androidx.compose.material3.IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                        contentDescription = "关闭",
+                        tint = Color.White
+                    )
+                }
             }
         }
     }

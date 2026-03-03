@@ -31,8 +31,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.components.CustomToast
+import com.english.accelerator.ui.components.ScreenshotNotification
 import com.english.accelerator.utils.rememberScreenshotCapture
 import com.english.accelerator.ai.model.GemmaInferenceManager
 import com.english.accelerator.ai.model.GemmaInferenceManager.ModelState
@@ -40,6 +45,7 @@ import com.english.accelerator.ai.inference.InferenceResult
 import com.english.accelerator.ai.inference.SuggestionType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -83,6 +89,7 @@ private fun parseConversationResponse(rawResponse: String): String {
 fun SpeakingScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val messages = remember { mutableStateListOf<Message>() }
     var inputText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -97,12 +104,14 @@ fun SpeakingScreen(
     var toastBackgroundColor by remember { mutableStateOf(Color.White) }
     var showToast by remember { mutableStateOf(false) }
 
+    // 截图状态
+    var screenshotFile by remember { mutableStateOf<File?>(null) }
+    var showImageViewer by remember { mutableStateOf(false) }
+
     // 截图功能
     val captureScreenshot = rememberScreenshotCapture(
-        onSuccess = { message ->
-            toastMessage = message
-            toastBackgroundColor = Color(0xFFDCFCE7)
-            showToast = true
+        onSuccess = { file ->
+            screenshotFile = file
         },
         onError = { error ->
             toastMessage = error
@@ -321,6 +330,32 @@ fun SpeakingScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 80.dp)
+            )
+        }
+
+        // 截图通知
+        screenshotFile?.let { file ->
+            ScreenshotNotification(
+                imageFile = file,
+                onDismiss = { screenshotFile = null },
+                onOpenImage = {
+                    showImageViewer = true
+                },
+                context = context
+            )
+        }
+
+        // 图片查看器
+        if (showImageViewer && screenshotFile != null) {
+            ImageViewDialog(
+                imageFile = screenshotFile!!,
+                onDismiss = {
+                    showImageViewer = false
+                    screenshotFile = null
+                },
+                onShare = {
+                    shareImage(context, screenshotFile!!)
+                }
             )
         }
     }
@@ -833,3 +868,76 @@ fun ConversationCard(
     }
 }
 
+
+
+private fun shareImage(context: android.content.Context, file: File) {
+    try {
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "image/*"
+            putExtra(android.content.Intent.EXTRA_STREAM, uri)
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(android.content.Intent.createChooser(intent, "分享图片"))
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+@Composable
+private fun ImageViewDialog(
+    imageFile: File,
+    onDismiss: () -> Unit,
+    onShare: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxSize(),
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFF1E293B)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                val bitmap = remember(imageFile) {
+                    try {
+                        android.graphics.BitmapFactory.decodeFile(imageFile.absolutePath)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (bitmap != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = imageFile.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                    )
+                }
+
+                // 关闭按钮
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "关闭",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}

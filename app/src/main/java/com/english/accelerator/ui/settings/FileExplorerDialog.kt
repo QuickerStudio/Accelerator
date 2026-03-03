@@ -3,6 +3,9 @@ package com.english.accelerator.ui.settings
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,11 +19,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.FileProvider
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,6 +46,7 @@ fun FileExplorerDialog(
     var files by remember { mutableStateOf(listOf<File>()) }
     var showDeleteConfirm by remember { mutableStateOf<File?>(null) }
     var showCopyToast by remember { mutableStateOf(false) }
+    var imageToView by remember { mutableStateOf<File?>(null) }
 
     // 加载当前目录的文件
     LaunchedEffect(currentPath) {
@@ -171,10 +178,15 @@ fun FileExplorerDialog(
                             onClick = {
                                 if (file.isDirectory) {
                                     currentPath = file
+                                } else if (isImageFile(file)) {
+                                    imageToView = file
                                 }
                             },
                             onDelete = {
                                 showDeleteConfirm = file
+                            },
+                            onShare = {
+                                shareFile(context, file)
                             }
                         )
                     }
@@ -220,6 +232,17 @@ fun FileExplorerDialog(
         }
     }
 
+    // 图片查看对话框
+    imageToView?.let { imageFile ->
+        ImageViewDialog(
+            imageFile = imageFile,
+            onDismiss = { imageToView = null },
+            onShare = {
+                shareFile(context, imageFile)
+            }
+        )
+    }
+
     // 删除确认对话框
     showDeleteConfirm?.let { fileToDelete ->
         AlertDialog(
@@ -262,7 +285,8 @@ fun FileExplorerDialog(
 private fun FileItem(
     file: File,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShare: () -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -284,9 +308,17 @@ private fun FileItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = if (file.isDirectory) Icons.Default.Folder else Icons.Default.InsertDriveFile,
+                    imageVector = when {
+                        file.isDirectory -> Icons.Default.Folder
+                        isImageFile(file) -> Icons.Default.Image
+                        else -> Icons.Default.InsertDriveFile
+                    },
                     contentDescription = null,
-                    tint = if (file.isDirectory) Color(0xFF8B5CF6) else Color(0xFF64748B),
+                    tint = when {
+                        file.isDirectory -> Color(0xFF8B5CF6)
+                        isImageFile(file) -> Color(0xFF10B981)
+                        else -> Color(0xFF64748B)
+                    },
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -314,16 +346,31 @@ private fun FileItem(
                 }
             }
 
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
-                    tint = Color(0xFFEF4444),
-                    modifier = Modifier.size(20.dp)
-                )
+            Row {
+                if (!file.isDirectory) {
+                    IconButton(
+                        onClick = onShare,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "分享",
+                            tint = Color(0xFF8B5CF6),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "删除",
+                        tint = Color(0xFFEF4444),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
@@ -341,4 +388,130 @@ private fun formatFileSize(bytes: Long): String {
 private fun formatDate(timestamp: Long): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp))
+}
+
+private fun isImageFile(file: File): Boolean {
+    val extension = file.extension.lowercase()
+    return extension in listOf("png", "jpg", "jpeg", "gif", "bmp", "webp")
+}
+
+private fun shareFile(context: Context, file: File) {
+    try {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = when {
+                isImageFile(file) -> "image/*"
+                else -> "*/*"
+            }
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(Intent.createChooser(intent, "分享文件"))
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+@Composable
+private fun ImageViewDialog(
+    imageFile: File,
+    onDismiss: () -> Unit,
+    onShare: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.9f),
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFF1E293B)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // 标题栏
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF0F172A))
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = imageFile.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Row {
+                        IconButton(onClick = onShare) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "分享",
+                                tint = Color.White
+                            )
+                        }
+                        IconButton(onClick = onDismiss) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "关闭",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+
+                // 图片显示区域
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF1E293B)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val bitmap = remember(imageFile) {
+                        try {
+                            BitmapFactory.decodeFile(imageFile.absolutePath)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = imageFile.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BrokenImage,
+                                contentDescription = null,
+                                tint = Color(0xFF64748B),
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "无法加载图片",
+                                color = Color(0xFF94A3B8),
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

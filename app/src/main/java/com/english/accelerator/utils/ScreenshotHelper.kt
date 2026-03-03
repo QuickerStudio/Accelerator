@@ -28,7 +28,7 @@ object ScreenshotHelper {
     /**
      * 截取视图并保存到图片库
      */
-    fun captureAndSave(context: Context, view: View, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+    fun captureAndSave(context: Context, view: View, onSuccess: (File) -> Unit, onError: (String) -> Unit) {
         try {
             // 创建 Bitmap
             view.isDrawingCacheEnabled = true
@@ -48,7 +48,7 @@ object ScreenshotHelper {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
             }
 
-            onSuccess("截图已保存: ${file.absolutePath}")
+            onSuccess(file)
             bitmap.recycle()
         } catch (e: Exception) {
             onError("截图失败: ${e.message}")
@@ -61,7 +61,7 @@ object ScreenshotHelper {
  */
 @Composable
 fun rememberScreenshotCapture(
-    onSuccess: (String) -> Unit = {},
+    onSuccess: (File) -> Unit = {},
     onError: (String) -> Unit = {}
 ): () -> Unit {
     val view = LocalView.current

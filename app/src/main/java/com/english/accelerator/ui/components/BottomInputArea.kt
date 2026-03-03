@@ -1,5 +1,6 @@
 package com.english.accelerator.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -7,6 +8,7 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -17,10 +19,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,26 +35,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.english.accelerator.utils.rememberScreenshotCapture
+import java.io.File
 
 @Composable
 fun BottomInputArea(
     modifier: Modifier = Modifier,
-    onShowToast: (String, Color) -> Unit = { _, _ -> }
+    onShowToast: (String, Color) -> Unit = { _, _ -> },
+    onScreenshotCaptured: (File) -> Unit = {}
 ) {
+    val context = LocalContext.current
     var inputText by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
     // 截图功能
     val captureScreenshot = rememberScreenshotCapture(
-        onSuccess = { message ->
-            onShowToast(message, Color(0xFF10B981))
+        onSuccess = { file ->
+            onScreenshotCaptured(file)
         },
         onError = { error ->
             onShowToast(error, Color(0xFFEF4444))
