@@ -39,10 +39,11 @@ fun ScreenshotNotification(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             modifier = Modifier
+                .padding(top = 80.dp)
                 .background(Color.White, RoundedCornerShape(12.dp))
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -77,7 +78,6 @@ fun ScreenshotNotification(
                 Button(
                     onClick = {
                         onOpenImage()
-                        onDismiss()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF3B82F6)

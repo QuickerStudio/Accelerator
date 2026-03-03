@@ -60,6 +60,7 @@ fun BottomInputArea(
 
     // 截图功能
     val captureScreenshot = rememberScreenshotCapture(
+        cropRatio = 3f / 4f, // 3:4 比例裁剪
         onSuccess = { file ->
             onScreenshotCaptured(file)
         },

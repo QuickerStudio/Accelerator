@@ -27,14 +27,57 @@ object ScreenshotHelper {
 
     /**
      * 截取视图并保存到图片库
+     * @param cropRatio 裁剪比例，例如 6f/9f 表示 6:9 的比例，null 表示不裁剪
      */
-    fun captureAndSave(context: Context, view: View, onSuccess: (File) -> Unit, onError: (String) -> Unit) {
+    fun captureAndSave(
+        context: Context,
+        view: View,
+        cropRatio: Float? = null,
+        onSuccess: (File) -> Unit,
+        onError: (String) -> Unit
+    ) {
         try {
             // 创建 Bitmap
             view.isDrawingCacheEnabled = true
             view.buildDrawingCache()
-            val bitmap = Bitmap.createBitmap(view.drawingCache)
+            val originalBitmap = Bitmap.createBitmap(view.drawingCache)
             view.isDrawingCacheEnabled = false
+
+            // 如果需要裁剪，按照指定比例裁剪中心区域
+            val bitmap = if (cropRatio != null) {
+                val viewWidth = originalBitmap.width
+                val viewHeight = originalBitmap.height
+
+                // 计算裁剪后的尺寸（保持宽度，调整高度）
+                val cropHeight = (viewWidth / cropRatio).toInt()
+
+                // 如果计算出的高度超过视图高度，则保持高度，调整宽度
+                val (finalWidth, finalHeight) = if (cropHeight > viewHeight) {
+                    val cropWidth = (viewHeight * cropRatio).toInt()
+                    cropWidth to viewHeight
+                } else {
+                    viewWidth to cropHeight
+                }
+
+                // 计算居中裁剪的起始位置，向上偏移20dp
+                val density = context.resources.displayMetrics.density
+                val offsetPx = (20 * density).toInt() // 20dp转换为像素
+                val startX = (viewWidth - finalWidth) / 2
+                val startY = ((viewHeight - finalHeight) / 2 - offsetPx).coerceAtLeast(0)
+
+                // 裁剪 Bitmap
+                val croppedBitmap = Bitmap.createBitmap(
+                    originalBitmap,
+                    startX.coerceAtLeast(0),
+                    startY.coerceAtLeast(0),
+                    finalWidth.coerceAtMost(viewWidth),
+                    finalHeight.coerceAtMost(viewHeight)
+                )
+                originalBitmap.recycle()
+                croppedBitmap
+            } else {
+                originalBitmap
+            }
 
             // 保存到应用私有目录
             val fileName = "Accelerator_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.png"
@@ -58,9 +101,11 @@ object ScreenshotHelper {
 
 /**
  * Composable 函数：获取当前视图用于截图
+ * @param cropRatio 裁剪比例，例如 6f/9f 表示 6:9 的比例，null 表示不裁剪
  */
 @Composable
 fun rememberScreenshotCapture(
+    cropRatio: Float? = null,
     onSuccess: (File) -> Unit = {},
     onError: (String) -> Unit = {}
 ): () -> Unit {
@@ -69,7 +114,7 @@ fun rememberScreenshotCapture(
 
     return remember {
         {
-            ScreenshotHelper.captureAndSave(context, view.rootView, onSuccess, onError)
+            ScreenshotHelper.captureAndSave(context, view.rootView, cropRatio, onSuccess, onError)
         }
     }
 }
