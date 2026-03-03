@@ -62,51 +62,51 @@ fun ModelDownloadCard(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 第一行：动画标题 + 线路切换按钮 + 下载按钮/对勾按钮
+        // 第一行：动画标题 + 线路切换按钮
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 左侧：动画标题 + 线路切换按钮
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 动画标题
-                Text(
-                    text = currentTitle,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF8B5CF6)
-                )
+            // 动画标题
+            Text(
+                text = currentTitle,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF8B5CF6)
+            )
 
-                // 线路切换按钮（下载完成后隐藏）
-                if (!isDownloaded) {
-                    TextButton(
-                        onClick = onSwitchRoute,
-                        enabled = !isDownloading || isPaused,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = Color(0xFF8B5CF6),
-                            disabledContentColor = Color(0xFF94A3B8)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SwapHoriz,
-                            contentDescription = "切换线路",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = currentRoute,
-                            fontSize = 12.sp
-                        )
-                    }
+            // 线路切换按钮（下载完成后隐藏）
+            if (!isDownloaded) {
+                TextButton(
+                    onClick = onSwitchRoute,
+                    enabled = !isDownloading || isPaused,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = Color(0xFF8B5CF6),
+                        disabledContentColor = Color(0xFF94A3B8)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SwapHoriz,
+                        contentDescription = "切换线路",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = currentRoute,
+                        fontSize = 12.sp
+                    )
                 }
             }
+        }
 
-            // 右侧：下载按钮或模型管理按钮
+        // 第二行：按钮和状态
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             when {
                 // 已下载：显示加载模型和清除模型按钮
                 isDownloaded -> {
