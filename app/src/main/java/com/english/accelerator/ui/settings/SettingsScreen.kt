@@ -47,16 +47,13 @@ fun SettingsScreen() {
     val modelDownloadManager = remember { com.english.accelerator.ai.downloader.DManager(context) }
     val scope = rememberCoroutineScope()
 
-    // 从 DConfig 恢复下载状态
-    val savedState = remember { modelDownloadManager.getFullState() }
-
-    var isDownloading by remember { mutableStateOf(false) }
-    var isPaused by remember { mutableStateOf(savedState.configState?.isPaused ?: false) }
-    var isError by remember { mutableStateOf(false) }
+    // 核心状态：只使用 downloadStatus 作为唯一真相来源
+    var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDStatus()) }
     var downloadProgress by remember {
+        val state = modelDownloadManager.getFullState()
         mutableStateOf(
-            if (savedState.fileSize > 0 && savedState.expectedSize > 0) {
-                savedState.fileSize.toFloat() / savedState.expectedSize.toFloat()
+            if (state.fileSize > 0 && state.expectedSize > 0) {
+                state.fileSize.toFloat() / state.expectedSize.toFloat()
             } else {
                 0f
             }
@@ -64,25 +61,24 @@ fun SettingsScreen() {
     }
     var downloadSpeed by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(modelDownloadManager.getCurrentRouteName()) }
-
-    // 使用新的下载状态判断
-    var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDStatus()) }
-    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.DStatus.COMPLETE
-
-    // 文件浏览器对话框状态
     var showFileExplorer by remember { mutableStateOf(false) }
 
-    // 🔧 新增：定时轮询文件大小来更新进度（每秒一次）
-    LaunchedEffect(isDownloading, isPaused) {
-        if (isDownloading || isPaused) {
-            while (isDownloading || isPaused) {
-                val state = modelDownloadManager.getFullState()
-                if (state.expectedSize > 0) {
-                    downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
-                }
-                downloadStatus = modelDownloadManager.getDStatus()
-                delay(1000) // 每秒更新一次
+    // 从 downloadStatus 派生所有 UI 状态
+    val isDownloaded = downloadStatus == com.english.accelerator.ai.downloader.DStatus.COMPLETE
+    val isDownloading = downloadStatus == com.english.accelerator.ai.downloader.DStatus.DOWNLOADING
+    val isPaused = downloadStatus == com.english.accelerator.ai.downloader.DStatus.PARTIAL
+    val hasCache = isPaused || isDownloading
+
+    // 定时刷新进度（仅在下载中或暂停时）
+    LaunchedEffect(downloadStatus) {
+        while (downloadStatus == com.english.accelerator.ai.downloader.DStatus.DOWNLOADING ||
+               downloadStatus == com.english.accelerator.ai.downloader.DStatus.PARTIAL) {
+            delay(1000)
+            val state = modelDownloadManager.getFullState()
+            if (state.expectedSize > 0) {
+                downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
             }
+            downloadStatus = modelDownloadManager.getDStatus()
         }
     }
 
@@ -106,58 +102,44 @@ fun SettingsScreen() {
         // AI 模型管理部分
         SettingsSection(title = "AI 模型管理") {
             ModelDownloadCard(
-                isDownloaded = isDownloadComplete,
+                isDownloaded = isDownloaded,
                 isDownloading = isDownloading,
                 isPaused = isPaused,
-                isError = isError,
+                isError = false,
                 downloadProgress = downloadProgress,
                 downloadSpeed = downloadSpeed,
                 currentRoute = currentRoute,
-                hasCache = downloadProgress > 0f || downloadStatus == com.english.accelerator.ai.downloader.DStatus.PARTIAL,
+                hasCache = hasCache,
                 onDownloadClick = {
-                    when {
-                        isError -> {
-                            // 重试
-                            isError = false
-                            downloadStatus = com.english.accelerator.ai.downloader.DStatus.NOT_DOWNLOADED
+                    when (downloadStatus) {
+                        com.english.accelerator.ai.downloader.DStatus.PARTIAL -> {
+                            // 继续下载
                             scope.launch {
-                                isDownloading = true
+                                downloadStatus = com.english.accelerator.ai.downloader.DStatus.DOWNLOADING
                                 modelDownloadManager.downloadModel { downloaded, total, speed ->
-                                    downloadProgress = if (total > 0) downloaded.toFloat() / total else 0f
                                     downloadSpeed = speed
                                 }.onSuccess {
-                                    isDownloading = false
                                     downloadStatus = modelDownloadManager.getDStatus()
                                 }.onFailure {
-                                    isDownloading = false
-                                    isError = true
+                                    downloadStatus = modelDownloadManager.getDStatus()
                                 }
                             }
                         }
-                        isPaused -> {
-                            // 继续
-                            modelDownloadManager.resumeDownload()
-                            isPaused = false
-                        }
-                        isDownloading -> {
+                        com.english.accelerator.ai.downloader.DStatus.DOWNLOADING -> {
                             // 暂停
                             modelDownloadManager.pauseDownload()
-                            isPaused = true
+                            downloadStatus = com.english.accelerator.ai.downloader.DStatus.PARTIAL
                         }
                         else -> {
                             // 开始下载
-                            downloadStatus = com.english.accelerator.ai.downloader.DStatus.NOT_DOWNLOADED
                             scope.launch {
-                                isDownloading = true
+                                downloadStatus = com.english.accelerator.ai.downloader.DStatus.DOWNLOADING
                                 modelDownloadManager.downloadModel { downloaded, total, speed ->
-                                    downloadProgress = if (total > 0) downloaded.toFloat() / total else 0f
                                     downloadSpeed = speed
                                 }.onSuccess {
-                                    isDownloading = false
                                     downloadStatus = modelDownloadManager.getDStatus()
                                 }.onFailure {
-                                    isDownloading = false
-                                    isError = true
+                                    downloadStatus = modelDownloadManager.getDStatus()
                                 }
                             }
                         }
@@ -177,20 +159,14 @@ fun SettingsScreen() {
                     }
                 },
                 onClearCache = {
-                    // 清空下载缓存
                     scope.launch {
                         modelDownloadManager.cancelDownload()
                         modelDownloadManager.deleteModel()
-                        isDownloading = false
-                        isPaused = false
-                        isError = false
-                        downloadProgress = 0f
                         downloadSpeed = 0L
                         downloadStatus = modelDownloadManager.getDStatus()
                     }
                 },
                 onOpenDirectory = {
-                    // 🔧 临时：打开内部文件浏览器
                     showFileExplorer = true
                 }
             )
