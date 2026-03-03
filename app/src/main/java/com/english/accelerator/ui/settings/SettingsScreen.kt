@@ -55,7 +55,7 @@ fun SettingsScreen() {
 
     // 使用新的下载状态判断
     var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDStatus()) }
-    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.DManager.DStatus.COMPLETE
+    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.DStatus.COMPLETE
 
     Column(
         modifier = Modifier
@@ -89,7 +89,7 @@ fun SettingsScreen() {
                         isError -> {
                             // 重试
                             isError = false
-                            isDownloadComplete = false
+                            downloadStatus = com.english.accelerator.ai.downloader.DStatus.NOT_DOWNLOADED
                             scope.launch {
                                 isDownloading = true
                                 modelDownloadManager.downloadModel { downloaded, total, speed ->
@@ -116,7 +116,7 @@ fun SettingsScreen() {
                         }
                         else -> {
                             // 开始下载
-                            isDownloadComplete = false
+                            downloadStatus = com.english.accelerator.ai.downloader.DStatus.NOT_DOWNLOADED
                             scope.launch {
                                 isDownloading = true
                                 modelDownloadManager.downloadModel { downloaded, total, speed ->

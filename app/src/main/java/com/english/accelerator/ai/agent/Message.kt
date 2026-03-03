@@ -6,5 +6,6 @@ package com.english.accelerator.ai.agent
  */
 data class Message(
     val role: String,  // "system", "user", or "assistant"
-    val content: String
+    val content: String,
+    val timestamp: Long = System.currentTimeMillis()
 )
