@@ -74,6 +74,9 @@ class MainActivity : ComponentActivity() {
         // 初始化 GemmaInferenceManager
         com.english.accelerator.ai.model.GemmaInferenceManager.init(this)
 
+        // 初始化 WordPoolManager（新增：算法模块）
+        com.english.accelerator.algorithm.WordPoolManager.getInstance().init(this)
+
         // 自动初始化模型（如果已下载）
         scope.launch {
             val gemmaManager = com.english.accelerator.ai.model.GemmaInferenceManager.getInstance()
