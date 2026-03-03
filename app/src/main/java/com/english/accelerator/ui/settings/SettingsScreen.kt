@@ -90,19 +90,7 @@ fun SettingsScreen() {
 
         // 关于部分
         SettingsSection(title = "关于") {
-            SettingsItem(
-                icon = Icons.Default.Info,
-                title = "版本信息",
-                subtitle = "v0.5.0",
-                onClick = { /* TODO: 显示版本详情 */ }
-            )
-            Divider(color = Color(0xFFE2E8F0))
-            SettingsItem(
-                icon = Icons.Default.Code,
-                title = "开源许可",
-                subtitle = "查看开源组件许可信息",
-                onClick = { /* TODO: 显示许可信息 */ }
-            )
+            AboutCard()
         }
     }
 }
@@ -131,48 +119,5 @@ private fun SettingsSection(
         ) {
             content()
         }
-    }
-}
-
-@Composable
-private fun SettingsItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color(0xFF8B5CF6),
-            modifier = Modifier.size(24.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF1E293B)
-            )
-            Text(
-                text = subtitle,
-                fontSize = 13.sp,
-                color = Color(0xFF64748B)
-            )
-        }
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = Color(0xFF94A3B8),
-            modifier = Modifier.size(20.dp)
-        )
     }
 }
