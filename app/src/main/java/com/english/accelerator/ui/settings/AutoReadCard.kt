@@ -252,7 +252,7 @@ fun AutoReadCard() {
                             fontWeight = FontWeight.Medium
                         )
                     }
-                </Row>
+                }
 
                 // 持续时间
                 Row(
