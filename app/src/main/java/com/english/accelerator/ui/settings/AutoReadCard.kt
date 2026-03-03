@@ -32,9 +32,9 @@ import com.google.accompanist.flowlayout.FlowRow
  */
 @Composable
 fun AutoReadCard() {
-    var readTextEnabled by remember { mutableStateOf(true) }
-    var readWordsEnabled by remember { mutableStateOf(true) }
-    var readGrammarEnabled by remember { mutableStateOf(true) }
+    var readTextEnabled by remember { mutableStateOf(false) }
+    var readWordsEnabled by remember { mutableStateOf(false) }
+    var readGrammarEnabled by remember { mutableStateOf(false) }
     var isScheduleExpanded by remember { mutableStateOf(false) }
     var isReadSettingsExpanded by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(setOf(1, 2, 3, 4, 5, 6, 7)) }
