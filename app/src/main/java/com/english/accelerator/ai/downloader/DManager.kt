@@ -12,18 +12,20 @@ import java.io.File
  * 管理 Gemma 3n E2B-it 模型的下载
  */
 class DManager(private val context: Context) {
-    private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
     private val modelConfig = ModelConfig.getInstance()
 
     // Config.json 管理器 - 单一真相来源
-    private val configManager = com.english.accelerator.ai.downloader.DConfig(context)
+    private val configManager = DConfig(context)
 
-    // 从 Config.json 读取配置
-    private val expectedModelSize: Long
-        get() = configManager.getExpectedModelSize()
+    // 状态监视器 - 监视文件和下载状态
+    private val stateMonitor = DStateMonitor(context)
 
     // 下载引擎
     private val downloadEngine = DEngine()
+
+    // 模型文件引用
+    private val modelFile: File
+        get() = File(stateMonitor.getFilePath())
 
     // 线路枚举
     enum class DownloadRoute {
@@ -89,14 +91,14 @@ class DManager(private val context: Context) {
     suspend fun downloadModel(
         onProgress: (downloaded: Long, total: Long, speed: Long) -> Unit
     ): Result<File> = withContext(Dispatchers.IO) {
-        // 检查模型是否已完整下载
-        if (isModelComplete()) {
+        // 使用状态监视器检查模型是否已完整下载
+        if (stateMonitor.isFileComplete()) {
             configManager.addDownloadLog("Model already complete, skipping download")
             return@withContext Result.success(modelFile)
         }
 
         // 检查是否可以恢复下载
-        val existingSize = if (modelFile.exists()) modelFile.length() else 0L
+        val existingSize = stateMonitor.getFileSize()
         if (existingSize > 0) {
             configManager.addResumeLog("Resuming download from $existingSize bytes")
         } else {
@@ -104,10 +106,11 @@ class DManager(private val context: Context) {
         }
 
         // 更新下载状态
+        val expectedSize = configManager.getExpectedModelSize()
         configManager.updateDownloadState(
-            modelPath = modelFile.absolutePath,
+            modelPath = stateMonitor.getFilePath(),
             downloadedBytes = existingSize,
-            totalBytes = expectedModelSize,
+            totalBytes = expectedSize,
             isComplete = false,
             isPaused = false,
             downloadRoute = selectedRoute.name
@@ -118,21 +121,21 @@ class DManager(private val context: Context) {
 
         // 下载成功后验证完整性并保存配置
         if (result.isSuccess) {
-            if (isModelComplete()) {
-                modelConfig.markModelDownloaded(modelFile.absolutePath, modelFile.length())
+            val validation = stateMonitor.validateFile()
+            if (validation.isValid) {
+                modelConfig.markModelDownloaded(stateMonitor.getFilePath(), stateMonitor.getFileSize())
                 configManager.updateDownloadState(
-                    modelPath = modelFile.absolutePath,
-                    downloadedBytes = modelFile.length(),
-                    totalBytes = expectedModelSize,
+                    modelPath = stateMonitor.getFilePath(),
+                    downloadedBytes = stateMonitor.getFileSize(),
+                    totalBytes = expectedSize,
                     isComplete = true,
                     isPaused = false,
                     downloadRoute = selectedRoute.name
                 )
-                configManager.addDownloadLog("Download completed successfully: ${modelFile.length()} bytes")
+                configManager.addDownloadLog("Download completed successfully: ${stateMonitor.getFileSize()} bytes")
             } else {
-                val errorMsg = "下载完成但文件大小不匹配。预期: ${expectedModelSize / (1024 * 1024)}MB, 实际: ${modelFile.length() / (1024 * 1024)}MB"
-                configManager.addErrorLog(errorMsg)
-                return@withContext Result.failure(Exception(errorMsg))
+                configManager.addErrorLog("Download validation failed: ${validation.reason}")
+                return@withContext Result.failure(Exception(validation.reason))
             }
         } else {
             val errorMsg = result.exceptionOrNull()?.message ?: "Unknown download error"
@@ -171,54 +174,35 @@ class DManager(private val context: Context) {
     /**
      * 检查模型是否已下载
      */
-    fun isModelDownloaded(): Boolean = modelFile.exists() && modelFile.length() > 0
+    fun isModelDownloaded(): Boolean = stateMonitor.fileExists() && stateMonitor.getFileSize() > 0
 
     /**
      * 检查模型文件完整性
-     * @return true 如果文件完整，false 如果文件不存在或不完整
      */
-    fun isModelComplete(): Boolean {
-        if (!modelFile.exists()) {
-            return false
-        }
-
-        val fileSize = modelFile.length()
-
-        // 从 Config.json 读取容差值（1MB）
-        val sizeTolerance = 1024 * 1024L
-
-        // 检查文件大小是否在预期范围内
-        val sizeDiff = kotlin.math.abs(fileSize - expectedModelSize)
-        return sizeDiff <= sizeTolerance
-    }
+    fun isModelComplete(): Boolean = stateMonitor.isFileComplete()
 
     /**
      * 获取下载状态
      */
-    fun getDStatus(): DStatus {
-        return when {
-            !modelFile.exists() -> DStatus.NOT_DOWNLOADED
-            isModelComplete() -> DStatus.COMPLETE
-            else -> DStatus.PARTIAL
-        }
-    }
+    fun getDStatus(): DStatus = stateMonitor.getFileStatus()
 
     /**
-     * 下载状态枚举
+     * 获取完整状态信息
      */
-    enum class DStatus {
-        NOT_DOWNLOADED,  // 文件不存在
-        PARTIAL,         // 文件部分下载
-        COMPLETE         // 文件完整
-    }
+    fun getFullState(): DStateInfo = stateMonitor.getFullState()
+
+    /**
+     * 获取下载进度百分比
+     */
+    fun getProgressPercentage(): Float = stateMonitor.getProgressPercentage()
 
     /**
      * 获取模型文件路径
      */
-    fun getModelPath(): String = modelFile.absolutePath
+    fun getModelPath(): String = stateMonitor.getFilePath()
 
     /**
      * 删除模型
      */
-    fun deleteModel(): Boolean = modelFile.delete()
+    fun deleteModel(): Boolean = stateMonitor.deleteFile()
 }

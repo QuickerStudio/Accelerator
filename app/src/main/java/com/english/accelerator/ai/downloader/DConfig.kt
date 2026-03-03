@@ -271,6 +271,28 @@ class DConfig(private val context: Context) {
     }
 
     /**
+     * 获取模型文件名
+     */
+    fun getModelFileName(): String {
+        return try {
+            config?.getAsJsonObject("model")?.get("fileName")?.asString ?: "gemma-3n-e2b-it-int4.litertlm"
+        } catch (e: Exception) {
+            "gemma-3n-e2b-it-int4.litertlm"
+        }
+    }
+
+    /**
+     * 获取文件大小容差值
+     */
+    fun getSizeTolerance(): Long {
+        return try {
+            config?.getAsJsonObject("model")?.get("sizeTolerance")?.asLong ?: (1024 * 1024L)
+        } catch (e: Exception) {
+            1024 * 1024L
+        }
+    }
+
+    /**
      * 获取默认下载线路
      */
     fun getDefaultRoute(): String {
@@ -303,26 +325,3 @@ class DConfig(private val context: Context) {
         }
     }
 }
-
-/**
- * 下载状态信息
- */
-data class DState(
-    val modelPath: String,
-    val downloadedBytes: Long,
-    val totalBytes: Long,
-    val isComplete: Boolean,
-    val isPaused: Boolean,
-    val lastUpdateTime: Long,
-    val downloadRoute: String,
-    val errorMessage: String?
-)
-
-/**
- * 下载线路信息
- */
-data class DRoute(
-    val name: String,
-    val displayName: String,
-    val url: String
-)
