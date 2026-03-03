@@ -243,9 +243,20 @@ fun LearningPlanScreen(
             initialMinute = reminderMinute,
             onDismiss = { showReminderTimePicker = false },
             onConfirm = { hour, minute ->
-                reminderHour = hour
-                reminderMinute = minute
-                showReminderTimePicker = false
+                // 验证提醒时间是否在学习时间段内
+                val reminderMinutes = hour * 60 + minute
+                val startMinutes = dailyStartHour * 60 + dailyStartMinute
+                val endMinutes = dailyEndHour * 60 + dailyEndMinute
+
+                if (reminderMinutes >= startMinutes && reminderMinutes <= endMinutes) {
+                    reminderHour = hour
+                    reminderMinute = minute
+                    showReminderTimePicker = false
+                } else {
+                    // 提示用户时间超出范围
+                    // TODO: 显示错误提示
+                    showReminderTimePicker = false
+                }
             }
         )
     }

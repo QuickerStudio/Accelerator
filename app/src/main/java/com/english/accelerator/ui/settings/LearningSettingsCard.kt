@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
  *
  * 功能：
  * - 学习提醒开关
+ * - 夜晚免打扰开关
  * - 每日学习目标设置
  * - 学习计划设置
  * - 学习统计显示设置
@@ -31,6 +32,7 @@ fun LearningSettingsCard(
 ) {
     // 内部状态管理
     var learningReminderEnabled by remember { mutableStateOf(true) }
+    var nightDoNotDisturbEnabled by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -41,6 +43,17 @@ fun LearningSettingsCard(
             title = "学习提醒",
             checked = learningReminderEnabled,
             onCheckedChange = { learningReminderEnabled = it }
+        )
+
+        Divider(color = Color(0xFFE2E8F0))
+
+        // 夜晚免打扰 - 开关
+        SettingItemWithSwitch(
+            icon = Icons.Default.NightlightRound,
+            title = "夜晚免打扰",
+            subtitle = "关闭夜晚的学习提醒和自动朗读",
+            checked = nightDoNotDisturbEnabled,
+            onCheckedChange = { nightDoNotDisturbEnabled = it }
         )
 
         Divider(color = Color(0xFFE2E8F0))
@@ -82,6 +95,7 @@ fun LearningSettingsCard(
 private fun SettingItemWithSwitch(
     icon: ImageVector,
     title: String,
+    subtitle: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
@@ -98,13 +112,21 @@ private fun SettingItemWithSwitch(
             tint = Color(0xFF8B5CF6),
             modifier = Modifier.size(24.dp)
         )
-        Text(
-            text = title,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color(0xFF1E293B),
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF1E293B)
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    fontSize = 13.sp,
+                    color = Color(0xFF64748B)
+                )
+            }
+        }
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
