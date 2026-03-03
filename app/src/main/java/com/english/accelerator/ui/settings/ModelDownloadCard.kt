@@ -228,7 +228,7 @@ fun ModelDownloadCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${(downloadProgress * 100).toInt()}%",
+                        text = String.format("%.2f%%", downloadProgress * 100),
                         fontSize = 12.sp,
                         color = Color(0xFF64748B)
                     )
