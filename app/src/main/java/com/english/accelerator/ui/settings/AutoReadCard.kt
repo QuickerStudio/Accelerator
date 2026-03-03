@@ -1,5 +1,8 @@
 package com.english.accelerator.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,13 +18,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.flowlayout.FlowRow
 
 /**
  * 自动朗读设置卡片 - 自包含组件
  *
  * 功能：
  * - 每日自动朗读英语文本/单词/语法开关
- * - 日期时间设置（每周哪些天、每日几点）
+ * - 日期时间设置（每周哪些天、每日几点）- 可折叠
  * - 朗读速度设置
  * - 朗读音量设置
  * - 朗读语音选择
@@ -31,6 +35,7 @@ fun AutoReadCard() {
     var readTextEnabled by remember { mutableStateOf(true) }
     var readWordsEnabled by remember { mutableStateOf(true) }
     var readGrammarEnabled by remember { mutableStateOf(true) }
+    var isScheduleExpanded by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(setOf(1, 2, 3, 4, 5, 6, 7)) }
     var selectedTime by remember { mutableStateOf("20:00") }
     var showTimePickerDialog by remember { mutableStateOf(false) }
@@ -145,34 +150,54 @@ fun AutoReadCard() {
 
         Divider(color = Color(0xFFE2E8F0))
 
-        // 日期时间设置
-        Column(
+        // 日期时间设置 - 可折叠标题
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable { isScheduleExpanded = !isScheduleExpanded }
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "日期时间设置",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF64748B)
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF1E293B),
+                modifier = Modifier.weight(1f)
             )
-
-            // 每周哪些天
-            Text(
-                text = "每周哪些天:",
-                fontSize = 13.sp,
-                color = Color(0xFF64748B)
+            Icon(
+                imageVector = if (isScheduleExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = null,
+                tint = Color(0xFF94A3B8),
+                modifier = Modifier.size(20.dp)
             )
+        }
 
-            // 使用两行布局显示星期按钮
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // 第一行：周一到周四
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+        // 可折叠的日期时间设置内容
+        AnimatedVisibility(
+            visible = isScheduleExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 每周哪些天
+                Text(
+                    text = "每周哪些天:",
+                    fontSize = 13.sp,
+                    color = Color(0xFF64748B)
+                )
+
+                FlowRow(
+                    mainAxisSpacing = 8.dp,
+                    crossAxisSpacing = 8.dp
                 ) {
-                    weekDays.take(4).forEachIndexed { index, day ->
+                    weekDays.forEachIndexed { index, day ->
                         val dayNumber = index + 1
                         val isSelected = selectedDays.contains(dayNumber)
                         OutlinedButton(
@@ -189,8 +214,7 @@ fun AutoReadCard() {
                             ),
                             border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
                             shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                            modifier = Modifier.weight(1f)
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text(
                                 text = day,
@@ -200,65 +224,36 @@ fun AutoReadCard() {
                     }
                 }
 
-                // 第二行：周五到周日
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // 每日几点
                 Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    weekDays.drop(4).forEachIndexed { index, day ->
-                        val dayNumber = index + 5
-                        val isSelected = selectedDays.contains(dayNumber)
-                        OutlinedButton(
-                            onClick = {
-                                selectedDays = if (isSelected) {
-                                    selectedDays - dayNumber
-                                } else {
-                                    selectedDays + dayNumber
-                                }
-                            },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (isSelected) Color(0xFF8B5CF6) else Color.Transparent,
-                                contentColor = if (isSelected) Color.White else Color(0xFF8B5CF6)
-                            ),
-                            border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = day,
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-                    // 添加空白占位符以保持对齐
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // 每日几点
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "每日几点:",
-                    fontSize = 13.sp,
-                    color = Color(0xFF64748B)
-                )
-                OutlinedButton(
-                    onClick = { showTimePickerDialog = true },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF8B5CF6)
-                    ),
-                    border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-                ) {
                     Text(
-                        text = selectedTime,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
+                        text = "每日几点:",
+                        fontSize = 13.sp,
+                        color = Color(0xFF64748B)
+                    )
+                    OutlinedButton(
+                        onClick = { showTimePickerDialog = true },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF8B5CF6)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = selectedTime,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Text(
+                        text = "设置",
+                        fontSize = 13.sp,
+                        color = Color(0xFF64748B)
                     )
                 }
             }

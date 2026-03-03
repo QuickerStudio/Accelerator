@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.accompanist.flowlayout)
 
     // MediaPipe LLM Inference for Gemma
     implementation("com.google.mediapipe:tasks-genai:0.10.14")
