@@ -61,9 +61,14 @@ fun LearningStatsScreen(
 
     val appUsageMinutes = remember { mutableStateOf(1050) }
     val streakDays = remember { mutableStateOf(7) }
+    val averageEssayScore = remember { mutableStateOf(85) }
+    val averageSpeakingScore = remember { mutableStateOf(78) }
 
     // 学习日历数据 - 哪些天有学习记录
     val studyDays = remember { mutableStateOf(setOf(1, 2, 3, 5, 6, 7, 9, 10, 12, 14, 15, 16, 18, 20, 21, 22, 23, 25, 27, 28, 29, 30)) }
+
+    // 日历显示状态
+    var showCalendar by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -121,18 +126,22 @@ fun LearningStatsScreen(
                                 color = Color.White.copy(alpha = 0.8f)
                             )
                         }
-                        Surface(
-                            shape = CircleShape,
-                            color = Color.White.copy(alpha = 0.2f)
+                        IconButton(
+                            onClick = { showCalendar = !showCalendar }
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .padding(12.dp)
-                                    .size(32.dp)
-                            )
+                            Surface(
+                                shape = CircleShape,
+                                color = Color.White.copy(alpha = 0.2f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = "切换日历显示",
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .size(32.dp)
+                                )
+                            }
                         }
                     }
 
@@ -202,14 +211,15 @@ fun LearningStatsScreen(
                 }
             }
 
-            // 学习日历
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
+            // 学习日历（可折叠）
+            if (showCalendar) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -275,6 +285,7 @@ fun LearningStatsScreen(
                     }
                 }
             }
+            }
 
             // 分类统计标题
             Text(
@@ -295,13 +306,15 @@ fun LearningStatsScreen(
             // 写作练习统计
             WritingStatsCard(
                 essayCount = essayCount.value,
-                totalWords = totalWords.value
+                totalWords = totalWords.value,
+                averageScore = averageEssayScore.value
             )
 
             // 对话练习统计
             SpeakingStatsCard(
                 conversationCount = conversationCount.value,
-                conversationRounds = conversationRounds.value
+                conversationRounds = conversationRounds.value,
+                averageScore = averageSpeakingScore.value
             )
 
             // 应用使用时长（参考）
@@ -510,7 +523,8 @@ private fun VocabularyStatsCard(
 @Composable
 private fun WritingStatsCard(
     essayCount: Int,
-    totalWords: Int
+    totalWords: Int,
+    averageScore: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -552,7 +566,7 @@ private fun WritingStatsCard(
             // 统计数据
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 StatItem(
                     label = "完成作文",
@@ -573,6 +587,38 @@ private fun WritingStatsCard(
                     color = Color(0xFF3B82F6)
                 )
             }
+
+            Divider(color = Color(0xFFE2E8F0))
+
+            // AI 平均评分
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = Color(0xFFFFB800),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "AI 平均评分",
+                        fontSize = 14.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+                Text(
+                    text = "$averageScore 分",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF3B82F6)
+                )
+            }
         }
     }
 }
@@ -580,7 +626,8 @@ private fun WritingStatsCard(
 @Composable
 private fun SpeakingStatsCard(
     conversationCount: Int,
-    conversationRounds: Int
+    conversationRounds: Int,
+    averageScore: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -636,10 +683,36 @@ private fun SpeakingStatsCard(
                     unit = "轮",
                     color = Color(0xFF10B981)
                 )
-                StatItem(
-                    label = "平均轮次",
-                    value = "${conversationRounds / conversationCount.coerceAtLeast(1)}",
-                    unit = "轮",
+            }
+
+            Divider(color = Color(0xFFE2E8F0))
+
+            // AI 平均评分
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = Color(0xFFFFB800),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "AI 平均评分",
+                        fontSize = 14.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+                Text(
+                    text = "$averageScore 分",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xFF10B981)
                 )
             }

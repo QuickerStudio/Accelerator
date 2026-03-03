@@ -120,7 +120,7 @@ fun VocabularyTopBar(
                 )
             }
 
-            // 作文收藏库按钮
+            // 作文收藏按钮
             IconButton(
                 onClick = onBookmarkClick,
                 modifier = Modifier
@@ -131,7 +131,7 @@ fun VocabularyTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Book,
-                    contentDescription = "作文收藏库",
+                    contentDescription = "作文收藏",
                     tint = if (isCollectionMode) Color.White else Color(0xFF1E293B)
                 )
             }

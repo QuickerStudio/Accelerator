@@ -100,14 +100,14 @@ fun WritingScreen(
                     showSidebar = true
                 },
                 onConversationClick = {
-                    // Toggle AI 面板，关闭作文收藏库
+                    // Toggle AI 面板，关闭作文收藏
                     showAiPanel = !showAiPanel
                     if (showAiPanel) {
                         showEssayCollection = false
                     }
                 },
                 onBookmarkClick = {
-                    // Toggle 作文收藏库，关闭 AI 面板
+                    // Toggle 作文收藏，关闭 AI 面板
                     showEssayCollection = !showEssayCollection
                     if (showEssayCollection) {
                         showAiPanel = false
@@ -143,7 +143,7 @@ fun WritingScreen(
                             content = ""
                         },
                         onSaveToCollection = {
-                            // 保存到作文收藏库
+                            // 保存到作文收藏
                             EssayCollectionManager.addEssay(
                                 title = title,
                                 content = content,
@@ -255,7 +255,7 @@ fun WritingScreen(
                     )
                 }
 
-                // 作文收藏库面板
+                // 作文收藏面板
                 if (showEssayCollection) {
                     EssayCollectionPanel(
                         onEssayClick = { essay ->

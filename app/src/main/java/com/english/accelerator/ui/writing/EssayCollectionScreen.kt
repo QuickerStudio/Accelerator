@@ -54,7 +54,7 @@ fun EssayCollectionScreen(
                 )
             }
             Text(
-                text = "作文收藏库",
+                text = "作文收藏",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1E293B),
