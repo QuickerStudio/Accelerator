@@ -9,16 +9,17 @@
     "chunkSize": 8192,
     "maxRetries": 3,
     "timeoutMs": 30000,
+    "defaultRoute": "MODELSCOPE",
     "routes": [
-      {
-        "name": "HUGGINGFACE",
-        "displayName": "HuggingFace",
-        "url": "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm"
-      },
       {
         "name": "MODELSCOPE",
         "displayName": "魔塔社区",
         "url": "https://www.modelscope.cn/models/google/gemma-3n-E2B-it-litert-lm/resolve/master/gemma-3n-E2B-it-int4.litertlm"
+      },
+      {
+        "name": "HUGGINGFACE",
+        "displayName": "HuggingFace",
+        "url": "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm"
       }
     ]
   },
@@ -30,10 +31,16 @@
       "isComplete": false,
       "isPaused": false,
       "lastUpdateTime": 0,
-      "downloadRoute": "HUGGINGFACE",
+      "downloadRoute": "MODELSCOPE",
       "errorMessage": null
-    },
-    "history": []
+    }
+  },
+  "logs": {
+    "downloadHistory": [],
+    "initializationLogs": [],
+    "loadLogs": [],
+    "errorLogs": [],
+    "resumeLogs": []
   },
   "version": "1.0.0"
 }
