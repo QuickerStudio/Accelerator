@@ -118,6 +118,26 @@ fun SpeakingScreen(
                         }
                     },
                     actions = {
+                        // New conversation thread
+                        IconButton(onClick = {
+                            // 清空当前对话，开始新线程
+                            messages.clear()
+                            // 添加欢迎消息
+                            if (modelState is ModelState.Ready) {
+                                messages.add(
+                                    Message(
+                                        content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
+                                        isFromUser = false
+                                    )
+                                )
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "新建对话",
+                                tint = Color(0xFF64748B)
+                            )
+                        }
                         // Toggle continuous conversation mode
                         IconButton(onClick = { isContinuousMode = !isContinuousMode }) {
                             Icon(

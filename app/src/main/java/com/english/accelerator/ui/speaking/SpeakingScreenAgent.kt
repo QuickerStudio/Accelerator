@@ -73,6 +73,18 @@ fun SpeakingScreenWithAgent(
                         }
                     },
                     actions = {
+                        // New conversation thread
+                        IconButton(onClick = {
+                            viewModel.clearConversation()
+                            viewModel.generateWelcomeMessage()
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "新建对话",
+                                tint = Color(0xFF64748B)
+                            )
+                        }
+                        // Phone mode
                         IconButton(onClick = { /* Phone mode */ }) {
                             Icon(
                                 imageVector = Icons.Default.Phone,
@@ -80,8 +92,9 @@ fun SpeakingScreenWithAgent(
                                 tint = Color(0xFF64748B)
                             )
                         }
-                        IconButton(onClick = { viewModel.clearConversation() }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "更多选项")
+                        // More options (currently clears conversation)
+                        IconButton(onClick = { /* Show history or more options */ }) {
+                            Icon(Icons.Default.History, contentDescription = "对话历史")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
