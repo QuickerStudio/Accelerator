@@ -112,7 +112,7 @@ class ConfigManager private constructor(context: Context) {
 
     // ==================== 复杂对象存储 ====================
 
-    inline fun <reified T> putObject(key: String, value: T) {
+    fun <T> putObject(key: String, value: T) {
         val json = gson.toJson(value)
         putString(key, json)
         AppLogger.debug("ConfigManager", "Set object: $key")
@@ -121,7 +121,7 @@ class ConfigManager private constructor(context: Context) {
     inline fun <reified T> getObject(key: String): T? {
         val json = getString(key) ?: return null
         return try {
-            gson.fromJson(json, object : TypeToken<T>() {}.type)
+            gson.fromJson(json, T::class.java)
         } catch (e: Exception) {
             AppLogger.error("ConfigManager", "Failed to parse object: $key", e)
             null
@@ -130,7 +130,7 @@ class ConfigManager private constructor(context: Context) {
 
     // ==================== 列表存储 ====================
 
-    inline fun <reified T> putList(key: String, list: List<T>) {
+    fun <T> putList(key: String, list: List<T>) {
         val json = gson.toJson(list)
         putString(key, json)
         AppLogger.debug("ConfigManager", "Set list: $key (${list.size} items)")
