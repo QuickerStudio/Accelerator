@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.download
+package com.english.accelerator.ai.downloader
 
 import android.content.Context
 import com.english.accelerator.ai.model.ModelConfig
@@ -16,7 +16,7 @@ class ModelDownloadManager(private val context: Context) {
     private val modelConfig = ModelConfig.getInstance()
 
     // Config.json 管理器 - 单一真相来源
-    private val configManager = com.english.accelerator.ai.download.States.ConfigManager(context)
+    private val configManager = com.english.accelerator.ai.downloader.States.ConfigManager(context)
 
     // 从 Config.json 读取配置
     private val expectedModelSize: Long

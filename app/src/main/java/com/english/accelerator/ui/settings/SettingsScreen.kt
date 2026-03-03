@@ -43,7 +43,7 @@ fun SettingsScreen() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val gemmaManager = remember { GemmaInferenceManager.getInstance() }
     val modelState by gemmaManager.modelState.collectAsState()
-    val modelDownloadManager = remember { com.english.accelerator.ai.download.ModelDownloadManager(context) }
+    val modelDownloadManager = remember { com.english.accelerator.ai.downloader.ModelDownloadManager(context) }
     val scope = rememberCoroutineScope()
 
     var isDownloading by remember { mutableStateOf(false) }
@@ -55,7 +55,7 @@ fun SettingsScreen() {
 
     // 使用新的下载状态判断
     var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDownloadStatus()) }
-    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.download.ModelDownloadManager.DownloadStatus.COMPLETE
+    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.ModelDownloadManager.DownloadStatus.COMPLETE
 
     Column(
         modifier = Modifier

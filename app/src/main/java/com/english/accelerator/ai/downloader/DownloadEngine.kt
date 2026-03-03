@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.download
+package com.english.accelerator.ai.downloader
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

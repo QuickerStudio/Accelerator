@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.download.States
+package com.english.accelerator.ai.downloader.States
 
 import android.content.Context
 import com.english.accelerator.utils.AppLogger
