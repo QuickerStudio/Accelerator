@@ -12,21 +12,15 @@ import java.io.File
  * 管理 Gemma 3n E2B-it 模型的下载
  */
 class ModelDownloadManager(private val context: Context) {
-    companion object {
-        // 模型文件预期大小（约 1.8GB）
-        private const val EXPECTED_MODEL_SIZE = 1_932_735_488L // 精确字节数
-        private const val SIZE_TOLERANCE = 1024 * 1024 // 1MB 容差
-    }
-
-    // 下载线路
-    private val huggingFaceUrl = "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm"
-    private val modelScopeUrl = "https://www.modelscope.cn/models/google/gemma-3n-E2B-it-litert-lm/resolve/master/gemma-3n-E2B-it-int4.litertlm"
-
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
     private val modelConfig = ModelConfig.getInstance()
 
-    // Config.json 管理器
+    // Config.json 管理器 - 单一真相来源
     private val configManager = com.english.accelerator.ai.download.States.ConfigManager(context)
+
+    // 从 Config.json 读取配置
+    private val expectedModelSize: Long
+        get() = configManager.getExpectedModelSize()
 
     // 下载引擎
     private val downloadEngine = DownloadEngine()
@@ -64,9 +58,9 @@ class ModelDownloadManager(private val context: Context) {
     /**
      * 获取当前选择的下载地址
      */
-    private fun getSelectedUrl(): String = when (selectedRoute) {
-        DownloadRoute.HUGGINGFACE -> huggingFaceUrl
-        DownloadRoute.MODELSCOPE -> modelScopeUrl
+    private fun getSelectedUrl(): String {
+        val routes = configManager.getDownloadRoutes()
+        return routes.find { it.name == selectedRoute.name }?.url ?: ""
     }
 
     /**
@@ -113,7 +107,7 @@ class ModelDownloadManager(private val context: Context) {
         configManager.updateDownloadState(
             modelPath = modelFile.absolutePath,
             downloadedBytes = existingSize,
-            totalBytes = EXPECTED_MODEL_SIZE,
+            totalBytes = expectedModelSize,
             isComplete = false,
             isPaused = false,
             downloadRoute = selectedRoute.name
@@ -129,14 +123,14 @@ class ModelDownloadManager(private val context: Context) {
                 configManager.updateDownloadState(
                     modelPath = modelFile.absolutePath,
                     downloadedBytes = modelFile.length(),
-                    totalBytes = EXPECTED_MODEL_SIZE,
+                    totalBytes = expectedModelSize,
                     isComplete = true,
                     isPaused = false,
                     downloadRoute = selectedRoute.name
                 )
                 configManager.addDownloadLog("Download completed successfully: ${modelFile.length()} bytes")
             } else {
-                val errorMsg = "下载完成但文件大小不匹配。预期: ${EXPECTED_MODEL_SIZE / (1024 * 1024)}MB, 实际: ${modelFile.length() / (1024 * 1024)}MB"
+                val errorMsg = "下载完成但文件大小不匹配。预期: ${expectedModelSize / (1024 * 1024)}MB, 实际: ${modelFile.length() / (1024 * 1024)}MB"
                 configManager.addErrorLog(errorMsg)
                 return@withContext Result.failure(Exception(errorMsg))
             }
@@ -190,9 +184,12 @@ class ModelDownloadManager(private val context: Context) {
 
         val fileSize = modelFile.length()
 
+        // 从 Config.json 读取容差值（1MB）
+        val sizeTolerance = 1024 * 1024L
+
         // 检查文件大小是否在预期范围内
-        val sizeDiff = kotlin.math.abs(fileSize - EXPECTED_MODEL_SIZE)
-        return sizeDiff <= SIZE_TOLERANCE
+        val sizeDiff = kotlin.math.abs(fileSize - expectedModelSize)
+        return sizeDiff <= sizeTolerance
     }
 
     /**
