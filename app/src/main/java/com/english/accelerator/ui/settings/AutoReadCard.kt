@@ -36,11 +36,11 @@ fun AutoReadCard() {
     var readWordsEnabled by remember { mutableStateOf(true) }
     var readGrammarEnabled by remember { mutableStateOf(true) }
     var isScheduleExpanded by remember { mutableStateOf(false) }
+    var isReadSettingsExpanded by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(setOf(1, 2, 3, 4, 5, 6, 7)) }
     var startTime by remember { mutableStateOf("00:00") }
-    var duration by remember { mutableStateOf(0) }
+    var duration by remember { mutableStateOf("0") }
     var showTimePickerDialog by remember { mutableStateOf(false) }
-    var showDurationPickerDialog by remember { mutableStateOf(false) }
 
     val weekDays = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
@@ -264,119 +264,175 @@ fun AutoReadCard() {
                         fontSize = 13.sp,
                         color = Color(0xFF64748B)
                     )
-                    OutlinedButton(
-                        onClick = { showDurationPickerDialog = true },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFF8B5CF6)
-                        ),
-                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "${duration}分钟",
+                    OutlinedTextField(
+                        value = duration,
+                        onValueChange = { newValue ->
+                            // 只允许输入数字
+                            if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
+                                duration = newValue
+                            }
+                        },
+                        modifier = Modifier.width(100.dp),
+                        textStyle = androidx.compose.ui.text.TextStyle(
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
-                        )
-                    }
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF8B5CF6),
+                            unfocusedBorderColor = Color(0xFF8B5CF6),
+                            focusedTextColor = Color(0xFF8B5CF6),
+                            unfocusedTextColor = Color(0xFF8B5CF6)
+                        ),
+                        singleLine = true
+                    )
+                    Text(
+                        text = "分钟",
+                        fontSize = 13.sp,
+                        color = Color(0xFF64748B)
+                    )
                 }
             }
         }
 
         Divider(color = Color(0xFFE2E8F0))
 
-        // 朗读速度
-        SettingItemWithArrow(
-            icon = Icons.Default.Speed,
-            title = "朗读速度",
-            subtitle = "设置朗读速度",
-            onClick = { /* TODO: 进入朗读速度设置页面 */ }
-        )
+        // 朗读设置 - 可折叠标题
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isReadSettingsExpanded = !isReadSettingsExpanded }
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "朗读设置",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF1E293B),
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (isReadSettingsExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = null,
+                tint = Color(0xFF94A3B8),
+                modifier = Modifier.size(20.dp)
+            )
+        }
 
-        Divider(color = Color(0xFFE2E8F0))
+        // 可折叠的朗读设置内容
+        AnimatedVisibility(
+            visible = isReadSettingsExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Column {
+                Divider(color = Color(0xFFE2E8F0))
 
-        // 朗读音量
-        SettingItemWithArrow(
-            icon = Icons.Default.VolumeDown,
-            title = "朗读音量",
-            subtitle = "设置朗读音量",
-            onClick = { /* TODO: 进入朗读音量设置页面 */ }
-        )
+                // 朗读速度
+                SettingItemWithArrow(
+                    icon = Icons.Default.Speed,
+                    title = "朗读速度",
+                    subtitle = "设置朗读速度",
+                    onClick = { /* TODO: 进入朗读速度设置页面 */ }
+                )
 
-        Divider(color = Color(0xFFE2E8F0))
+                Divider(color = Color(0xFFE2E8F0))
 
-        // 朗读语音
-        SettingItemWithArrow(
-            icon = Icons.Default.RecordVoiceOver,
-            title = "朗读语音",
-            subtitle = "选择朗读语音",
-            onClick = { /* TODO: 进入朗读语音选择页面 */ }
-        )
+                // 朗读音量
+                SettingItemWithArrow(
+                    icon = Icons.Default.VolumeDown,
+                    title = "朗读音量",
+                    subtitle = "设置朗读音量",
+                    onClick = { /* TODO: 进入朗读音量设置页面 */ }
+                )
+
+                Divider(color = Color(0xFFE2E8F0))
+
+                // 朗读语音
+                SettingItemWithArrow(
+                    icon = Icons.Default.RecordVoiceOver,
+                    title = "朗读语音",
+                    subtitle = "选择朗读语音",
+                    onClick = { /* TODO: 进入朗读语音选择页面 */ }
+                )
+            }
+        }
     }
 
     // 开始时间选择对话框
     if (showTimePickerDialog) {
+        var selectedHour by remember { mutableStateOf(0) }
+        var selectedMinute by remember { mutableStateOf(0) }
+
         AlertDialog(
             onDismissRequest = { showTimePickerDialog = false },
             title = { Text("设置开始时间") },
             text = {
-                Column {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text("选择每日朗读开始时间")
                     Spacer(modifier = Modifier.height(16.dp))
-                    // TODO: 添加时间选择器
-                    Text(
-                        text = "当前时间: $startTime",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showTimePickerDialog = false }) {
-                    Text("确定", color = Color(0xFF8B5CF6))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePickerDialog = false }) {
-                    Text("取消", color = Color(0xFF8B5CF6))
-                }
-            }
-        )
-    }
 
-    // 持续时间选择对话框
-    if (showDurationPickerDialog) {
-        AlertDialog(
-            onDismissRequest = { showDurationPickerDialog = false },
-            title = { Text("设置持续时间") },
-            text = {
-                Column {
-                    Text("选择朗读持续时间（分钟）")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Slider(
-                        value = duration.toFloat(),
-                        onValueChange = { duration = it.toInt() },
-                        valueRange = 0f..120f,
-                        steps = 23,
-                        colors = SliderDefaults.colors(
-                            thumbColor = Color(0xFF8B5CF6),
-                            activeTrackColor = Color(0xFF8B5CF6)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 小时选择
+                        OutlinedTextField(
+                            value = selectedHour.toString().padStart(2, '0'),
+                            onValueChange = { newValue ->
+                                val hour = newValue.toIntOrNull()
+                                if (hour != null && hour in 0..23) {
+                                    selectedHour = hour
+                                }
+                            },
+                            modifier = Modifier.width(80.dp),
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            ),
+                            singleLine = true,
+                            label = { Text("时") }
                         )
-                    )
-                    Text(
-                        text = "$duration 分钟",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
+
+                        Text(":", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+
+                        // 分钟选择
+                        OutlinedTextField(
+                            value = selectedMinute.toString().padStart(2, '0'),
+                            onValueChange = { newValue ->
+                                val minute = newValue.toIntOrNull()
+                                if (minute != null && minute in 0..59) {
+                                    selectedMinute = minute
+                                }
+                            },
+                            modifier = Modifier.width(80.dp),
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            ),
+                            singleLine = true,
+                            label = { Text("分") }
+                        )
+                    }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showDurationPickerDialog = false }) {
+                TextButton(
+                    onClick = {
+                        startTime = "${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}"
+                        showTimePickerDialog = false
+                    }
+                ) {
                     Text("确定", color = Color(0xFF8B5CF6))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDurationPickerDialog = false }) {
+                TextButton(onClick = { showTimePickerDialog = false }) {
                     Text("取消", color = Color(0xFF8B5CF6))
                 }
             }
