@@ -553,7 +553,7 @@ private fun AiAssistPanel(
     onCheckGrammar: () -> Unit,
     onGetSuggestions: () -> Unit,
     onDownloadModel: () -> Unit,
-    onApplySuggestion: (com.english.accelerator.ai.GrammarSuggestion) -> Unit,
+    onApplySuggestion: (com.english.accelerator.ai.inference.GrammarSuggestion) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -758,7 +758,7 @@ private fun DownloadProgress(progress: Float) {
 
 @Composable
 private fun SuggestionCard(
-    suggestion: com.english.accelerator.ai.GrammarSuggestion,
+    suggestion: com.english.accelerator.ai.inference.GrammarSuggestion,
     onApply: () -> Unit
 ) {
     Card(
