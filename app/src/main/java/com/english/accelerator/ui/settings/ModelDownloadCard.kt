@@ -43,7 +43,8 @@ fun ModelDownloadCard(
     onSwitchRoute: () -> Unit,
     onDelete: () -> Unit,
     onLoadModel: () -> Unit,
-    onClearCache: () -> Unit
+    onClearCache: () -> Unit,
+    onOpenDirectory: () -> Unit  // 新增：打开目录回调
 ) {
     var currentTitle by remember { mutableStateOf("智能老师") }
 
@@ -172,6 +173,21 @@ fun ModelDownloadCard(
                                     imageVector = Icons.Default.DeleteOutline,
                                     contentDescription = "清空缓存",
                                     tint = Color(0xFFEF4444),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        // 🔧 临时：打开目录按钮（有缓存文件时显示）
+                        if (hasCache) {
+                            IconButton(
+                                onClick = onOpenDirectory,
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FolderOpen,
+                                    contentDescription = "打开目录",
+                                    tint = Color(0xFF8B5CF6),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }

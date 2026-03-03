@@ -173,7 +173,7 @@ fun SettingsScreen() {
                     }
                 },
                 onClearCache = {
-                    // 长按5秒清空下载缓存
+                    // 清空下载缓存
                     scope.launch {
                         modelDownloadManager.cancelDownload()
                         modelDownloadManager.deleteModel()
@@ -183,6 +183,27 @@ fun SettingsScreen() {
                         downloadProgress = 0f
                         downloadSpeed = 0L
                         downloadStatus = modelDownloadManager.getDStatus()
+                    }
+                },
+                onOpenDirectory = {
+                    // 🔧 临时：打开缓存目录
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        context.filesDir
+                    )
+                    intent.setDataAndType(uri, "resource/folder")
+                    intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    try {
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        // 如果无法打开文件管理器，使用 Toast 提示路径
+                        android.widget.Toast.makeText(
+                            context,
+                            "缓存目录: ${context.filesDir.absolutePath}",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             )
