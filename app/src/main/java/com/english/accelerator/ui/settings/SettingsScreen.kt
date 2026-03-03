@@ -43,7 +43,7 @@ fun SettingsScreen() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val gemmaManager = remember { GemmaInferenceManager.getInstance() }
     val modelState by gemmaManager.modelState.collectAsState()
-    val modelDownloadManager = remember { com.english.accelerator.ai.downloader.ModelDownloadManager(context) }
+    val modelDownloadManager = remember { com.english.accelerator.ai.downloader.DManager(context) }
     val scope = rememberCoroutineScope()
 
     var isDownloading by remember { mutableStateOf(false) }
@@ -54,8 +54,8 @@ fun SettingsScreen() {
     var currentRoute by remember { mutableStateOf(modelDownloadManager.getCurrentRouteName()) }
 
     // 使用新的下载状态判断
-    var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDownloadStatus()) }
-    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.ModelDownloadManager.DownloadStatus.COMPLETE
+    var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDStatus()) }
+    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.DManager.DStatus.COMPLETE
 
     Column(
         modifier = Modifier
@@ -97,7 +97,7 @@ fun SettingsScreen() {
                                     downloadSpeed = speed
                                 }.onSuccess {
                                     isDownloading = false
-                                    downloadStatus = modelDownloadManager.getDownloadStatus()
+                                    downloadStatus = modelDownloadManager.getDStatus()
                                 }.onFailure {
                                     isDownloading = false
                                     isError = true
@@ -124,7 +124,7 @@ fun SettingsScreen() {
                                     downloadSpeed = speed
                                 }.onSuccess {
                                     isDownloading = false
-                                    downloadStatus = modelDownloadManager.getDownloadStatus()
+                                    downloadStatus = modelDownloadManager.getDStatus()
                                 }.onFailure {
                                     isDownloading = false
                                     isError = true
@@ -139,7 +139,7 @@ fun SettingsScreen() {
                 },
                 onDelete = {
                     modelDownloadManager.deleteModel()
-                    downloadStatus = modelDownloadManager.getDownloadStatus()
+                    downloadStatus = modelDownloadManager.getDStatus()
                 },
                 onLoadModel = {
                     scope.launch {

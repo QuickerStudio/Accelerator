@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
 
         // 初始化基础设施系统（必须最先初始化）
         com.english.accelerator.utils.AppLogger.init(this)
-        com.english.accelerator.utils.ConfigManager.init(this)
+        com.english.accelerator.utils.DConfig.init(this)
         com.english.accelerator.ai.model.ModelConfig.init(this)
 
         // 记录应用启动

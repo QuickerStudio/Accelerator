@@ -11,19 +11,19 @@ import java.io.File
  *
  * 管理 Gemma 3n E2B-it 模型的下载
  */
-class ModelDownloadManager(private val context: Context) {
+class DManager(private val context: Context) {
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
     private val modelConfig = ModelConfig.getInstance()
 
     // Config.json 管理器 - 单一真相来源
-    private val configManager = com.english.accelerator.ai.downloader.States.ConfigManager(context)
+    private val configManager = com.english.accelerator.ai.downloader.DConfig(context)
 
     // 从 Config.json 读取配置
     private val expectedModelSize: Long
         get() = configManager.getExpectedModelSize()
 
     // 下载引擎
-    private val downloadEngine = DownloadEngine()
+    private val downloadEngine = DEngine()
 
     // 线路枚举
     enum class DownloadRoute {
@@ -52,7 +52,7 @@ class ModelDownloadManager(private val context: Context) {
             }
         }
 
-        configManager.addDownloadLog("ModelDownloadManager initialized with route: $selectedRoute")
+        configManager.addDownloadLog("DManager initialized with route: $selectedRoute")
     }
 
     /**
@@ -195,18 +195,18 @@ class ModelDownloadManager(private val context: Context) {
     /**
      * 获取下载状态
      */
-    fun getDownloadStatus(): DownloadStatus {
+    fun getDStatus(): DStatus {
         return when {
-            !modelFile.exists() -> DownloadStatus.NOT_DOWNLOADED
-            isModelComplete() -> DownloadStatus.COMPLETE
-            else -> DownloadStatus.PARTIAL
+            !modelFile.exists() -> DStatus.NOT_DOWNLOADED
+            isModelComplete() -> DStatus.COMPLETE
+            else -> DStatus.PARTIAL
         }
     }
 
     /**
      * 下载状态枚举
      */
-    enum class DownloadStatus {
+    enum class DStatus {
         NOT_DOWNLOADED,  // 文件不存在
         PARTIAL,         // 文件部分下载
         COMPLETE         // 文件完整

@@ -3,7 +3,7 @@ package com.english.accelerator.ai.session
 import android.content.Context
 import com.english.accelerator.ai.agent.AgentRole
 import com.english.accelerator.utils.AppLogger
-import com.english.accelerator.utils.ConfigManager
+import com.english.accelerator.utils.DConfig
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class SessionManager private constructor(context: Context) {
 
-    private val configManager = ConfigManager.getInstance()
+    private val configManager = DConfig.getInstance()
     private val sessions = mutableListOf<Session>()
 
     private val _currentSession = MutableStateFlow<Session?>(null)

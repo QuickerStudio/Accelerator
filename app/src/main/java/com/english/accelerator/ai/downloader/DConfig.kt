@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.downloader.States
+package com.english.accelerator.ai.downloader
 
 import android.content.Context
 import com.english.accelerator.utils.AppLogger
@@ -13,13 +13,13 @@ import java.io.File
  * 管理下载器的持久化配置和状态
  * 这是下载管理器的核心记忆文件
  */
-class ConfigManager(private val context: Context) {
+class DConfig(private val context: Context) {
 
     private val configFile = File(context.filesDir, "download_states/Config.json")
     private var config: JsonObject? = null
 
     companion object {
-        private const val TAG = "DownloadConfigManager"
+        private const val TAG = "DownloadDConfig"
     }
 
     init {
@@ -220,13 +220,13 @@ class ConfigManager(private val context: Context) {
     /**
      * 获取当前下载状态
      */
-    fun getCurrentDownloadState(): DownloadStateInfo? {
+    fun getCurrentDownloadState(): DState? {
         return try {
             val state = config?.getAsJsonObject("state")
             val currentDownload = state?.getAsJsonObject("currentDownload")
 
             currentDownload?.let {
-                DownloadStateInfo(
+                DState(
                     modelPath = it.get("modelPath")?.asString ?: "",
                     downloadedBytes = it.get("downloadedBytes")?.asLong ?: 0L,
                     totalBytes = it.get("totalBytes")?.asLong ?: 0L,
@@ -284,14 +284,14 @@ class ConfigManager(private val context: Context) {
     /**
      * 获取下载线路列表
      */
-    fun getDownloadRoutes(): List<DownloadRouteInfo> {
+    fun getDownloadRoutes(): List<DRoute> {
         return try {
             val download = config?.getAsJsonObject("download")
             val routes = download?.getAsJsonArray("routes")
 
             routes?.map { routeElement ->
                 val route = routeElement.asJsonObject
-                DownloadRouteInfo(
+                DRoute(
                     name = route.get("name")?.asString ?: "",
                     displayName = route.get("displayName")?.asString ?: "",
                     url = route.get("url")?.asString ?: ""
@@ -307,7 +307,7 @@ class ConfigManager(private val context: Context) {
 /**
  * 下载状态信息
  */
-data class DownloadStateInfo(
+data class DState(
     val modelPath: String,
     val downloadedBytes: Long,
     val totalBytes: Long,
@@ -321,7 +321,7 @@ data class DownloadStateInfo(
 /**
  * 下载线路信息
  */
-data class DownloadRouteInfo(
+data class DRoute(
     val name: String,
     val displayName: String,
     val url: String

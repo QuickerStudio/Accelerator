@@ -3,7 +3,7 @@ package com.english.accelerator.ai.history
 import android.content.Context
 import com.english.accelerator.ai.agent.Message
 import com.english.accelerator.utils.AppLogger
-import com.english.accelerator.utils.ConfigManager
+import com.english.accelerator.utils.DConfig
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class HistoryManager private constructor(context: Context) {
 
-    private val configManager = ConfigManager.getInstance()
+    private val configManager = DConfig.getInstance()
     private val histories = mutableMapOf<String, ConversationHistory>()
 
     private val _currentHistory = MutableStateFlow<ConversationHistory?>(null)

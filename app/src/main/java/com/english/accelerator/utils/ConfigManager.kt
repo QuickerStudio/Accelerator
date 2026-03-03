@@ -15,7 +15,7 @@ import com.google.gson.reflect.TypeToken
  * - 配置导出和导入
  * - 配置变更监听
  */
-class ConfigManager private constructor(context: Context) {
+class DConfig private constructor(context: Context) {
 
     internal val prefs: SharedPreferences = context.getSharedPreferences(
         "app_config",
@@ -27,7 +27,7 @@ class ConfigManager private constructor(context: Context) {
 
     companion object {
         @Volatile
-        private var instance: ConfigManager? = null
+        private var instance: DConfig? = null
 
         private const val KEY_CONFIG_VERSION = "config_version"
         private const val CURRENT_CONFIG_VERSION = 1
@@ -36,16 +36,16 @@ class ConfigManager private constructor(context: Context) {
             if (instance == null) {
                 synchronized(this) {
                     if (instance == null) {
-                        instance = ConfigManager(context.applicationContext)
+                        instance = DConfig(context.applicationContext)
                         instance?.migrateIfNeeded()
                     }
                 }
             }
         }
 
-        fun getInstance(): ConfigManager {
+        fun getInstance(): DConfig {
             return instance ?: throw IllegalStateException(
-                "ConfigManager not initialized. Call init() first."
+                "DConfig not initialized. Call init() first."
             )
         }
     }
@@ -55,7 +55,7 @@ class ConfigManager private constructor(context: Context) {
     }
 
     init {
-        AppLogger.info("ConfigManager", "ConfigManager initialized")
+        AppLogger.info("DConfig", "DConfig initialized")
     }
 
     // ==================== 基础读写方法 ====================
@@ -63,7 +63,7 @@ class ConfigManager private constructor(context: Context) {
     fun putString(key: String, value: String) {
         prefs.edit().putString(key, value).apply()
         notifyListeners(key, value)
-        AppLogger.debug("ConfigManager", "Set string: $key = $value")
+        AppLogger.debug("DConfig", "Set string: $key = $value")
     }
 
     fun getString(key: String, defaultValue: String? = null): String? {
@@ -73,7 +73,7 @@ class ConfigManager private constructor(context: Context) {
     fun putInt(key: String, value: Int) {
         prefs.edit().putInt(key, value).apply()
         notifyListeners(key, value)
-        AppLogger.debug("ConfigManager", "Set int: $key = $value")
+        AppLogger.debug("DConfig", "Set int: $key = $value")
     }
 
     fun getInt(key: String, defaultValue: Int = 0): Int {
@@ -83,7 +83,7 @@ class ConfigManager private constructor(context: Context) {
     fun putLong(key: String, value: Long) {
         prefs.edit().putLong(key, value).apply()
         notifyListeners(key, value)
-        AppLogger.debug("ConfigManager", "Set long: $key = $value")
+        AppLogger.debug("DConfig", "Set long: $key = $value")
     }
 
     fun getLong(key: String, defaultValue: Long = 0L): Long {
@@ -93,7 +93,7 @@ class ConfigManager private constructor(context: Context) {
     fun putBoolean(key: String, value: Boolean) {
         prefs.edit().putBoolean(key, value).apply()
         notifyListeners(key, value)
-        AppLogger.debug("ConfigManager", "Set boolean: $key = $value")
+        AppLogger.debug("DConfig", "Set boolean: $key = $value")
     }
 
     fun getBoolean(key: String, defaultValue: Boolean = false): Boolean {
@@ -103,7 +103,7 @@ class ConfigManager private constructor(context: Context) {
     fun putFloat(key: String, value: Float) {
         prefs.edit().putFloat(key, value).apply()
         notifyListeners(key, value)
-        AppLogger.debug("ConfigManager", "Set float: $key = $value")
+        AppLogger.debug("DConfig", "Set float: $key = $value")
     }
 
     fun getFloat(key: String, defaultValue: Float = 0f): Float {
@@ -115,7 +115,7 @@ class ConfigManager private constructor(context: Context) {
     fun <T> putObject(key: String, value: T) {
         val json = gson.toJson(value)
         putString(key, json)
-        AppLogger.debug("ConfigManager", "Set object: $key")
+        AppLogger.debug("DConfig", "Set object: $key")
     }
 
     fun <T> getObject(key: String, clazz: Class<T>): T? {
@@ -123,7 +123,7 @@ class ConfigManager private constructor(context: Context) {
         return try {
             gson.fromJson(json, clazz)
         } catch (e: Exception) {
-            AppLogger.error("ConfigManager", "Failed to parse object: $key", e)
+            AppLogger.error("DConfig", "Failed to parse object: $key", e)
             null
         }
     }
@@ -133,7 +133,7 @@ class ConfigManager private constructor(context: Context) {
     fun <T> putList(key: String, list: List<T>) {
         val json = gson.toJson(list)
         putString(key, json)
-        AppLogger.debug("ConfigManager", "Set list: $key (${list.size} items)")
+        AppLogger.debug("DConfig", "Set list: $key (${list.size} items)")
     }
 
     fun <T> getList(key: String, type: java.lang.reflect.Type): List<T>? {
@@ -141,7 +141,7 @@ class ConfigManager private constructor(context: Context) {
         return try {
             gson.fromJson(json, type)
         } catch (e: Exception) {
-            AppLogger.error("ConfigManager", "Failed to parse list: $key", e)
+            AppLogger.error("DConfig", "Failed to parse list: $key", e)
             null
         }
     }
@@ -151,7 +151,7 @@ class ConfigManager private constructor(context: Context) {
     fun remove(key: String) {
         prefs.edit().remove(key).apply()
         notifyListeners(key, null)
-        AppLogger.debug("ConfigManager", "Removed: $key")
+        AppLogger.debug("DConfig", "Removed: $key")
     }
 
     fun contains(key: String): Boolean {
@@ -160,7 +160,7 @@ class ConfigManager private constructor(context: Context) {
 
     fun clear() {
         prefs.edit().clear().apply()
-        AppLogger.warn("ConfigManager", "All config cleared")
+        AppLogger.warn("DConfig", "All config cleared")
     }
 
     fun getAllKeys(): Set<String> {
@@ -174,7 +174,7 @@ class ConfigManager private constructor(context: Context) {
         prefs.all.forEach { (key, value) ->
             config[key] = value
         }
-        AppLogger.info("ConfigManager", "Config exported (${config.size} items)")
+        AppLogger.info("DConfig", "Config exported (${config.size} items)")
         return config
     }
 
@@ -191,7 +191,7 @@ class ConfigManager private constructor(context: Context) {
             }
             apply()
         }
-        AppLogger.info("ConfigManager", "Config imported (${config.size} items)")
+        AppLogger.info("DConfig", "Config imported (${config.size} items)")
     }
 
     // ==================== 配置版本管理 ====================
@@ -207,7 +207,7 @@ class ConfigManager private constructor(context: Context) {
     private fun migrateIfNeeded() {
         val currentVersion = getConfigVersion()
         if (currentVersion < CURRENT_CONFIG_VERSION) {
-            AppLogger.info("ConfigManager", "Migrating config from v$currentVersion to v$CURRENT_CONFIG_VERSION")
+            AppLogger.info("DConfig", "Migrating config from v$currentVersion to v$CURRENT_CONFIG_VERSION")
             performMigration(currentVersion, CURRENT_CONFIG_VERSION)
             setConfigVersion(CURRENT_CONFIG_VERSION)
         }
@@ -219,7 +219,7 @@ class ConfigManager private constructor(context: Context) {
         when (fromVersion) {
             0 -> {
                 // 从版本0迁移到版本1
-                AppLogger.info("ConfigManager", "Performing migration from v0 to v1")
+                AppLogger.info("DConfig", "Performing migration from v0 to v1")
             }
         }
     }
@@ -239,7 +239,7 @@ class ConfigManager private constructor(context: Context) {
             try {
                 listener.onConfigChanged(key, value)
             } catch (e: Exception) {
-                AppLogger.error("ConfigManager", "Listener error for key: $key", e)
+                AppLogger.error("DConfig", "Listener error for key: $key", e)
             }
         }
     }
@@ -248,9 +248,9 @@ class ConfigManager private constructor(context: Context) {
 
     fun printAllConfig() {
         val allConfig = prefs.all
-        AppLogger.info("ConfigManager", "=== All Config (${allConfig.size} items) ===")
+        AppLogger.info("DConfig", "=== All Config (${allConfig.size} items) ===")
         allConfig.forEach { (key, value) ->
-            AppLogger.info("ConfigManager", "  $key = $value")
+            AppLogger.info("DConfig", "  $key = $value")
         }
     }
 

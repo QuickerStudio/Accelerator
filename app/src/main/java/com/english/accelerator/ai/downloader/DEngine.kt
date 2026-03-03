@@ -14,7 +14,7 @@ import java.net.URL
  * - 支持暂停/恢复
  * - 实时进度和速度回调
  */
-class DownloadEngine {
+class DEngine {
     @Volatile
     private var isPaused = false
 
