@@ -1,5 +1,6 @@
 package com.english.accelerator.ui.settings
 
+import android.content.Context
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -12,40 +13,126 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.ai.downloader.DManager
+import com.english.accelerator.ai.downloader.DStatus
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
- * 模型下载卡片
+ * 模型下载卡片 - 自包含组件
  *
  * 功能：
+ * - 内部管理所有下载状态和逻辑
  * - 动画标题（智能老师 ⇄ 智慧之源）
  * - 下载按钮（下载/暂停/继续/重试）
  * - 清空缓存按钮（有缓存文件时显示）
  * - 线路切换按钮（下载时锁定）
- * - 进度条和网速显示
+ * - 进度显示和网速显示
  * - 下载完成后显示：加载模型 + 清除模型按钮
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ModelDownloadCard(
-    isDownloaded: Boolean,
-    isDownloading: Boolean,
-    isPaused: Boolean,
-    isError: Boolean,
-    downloadProgress: Float,
-    downloadSpeed: Long,
-    currentRoute: String,
-    hasCache: Boolean,  // 是否有缓存文件
-    onDownloadClick: () -> Unit,
-    onSwitchRoute: () -> Unit,
-    onDelete: () -> Unit,
     onLoadModel: () -> Unit,
-    onClearCache: () -> Unit,
-    onOpenDirectory: () -> Unit  // 新增：打开目录回调
+    onOpenDirectory: () -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dManager = remember { DManager(context) }
+
+    // 初始化状态
+    var downloadStatus by remember { mutableStateOf(dManager.getDStatus()) }
+    var downloadProgress by remember {
+        val state = dManager.getFullState()
+        mutableStateOf(
+            if (state.fileSize > 0 && state.expectedSize > 0) {
+                state.fileSize.toFloat() / state.expectedSize.toFloat()
+            } else {
+                0f
+            }
+        )
+    }
+    var downloadSpeed by remember { mutableStateOf(0L) }
+    var currentRoute by remember { mutableStateOf(dManager.getCurrentRouteName()) }
+
+    // 从 downloadStatus 派生所有 UI 状态
+    val isDownloaded = downloadStatus == DStatus.COMPLETE
+    val isDownloading = downloadStatus == DStatus.DOWNLOADING
+    val isPaused = downloadStatus == DStatus.PARTIAL
+    val hasCache = isPaused || isDownloading
+
+    // 定时刷新进度（仅在下载中或暂停时）
+    LaunchedEffect(downloadStatus) {
+        while (downloadStatus == DStatus.DOWNLOADING || downloadStatus == DStatus.PARTIAL) {
+            delay(1000)
+            val state = dManager.getFullState()
+            if (state.expectedSize > 0) {
+                downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
+            }
+            downloadStatus = dManager.getDStatus()
+        }
+    }
+
+    // 内部业务逻辑
+    fun handleDownloadClick() {
+        when (downloadStatus) {
+            DStatus.PARTIAL -> {
+                // 继续下载
+                scope.launch {
+                    downloadStatus = DStatus.DOWNLOADING
+                    dManager.downloadModel { downloaded, total, speed ->
+                        downloadSpeed = speed
+                    }.onSuccess {
+                        downloadStatus = dManager.getDStatus()
+                    }.onFailure {
+                        downloadStatus = dManager.getDStatus()
+                    }
+                }
+            }
+            DStatus.DOWNLOADING -> {
+                // 暂停
+                dManager.pauseDownload()
+                downloadStatus = DStatus.PARTIAL
+            }
+            else -> {
+                // 开始下载
+                scope.launch {
+                    downloadStatus = DStatus.DOWNLOADING
+                    dManager.downloadModel { downloaded, total, speed ->
+                        downloadSpeed = speed
+                    }.onSuccess {
+                        downloadStatus = dManager.getDStatus()
+                    }.onFailure {
+                        downloadStatus = dManager.getDStatus()
+                    }
+                }
+            }
+        }
+    }
+
+    fun handleSwitchRoute() {
+        dManager.switchRoute()
+        currentRoute = dManager.getCurrentRouteName()
+    }
+
+    fun handleDelete() {
+        dManager.deleteModel()
+        downloadStatus = dManager.getDStatus()
+    }
+
+    fun handleClearCache() {
+        scope.launch {
+            dManager.cancelDownload()
+            dManager.deleteModel()
+            downloadSpeed = 0L
+            downloadStatus = dManager.getDStatus()
+        }
+    }
+
     var currentTitle by remember { mutableStateOf("智能老师") }
 
     // 标题动画切换
@@ -79,7 +166,7 @@ fun ModelDownloadCard(
             // 线路切换按钮（下载完成后隐藏）
             if (!isDownloaded) {
                 TextButton(
-                    onClick = onSwitchRoute,
+                    onClick = ::handleSwitchRoute,
                     enabled = !isDownloading || isPaused,
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = Color(0xFF8B5CF6),
@@ -136,7 +223,7 @@ fun ModelDownloadCard(
 
                         // 清除模型按钮
                         OutlinedButton(
-                            onClick = onDelete,
+                            onClick = ::handleDelete,
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = Color(0xFFEF4444)
                             ),
@@ -166,7 +253,7 @@ fun ModelDownloadCard(
                         // 清空缓存按钮（有缓存文件时显示）
                         if (hasCache) {
                             IconButton(
-                                onClick = onClearCache,
+                                onClick = ::handleClearCache,
                                 modifier = Modifier.size(48.dp)
                             ) {
                                 Icon(
@@ -195,24 +282,21 @@ fun ModelDownloadCard(
 
                         // 下载/暂停/继续按钮
                         IconButton(
-                            onClick = onDownloadClick,
+                            onClick = ::handleDownloadClick,
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
                                 imageVector = when {
-                                    isError -> Icons.Default.Refresh
                                     isPaused -> Icons.Default.PlayArrow
                                     isDownloading -> Icons.Default.Pause
                                     else -> Icons.Default.CloudDownload
                                 },
                                 contentDescription = when {
-                                    isError -> "重试"
                                     isPaused -> "继续"
                                     isDownloading -> "暂停"
                                     else -> "下载"
                                 },
                                 tint = when {
-                                    isError -> Color(0xFFEF4444)
                                     isPaused -> Color(0xFF10B981)
                                     isDownloading -> Color(0xFFF59E0B)
                                     else -> Color(0xFF8B5CF6)
@@ -225,7 +309,6 @@ fun ModelDownloadCard(
                         Text(
                             text = when {
                                 isDownloaded -> "已就绪"
-                                isError -> "请重试"
                                 isPaused -> "已暂停 ${String.format("%.2f%%", downloadProgress * 100)}"
                                 isDownloading -> "正在下载... ${String.format("%.2f%%", downloadProgress * 100)} ${formatSpeed(downloadSpeed)}"
                                 else -> "开始下载"
@@ -233,7 +316,6 @@ fun ModelDownloadCard(
                             fontSize = 14.sp,
                             color = when {
                                 isDownloaded -> Color(0xFF10B981)
-                                isError -> Color(0xFFEF4444)
                                 else -> Color(0xFF64748B)
                             },
                             fontWeight = FontWeight.Medium
