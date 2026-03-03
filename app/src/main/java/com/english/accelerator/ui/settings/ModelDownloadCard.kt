@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
  * - 下载按钮（下载/暂停/继续/重试）
  * - 线路切换按钮（下载时锁定）
  * - 进度条和网速显示
- * - 完成后显示绿色对勾（长按10秒删除）
+ * - 下载完成后显示：加载模型 + 清除模型按钮
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -40,37 +40,16 @@ fun ModelDownloadCard(
     currentRoute: String,
     onDownloadClick: () -> Unit,
     onSwitchRoute: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLoadModel: () -> Unit
 ) {
     var currentTitle by remember { mutableStateOf("智能老师") }
-    var longPressProgress by remember { mutableStateOf(0f) }
-    var isLongPressing by remember { mutableStateOf(false) }
 
     // 标题动画切换
     LaunchedEffect(Unit) {
         while (true) {
             delay(3000)
             currentTitle = if (currentTitle == "智能老师") "智慧之源" else "智能老师"
-        }
-    }
-
-    // 长按计时器（10秒）
-    LaunchedEffect(isLongPressing) {
-        if (isLongPressing) {
-            val startTime = System.currentTimeMillis()
-            while (isLongPressing && longPressProgress < 1f) {
-                delay(50)
-                val elapsed = System.currentTimeMillis() - startTime
-                longPressProgress = (elapsed / 10000f).coerceIn(0f, 1f)
-
-                if (longPressProgress >= 1f) {
-                    onDelete()
-                    isLongPressing = false
-                    longPressProgress = 0f
-                }
-            }
-        } else {
-            longPressProgress = 0f
         }
     }
 
@@ -124,37 +103,54 @@ fun ModelDownloadCard(
                 }
             }
 
-            // 右侧：下载按钮或对勾按钮
+            // 右侧：下载按钮或模型管理按钮
             when {
-                // 已下载：显示绿色对勾按钮
+                // 已下载：显示加载模型和清除模型按钮
                 isDownloaded -> {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .combinedClickable(
-                                onClick = { /* 短按无操作 */ },
-                                onLongClick = { isLongPressing = true },
-                                onLongClickLabel = "长按10秒删除模型"
-                            )
-                            .background(Color(0xFF10B981), shape = CircleShape),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // 长按进度环
-                        if (longPressProgress > 0f) {
-                            CircularProgressIndicator(
-                                progress = { longPressProgress },
-                                modifier = Modifier.size(48.dp),
-                                color = Color(0xFFEF4444),
-                                strokeWidth = 3.dp
+                        // 加载模型按钮
+                        Button(
+                            onClick = onLoadModel,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF8B5CF6)
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "加载模型",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "加载模型",
+                                fontSize = 14.sp
                             )
                         }
 
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "已下载",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        // 清除模型按钮
+                        OutlinedButton(
+                            onClick = onDelete,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFEF4444)
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444)),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "清除模型",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "清除",
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
 

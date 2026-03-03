@@ -95,7 +95,6 @@ fun SettingsScreen() {
                                 }.onSuccess {
                                     isDownloading = false
                                     isDownloadComplete = true
-                                    gemmaManager.initialize()
                                 }.onFailure {
                                     isDownloading = false
                                     isError = true
@@ -123,7 +122,6 @@ fun SettingsScreen() {
                                 }.onSuccess {
                                     isDownloading = false
                                     isDownloadComplete = true
-                                    gemmaManager.initialize()
                                 }.onFailure {
                                     isDownloading = false
                                     isError = true
@@ -138,6 +136,12 @@ fun SettingsScreen() {
                 },
                 onDelete = {
                     modelDownloadManager.deleteModel()
+                    isDownloadComplete = false
+                },
+                onLoadModel = {
+                    scope.launch {
+                        gemmaManager.initialize()
+                    }
                 }
             )
         }
