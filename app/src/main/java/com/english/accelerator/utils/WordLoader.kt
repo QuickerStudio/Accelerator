@@ -11,6 +11,11 @@ import kotlinx.coroutines.launch
 /**
  * 单词加载器（加载层）
  *
+ * 核心定位：
+ * - 算法路由器：根据设置（poolSize）自动选择 DefaultPlanAlgorithm 或 DailyPlanAlgorithm
+ * - 数据加载器：管理分块加载、缓存、预加载和内存优化
+ * - UI 接口层：为 UI 层提供简化的 API，隔离底层复杂性
+ *
  * 职责：
  * - 加载索引（通过 WordPoolIndexer）
  * - 管理分块加载
@@ -18,6 +23,10 @@ import kotlinx.coroutines.launch
  * - 预加载优化
  * - 作为 UI 层和索引层之间的桥梁
  * - 提供简化的 API 供 UI 层调用
+ *
+ * 算法路由逻辑：
+ * - poolSize = 0 → 启用 DefaultPlanAlgorithm（默认模式，顺序推送所有单词）
+ * - poolSize > 0 → 启用 DailyPlanAlgorithm（每日计划模式，固定大小学习池）
  *
  * 架构层次：
  * data (数据层) → algorithm (算法层) → indexer (索引层) → WordLoader (加载层) → UI (界面层)
