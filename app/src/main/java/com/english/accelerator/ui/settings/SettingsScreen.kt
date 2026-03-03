@@ -88,23 +88,6 @@ fun SettingsScreen() {
             )
         }
 
-        // 学习设置部分
-        SettingsSection(title = "学习设置") {
-            SettingsItem(
-                icon = Icons.Default.Book,
-                title = "单词复习比例",
-                subtitle = "每 8 个新单词插入 1 个复习单词",
-                onClick = { /* TODO: 打开复习比例设置 */ }
-            )
-            Divider(color = Color(0xFFE2E8F0))
-            SettingsItem(
-                icon = Icons.Default.Timer,
-                title = "学习提醒",
-                subtitle = "设置每日学习提醒时间",
-                onClick = { /* TODO: 打开提醒设置 */ }
-            )
-        }
-
         // 关于部分
         SettingsSection(title = "关于") {
             SettingsItem(
