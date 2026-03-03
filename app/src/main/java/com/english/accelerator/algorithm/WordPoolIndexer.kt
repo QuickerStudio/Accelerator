@@ -1,30 +1,30 @@
 package com.english.accelerator.algorithm
 
 import android.content.Context
-import com.english.accelerator.algorithm.types.WordPoolStatistics
-import com.english.accelerator.algorithm.types.WordPoolType
+import com.english.accelerator.data.WordPoolStatistics
+import com.english.accelerator.data.WordPoolType
 import com.english.accelerator.data.LearningProgressManager
 import com.english.accelerator.data.Word
 import com.english.accelerator.data.WordLearningManager
 
 /**
- * 单词池管理器（核心调度器）
+ * 单词池索引器
  *
- * 功能：
- * 1. 根据用户设置选择合适的推送算法（默认计划 or 每日计划）
- * 2. 协调 DefaultPlanAlgorithm、DailyPlanAlgorithm 和 ReviewAlgorithm
- * 3. 管理学习池的生命周期
- * 4. 提供统一的 API 供 UI 层调用
+ * 职责：
+ * 1. 建立单词索引
+ * 2. 管理单词池的索引逻辑
+ * 3. 根据用户设置选择合适的推送算法（默认计划 or 每日计划）
+ * 4. 协调 DefaultPlanAlgorithm、DailyPlanAlgorithm 和 ReviewAlgorithm
  */
-class WordPoolManager private constructor() {
+class WordPoolIndexer private constructor() {
 
     companion object {
         @Volatile
-        private var instance: WordPoolManager? = null
+        private var instance: WordPoolIndexer? = null
 
-        fun getInstance(): WordPoolManager {
+        fun getInstance(): WordPoolIndexer {
             return instance ?: synchronized(this) {
-                instance ?: WordPoolManager().also { instance = it }
+                instance ?: WordPoolIndexer().also { instance = it }
             }
         }
     }

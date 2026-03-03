@@ -1,25 +1,24 @@
 package com.english.accelerator.utils
 
 import android.content.Context
-import com.english.accelerator.algorithm.WordPoolManager
+import com.english.accelerator.algorithm.WordPoolIndexer
 import com.english.accelerator.data.Word
 
 /**
  * 单词加载器 - 核心逻辑和界面的中间件
  *
  * 职责：
+ * - 加载索引（通过 WordPoolIndexer）
+ * - 管理分块加载
+ * - 内存加载管理
  * - 作为 UI 层和算法层之间的桥梁
  * - 提供简化的 API 供 UI 层调用
- * - 管理单词加载的生命周期
- * - 处理单词状态的更新
  *
- * 设计原则：
- * - UI 层只需要知道如何获取单词和标记单词状态
- * - 算法层的复杂性对 UI 层透明
- * - 所有单词推送逻辑由算法层处理
+ * 架构层次：
+ * data (数据层) → algorithm (算法层) → WordLoader (中间件层) → UI (界面层)
  */
 object WordLoader {
-    private lateinit var wordPoolManager: WordPoolManager
+    private lateinit var wordPoolIndexer: WordPoolIndexer
     private var isInitialized = false
 
     /**
@@ -27,14 +26,14 @@ object WordLoader {
      */
     fun init(context: Context) {
         if (!isInitialized) {
-            wordPoolManager = WordPoolManager.getInstance()
-            wordPoolManager.init(context)
+            wordPoolIndexer = WordPoolIndexer.getInstance()
+            wordPoolIndexer.init(context)
             isInitialized = true
         }
     }
 
     /**
-     * 获取下一批单词
+     * 获取下一批单词（分块加载）
      *
      * @param count 获取的单词数量（默认50个）
      * @param includeReview 是否包含复习单词（默认true）
@@ -45,7 +44,7 @@ object WordLoader {
         includeReview: Boolean = true
     ): List<Word> {
         checkInitialized()
-        return wordPoolManager.getNextBatch(count, includeReview)
+        return wordPoolIndexer.getNextBatch(count, includeReview)
     }
 
     /**
@@ -55,7 +54,7 @@ object WordLoader {
      */
     fun markAsMemorized(wordId: Int) {
         checkInitialized()
-        wordPoolManager.markAsMemorized(wordId)
+        wordPoolIndexer.markAsMemorized(wordId)
     }
 
     /**
@@ -65,7 +64,7 @@ object WordLoader {
      */
     fun markAsUnmemorized(wordId: Int) {
         checkInitialized()
-        wordPoolManager.markAsUnmemorized(wordId)
+        wordPoolIndexer.markAsUnmemorized(wordId)
     }
 
     /**
@@ -75,7 +74,7 @@ object WordLoader {
      */
     fun hasMoreWords(): Boolean {
         checkInitialized()
-        return wordPoolManager.hasMoreWords()
+        return wordPoolIndexer.hasMoreWords()
     }
 
     /**
@@ -85,7 +84,7 @@ object WordLoader {
      */
     fun setPoolSize(size: Int) {
         checkInitialized()
-        wordPoolManager.setPoolSize(size)
+        wordPoolIndexer.setPoolSize(size)
     }
 
     /**
@@ -95,7 +94,7 @@ object WordLoader {
      */
     fun getPoolSize(): Int {
         checkInitialized()
-        return wordPoolManager.getPoolSize()
+        return wordPoolIndexer.getPoolSize()
     }
 
     /**
@@ -103,9 +102,9 @@ object WordLoader {
      *
      * @return 单词池统计信息
      */
-    fun getStatistics(): com.english.accelerator.algorithm.types.WordPoolStatistics {
+    fun getStatistics(): com.english.accelerator.data.WordPoolStatistics {
         checkInitialized()
-        return wordPoolManager.getStatistics()
+        return wordPoolIndexer.getStatistics()
     }
 
     /**
