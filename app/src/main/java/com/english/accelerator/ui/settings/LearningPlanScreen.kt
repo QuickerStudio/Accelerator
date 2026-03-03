@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.algorithm.WordPoolManager
+import com.english.accelerator.utils.WordLoader
 
 /**
  * 学习计划设置页面
@@ -26,7 +26,7 @@ import com.english.accelerator.algorithm.WordPoolManager
  * - 每日结束时间设置（使用专业时间选择器）
  * - 学习提醒时间设置
  * - 学习目标设置
- * - 每日学习单词数设置（集成 WordPoolManager）
+ * - 每日学习单词数设置（集成 WordLoader）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,9 +34,8 @@ fun LearningPlanScreen(
     onNavigateBack: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val wordPoolManager = remember { WordPoolManager.getInstance() }
 
-    // 状态管理 - 从 WordPoolManager 加载初始值
+    // 状态管理 - 从 WordLoader 加载初始值
     var dailyStartHour by remember { mutableStateOf(9) }
     var dailyStartMinute by remember { mutableStateOf(0) }
     var dailyEndHour by remember { mutableStateOf(22) }
@@ -45,11 +44,11 @@ fun LearningPlanScreen(
     var reminderHour by remember { mutableStateOf(20) }
     var reminderMinute by remember { mutableStateOf(0) }
     var dailyGoalMinutes by remember { mutableStateOf(30) }
-    var dailyWordGoal by remember { mutableStateOf(wordPoolManager.getPoolSize()) }
+    var dailyWordGoal by remember { mutableStateOf(WordLoader.getPoolSize()) }
 
-    // 保存设置到 WordPoolManager
+    // 保存设置到 WordLoader
     LaunchedEffect(dailyWordGoal) {
-        wordPoolManager.setPoolSize(dailyWordGoal)
+        WordLoader.setPoolSize(dailyWordGoal)
     }
 
     // 对话框状态

@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import com.english.accelerator.algorithm.WordPoolManager
+import com.english.accelerator.utils.WordLoader
 import com.english.accelerator.data.BookmarkManager
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
@@ -33,11 +33,10 @@ fun VocabularyScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val wordPoolManager = remember { WordPoolManager.getInstance() }
 
-    // 使用 WordPoolManager 获取单词
+    // 使用 WordLoader 获取单词
     var currentBatchWords by remember {
-        mutableStateOf(wordPoolManager.getNextBatch(count = 50, includeReview = true))
+        mutableStateOf(WordLoader.getNextBatch(count = 50, includeReview = true))
     }
     var currentIndexInBatch by remember { mutableIntStateOf(0) }
 
@@ -103,7 +102,7 @@ fun VocabularyScreen(
                         // 标记为"未记住"
                         if (currentIndexInBatch < currentBatchWords.size) {
                             val currentWord = currentBatchWords[currentIndexInBatch]
-                            wordPoolManager.markAsUnmemorized(currentWord.id)
+                            WordLoader.markAsUnmemorized(currentWord.id)
                             currentIndexInBatch++
 
                             toastMessage = "未记住"
@@ -112,8 +111,8 @@ fun VocabularyScreen(
 
                             // 换批检查：当前批学完了，加载下一批
                             if (currentIndexInBatch >= currentBatchWords.size) {
-                                if (wordPoolManager.hasMoreWords()) {
-                                    currentBatchWords = wordPoolManager.getNextBatch(count = 50, includeReview = true)
+                                if (WordLoader.hasMoreWords()) {
+                                    currentBatchWords = WordLoader.getNextBatch(count = 50, includeReview = true)
                                     currentIndexInBatch = 0
                                 }
                             }
@@ -123,7 +122,7 @@ fun VocabularyScreen(
                         // 标记为"已记住"
                         if (currentIndexInBatch < currentBatchWords.size) {
                             val currentWord = currentBatchWords[currentIndexInBatch]
-                            wordPoolManager.markAsMemorized(currentWord.id)
+                            WordLoader.markAsMemorized(currentWord.id)
                             currentIndexInBatch++
 
                             toastMessage = "已记住"
@@ -132,8 +131,8 @@ fun VocabularyScreen(
 
                             // 换批检查：当前批学完了，加载下一批
                             if (currentIndexInBatch >= currentBatchWords.size) {
-                                if (wordPoolManager.hasMoreWords()) {
-                                    currentBatchWords = wordPoolManager.getNextBatch(count = 50, includeReview = true)
+                                if (WordLoader.hasMoreWords()) {
+                                    currentBatchWords = WordLoader.getNextBatch(count = 50, includeReview = true)
                                     currentIndexInBatch = 0
                                 }
                             }
