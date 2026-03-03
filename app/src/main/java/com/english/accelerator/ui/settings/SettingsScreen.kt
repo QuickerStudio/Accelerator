@@ -68,6 +68,20 @@ fun SettingsScreen() {
     var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDStatus()) }
     val isDownloadComplete = downloadStatus == com.english.accelerator.ai.downloader.DStatus.COMPLETE
 
+    // 🔧 新增：定时轮询文件大小来更新进度（每秒一次）
+    LaunchedEffect(isDownloading, isPaused) {
+        if (isDownloading || isPaused) {
+            while (isDownloading || isPaused) {
+                val state = modelDownloadManager.getFullState()
+                if (state.expectedSize > 0) {
+                    downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
+                }
+                downloadStatus = modelDownloadManager.getDStatus()
+                delay(1000) // 每秒更新一次
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
