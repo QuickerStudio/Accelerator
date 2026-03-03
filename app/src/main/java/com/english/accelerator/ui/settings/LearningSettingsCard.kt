@@ -25,7 +25,8 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun LearningSettingsCard(
-    onNavigateToLearningPlan: () -> Unit = {}
+    onNavigateToLearningPlan: () -> Unit = {},
+    onNavigateToLearningStats: () -> Unit = {}
 ) {
     // 内部状态管理
     var learningReminderEnabled by remember { mutableStateOf(true) }
@@ -67,8 +68,8 @@ fun LearningSettingsCard(
         SettingItemWithArrow(
             icon = Icons.Default.BarChart,
             title = "学习统计显示",
-            subtitle = "设置学习统计的显示方式",
-            onClick = { /* TODO: 进入统计显示设置页面 */ }
+            subtitle = "查看学习统计数据",
+            onClick = onNavigateToLearningStats
         )
     }
 }
