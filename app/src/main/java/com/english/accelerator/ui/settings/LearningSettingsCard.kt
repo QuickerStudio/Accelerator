@@ -24,7 +24,9 @@ import androidx.compose.ui.unit.sp
  * - 学习统计显示设置
  */
 @Composable
-fun LearningSettingsCard() {
+fun LearningSettingsCard(
+    onNavigateToLearningPlan: () -> Unit = {}
+) {
     // 内部状态管理
     var learningReminderEnabled by remember { mutableStateOf(true) }
 
@@ -56,7 +58,7 @@ fun LearningSettingsCard() {
             icon = Icons.Default.CalendarToday,
             title = "学习计划",
             subtitle = "设置学习计划和提醒时间",
-            onClick = { /* TODO: 进入学习计划页面 */ }
+            onClick = onNavigateToLearningPlan
         )
 
         Divider(color = Color(0xFFE2E8F0))

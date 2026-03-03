@@ -38,8 +38,9 @@ fun AutoReadCard() {
     var isScheduleExpanded by remember { mutableStateOf(false) }
     var isReadSettingsExpanded by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(setOf(1, 2, 3, 4, 5, 6, 7)) }
-    var startTime by remember { mutableStateOf("00:00") }
-    var duration by remember { mutableStateOf("0") }
+    var startHour by remember { mutableStateOf(0) }
+    var startMinute by remember { mutableStateOf(0) }
+    var duration by remember { mutableStateOf(30) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
     var readSpeed by remember { mutableStateOf(1f) } // 朗读速度 0.5x - 2.0x
     var readVolume by remember { mutableStateOf(0.8f) } // 朗读音量 0.0 - 1.0
@@ -233,66 +234,111 @@ fun AutoReadCard() {
 
                 // 每日开始时间
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showTimePickerDialog = true }
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "每日开始时间:",
-                        fontSize = 13.sp,
-                        color = Color(0xFF64748B)
-                    )
-                    OutlinedButton(
-                        onClick = { showTimePickerDialog = true },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFF8B5CF6)
-                        ),
-                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = null,
+                            tint = Color(0xFF8B5CF6),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "每日开始时间",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF1E293B)
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = startTime,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
+                            text = TimeFormatter.format(startHour, startMinute),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF8B5CF6)
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
-                // 持续时间
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Divider(color = Color(0xFFE2E8F0))
+
+                // 持续时间 - 使用滑块
+                Column(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "持续时间:",
-                        fontSize = 13.sp,
-                        color = Color(0xFF64748B)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Timer,
+                                contentDescription = null,
+                                tint = Color(0xFF8B5CF6),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "持续时间",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF1E293B)
+                            )
+                        }
+                        Text(
+                            text = "$duration 分钟",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF8B5CF6)
+                        )
+                    }
+                    Slider(
+                        value = duration.toFloat(),
+                        onValueChange = { duration = it.toInt() },
+                        valueRange = 5f..120f,
+                        steps = 22,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFF8B5CF6),
+                            activeTrackColor = Color(0xFF8B5CF6),
+                            inactiveTrackColor = Color(0xFFE2E8F0)
+                        )
                     )
-                    OutlinedTextField(
-                        value = duration,
-                        onValueChange = { newValue ->
-                            // 只允许输入数字
-                            if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
-                                duration = newValue
-                            }
-                        },
-                        modifier = Modifier.width(100.dp),
-                        textStyle = androidx.compose.ui.text.TextStyle(
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF8B5CF6),
-                            unfocusedBorderColor = Color(0xFF8B5CF6),
-                            focusedTextColor = Color(0xFF8B5CF6),
-                            unfocusedTextColor = Color(0xFF8B5CF6)
-                        ),
-                        singleLine = true
-                    )
-                    Text(
-                        text = "分钟",
-                        fontSize = 13.sp,
-                        color = Color(0xFF64748B)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "5分钟",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+                        Text(
+                            text = "120分钟",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
                 }
             }
         }
@@ -443,81 +489,17 @@ fun AutoReadCard() {
         }
     }
 
-    // 开始时间选择对话框
+    // 时间选择对话框
     if (showTimePickerDialog) {
-        var selectedHour by remember { mutableStateOf(0) }
-        var selectedMinute by remember { mutableStateOf(0) }
-
-        AlertDialog(
-            onDismissRequest = { showTimePickerDialog = false },
-            title = { Text("设置开始时间") },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("选择每日朗读开始时间")
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 小时选择
-                        OutlinedTextField(
-                            value = selectedHour.toString().padStart(2, '0'),
-                            onValueChange = { newValue ->
-                                val hour = newValue.toIntOrNull()
-                                if (hour != null && hour in 0..23) {
-                                    selectedHour = hour
-                                }
-                            },
-                            modifier = Modifier.width(80.dp),
-                            textStyle = androidx.compose.ui.text.TextStyle(
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Medium,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            ),
-                            singleLine = true,
-                            label = { Text("时") }
-                        )
-
-                        Text(":", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-
-                        // 分钟选择
-                        OutlinedTextField(
-                            value = selectedMinute.toString().padStart(2, '0'),
-                            onValueChange = { newValue ->
-                                val minute = newValue.toIntOrNull()
-                                if (minute != null && minute in 0..59) {
-                                    selectedMinute = minute
-                                }
-                            },
-                            modifier = Modifier.width(80.dp),
-                            textStyle = androidx.compose.ui.text.TextStyle(
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Medium,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            ),
-                            singleLine = true,
-                            label = { Text("分") }
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        startTime = "${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}"
-                        showTimePickerDialog = false
-                    }
-                ) {
-                    Text("确定", color = Color(0xFF8B5CF6))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePickerDialog = false }) {
-                    Text("取消", color = Color(0xFF8B5CF6))
-                }
+        TimePickerDialog(
+            title = "选择每日开始时间",
+            initialHour = startHour,
+            initialMinute = startMinute,
+            onDismiss = { showTimePickerDialog = false },
+            onConfirm = { hour, minute ->
+                startHour = hour
+                startMinute = minute
+                showTimePickerDialog = false
             }
         )
     }

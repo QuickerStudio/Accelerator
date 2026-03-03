@@ -51,6 +51,17 @@ fun SettingsScreen() {
     // 文件浏览器对话框状态
     var showFileExplorer by remember { mutableStateOf(false) }
 
+    // 学习计划页面导航状态
+    var showLearningPlanScreen by remember { mutableStateOf(false) }
+
+    // 如果显示学习计划页面，则显示该页面
+    if (showLearningPlanScreen) {
+        LearningPlanScreen(
+            onNavigateBack = { showLearningPlanScreen = false }
+        )
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -84,7 +95,9 @@ fun SettingsScreen() {
 
         // 学习设置
         SettingsSection(title = "学习设置") {
-            LearningSettingsCard()
+            LearningSettingsCard(
+                onNavigateToLearningPlan = { showLearningPlanScreen = true }
+            )
         }
 
         // 自动朗读设置
