@@ -1,4 +1,4 @@
-package com.english.accelerator.algorithm.types
+package com.english.accelerator.data
 
 /**
  * 单词池类型枚举

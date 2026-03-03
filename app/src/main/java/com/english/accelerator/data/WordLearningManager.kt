@@ -135,6 +135,13 @@ object WordLearningManager {
     }
 
     /**
+     * 获取已记住的单词数量
+     */
+    fun getMemorizedWordsCount(): Int {
+        return learningRecords.values.count { it.isMemorized }
+    }
+
+    /**
      * 清空所有学习记录
      */
     fun clearAll() {
