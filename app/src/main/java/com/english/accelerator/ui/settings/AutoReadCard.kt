@@ -41,6 +41,9 @@ fun AutoReadCard() {
     var startTime by remember { mutableStateOf("00:00") }
     var duration by remember { mutableStateOf("0") }
     var showTimePickerDialog by remember { mutableStateOf(false) }
+    var readSpeed by remember { mutableStateOf(1f) } // 朗读速度 0.5x - 2.0x
+    var readVolume by remember { mutableStateOf(0.8f) } // 朗读音量 0.0 - 1.0
+    var selectedVoice by remember { mutableStateOf(0) } // 0: 男声, 1: 女声, 2: 童声
 
     val weekDays = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
@@ -326,36 +329,116 @@ fun AutoReadCard() {
             enter = expandVertically(),
             exit = shrinkVertically()
         ) {
-            Column {
-                Divider(color = Color(0xFFE2E8F0))
-
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 // 朗读速度
-                SettingItemWithArrow(
-                    icon = Icons.Default.Speed,
-                    title = "朗读速度",
-                    subtitle = "设置朗读速度",
-                    onClick = { /* TODO: 进入朗读速度设置页面 */ }
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "朗读速度",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF1E293B)
+                        )
+                        Text(
+                            text = "${String.format("%.1f", readSpeed)}x",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF8B5CF6)
+                        )
+                    }
+                    Slider(
+                        value = readSpeed,
+                        onValueChange = { readSpeed = it },
+                        valueRange = 0.5f..2.0f,
+                        steps = 14,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFF8B5CF6),
+                            activeTrackColor = Color(0xFF8B5CF6),
+                            inactiveTrackColor = Color(0xFFE2E8F0)
+                        )
+                    )
+                }
 
                 Divider(color = Color(0xFFE2E8F0))
 
                 // 朗读音量
-                SettingItemWithArrow(
-                    icon = Icons.Default.VolumeDown,
-                    title = "朗读音量",
-                    subtitle = "设置朗读音量",
-                    onClick = { /* TODO: 进入朗读音量设置页面 */ }
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "朗读音量",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF1E293B)
+                        )
+                        Text(
+                            text = "${(readVolume * 100).toInt()}%",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF8B5CF6)
+                        )
+                    )
+                    Slider(
+                        value = readVolume,
+                        onValueChange = { readVolume = it },
+                        valueRange = 0f..1f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFF8B5CF6),
+                            activeTrackColor = Color(0xFF8B5CF6),
+                            inactiveTrackColor = Color(0xFFE2E8F0)
+                        )
+                    )
+                }
 
                 Divider(color = Color(0xFFE2E8F0))
 
-                // 朗读语音
-                SettingItemWithArrow(
-                    icon = Icons.Default.RecordVoiceOver,
-                    title = "朗读语音",
-                    subtitle = "选择朗读语音",
-                    onClick = { /* TODO: 进入朗读语音选择页面 */ }
-                )
+                // 朗读语音选择 - 分段胶囊按钮
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "朗读语音",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF1E293B)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("男声", "女声", "童声").forEachIndexed { index, voice ->
+                            OutlinedButton(
+                                onClick = { selectedVoice = index },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (selectedVoice == index) Color(0xFF8B5CF6) else Color.Transparent,
+                                    contentColor = if (selectedVoice == index) Color.White else Color(0xFF8B5CF6)
+                                ),
+                                border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
+                                shape = when (index) {
+                                    0 -> RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)
+                                    2 -> RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp)
+                                    else -> RoundedCornerShape(0.dp)
+                                },
+                                contentPadding = PaddingValues(vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = voice,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
