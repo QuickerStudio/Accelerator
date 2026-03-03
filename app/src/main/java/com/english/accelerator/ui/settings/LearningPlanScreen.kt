@@ -332,15 +332,14 @@ private fun MonthCalendarGrid(
         }
 
         // 日期网格和重置按钮
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Box(
+            modifier = Modifier.fillMaxWidth()
         ) {
             // 日期网格（固定31天）
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .heightIn(max = 300.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -399,8 +398,8 @@ private fun MonthCalendarGrid(
                 }
             }
 
-            // 重置按钮
-            Button(
+            // 悬浮重置按钮
+            FloatingActionButton(
                 onClick = {
                     // 清空所有选中的日期
                     selectedDays.forEach { day ->
@@ -408,17 +407,15 @@ private fun MonthCalendarGrid(
                     }
                 },
                 modifier = Modifier
-                    .width(80.dp)
-                    .align(Alignment.CenterVertically),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF1F5F9),
-                    contentColor = Color(0xFF64748B)
-                ),
-                shape = RoundedCornerShape(8.dp)
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 8.dp)
+                    .size(56.dp),
+                containerColor = Color(0xFFF1F5F9),
+                contentColor = Color(0xFF64748B)
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
@@ -427,7 +424,7 @@ private fun MonthCalendarGrid(
                     )
                     Text(
                         text = "重置",
-                        fontSize = 12.sp
+                        fontSize = 11.sp
                     )
                 }
             }
