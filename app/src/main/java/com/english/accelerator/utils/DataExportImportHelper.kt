@@ -33,6 +33,9 @@ object DataExportImportHelper {
                 // 单词学习数据
                 put("wordLearning", exportWordLearningData(context))
 
+                // 学习进度数据
+                put("learningProgress", exportLearningProgressData(context))
+
                 // 设置数据
                 put("settings", exportSettingsData(context))
 
@@ -44,6 +47,9 @@ object DataExportImportHelper {
 
                 // 写作数据
                 put("essays", exportEssaysData(context))
+
+                // 模型配置
+                put("modelConfig", exportModelConfigData(context))
             }
 
             // 创建导出文件
@@ -81,6 +87,10 @@ object DataExportImportHelper {
                 importWordLearningData(context, importData.getJSONObject("wordLearning"))
             }
 
+            if (importData.has("learningProgress")) {
+                importLearningProgressData(context, importData.getJSONObject("learningProgress"))
+            }
+
             if (importData.has("settings")) {
                 importSettingsData(context, importData.getJSONObject("settings"))
             }
@@ -97,6 +107,10 @@ object DataExportImportHelper {
                 importEssaysData(context, importData.getJSONObject("essays"))
             }
 
+            if (importData.has("modelConfig")) {
+                importModelConfigData(context, importData.getJSONObject("modelConfig"))
+            }
+
             Result.success("数据导入成功")
         } catch (e: Exception) {
             Result.failure(e)
@@ -109,12 +123,18 @@ object DataExportImportHelper {
         val data = JSONObject()
 
         // 从 WordLearningManager 获取数据
-        val sharedPrefs = context.getSharedPreferences("word_learning", Context.MODE_PRIVATE)
+        val sharedPrefs = context.getSharedPreferences("word_learning_prefs", Context.MODE_PRIVATE)
         val allData = sharedPrefs.all
 
-        data.put("memorizedWords", JSONObject(allData.filterKeys { it.startsWith("memorized_") }))
-        data.put("unmemorizedWords", JSONObject(allData.filterKeys { it.startsWith("unmemorized_") }))
-        data.put("wordProgress", JSONObject(allData.filterKeys { it.startsWith("progress_") }))
+        allData.forEach { (key, value) ->
+            when (value) {
+                is String -> data.put(key, value)
+                is Int -> data.put(key, value)
+                is Long -> data.put(key, value)
+                is Float -> data.put(key, value)
+                is Boolean -> data.put(key, value)
+            }
+        }
 
         return data
     }
@@ -122,12 +142,58 @@ object DataExportImportHelper {
     private fun exportSettingsData(context: Context): JSONObject {
         val data = JSONObject()
 
-        // 从 DConfig 获取设置数据
-        val sharedPrefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        // 从 app_config 获取设置数据
+        val sharedPrefs = context.getSharedPreferences("app_config", Context.MODE_PRIVATE)
         val allData = sharedPrefs.all
 
         allData.forEach { (key, value) ->
-            data.put(key, value)
+            when (value) {
+                is String -> data.put(key, value)
+                is Int -> data.put(key, value)
+                is Long -> data.put(key, value)
+                is Float -> data.put(key, value)
+                is Boolean -> data.put(key, value)
+            }
+        }
+
+        return data
+    }
+
+    private fun exportLearningProgressData(context: Context): JSONObject {
+        val data = JSONObject()
+
+        // 从 learning_progress_prefs 获取学习进度数据
+        val sharedPrefs = context.getSharedPreferences("learning_progress_prefs", Context.MODE_PRIVATE)
+        val allData = sharedPrefs.all
+
+        allData.forEach { (key, value) ->
+            when (value) {
+                is String -> data.put(key, value)
+                is Int -> data.put(key, value)
+                is Long -> data.put(key, value)
+                is Float -> data.put(key, value)
+                is Boolean -> data.put(key, value)
+            }
+        }
+
+        return data
+    }
+
+    private fun exportModelConfigData(context: Context): JSONObject {
+        val data = JSONObject()
+
+        // 从 model_config 获取模型配置数据
+        val sharedPrefs = context.getSharedPreferences("model_config", Context.MODE_PRIVATE)
+        val allData = sharedPrefs.all
+
+        allData.forEach { (key, value) ->
+            when (value) {
+                is String -> data.put(key, value)
+                is Int -> data.put(key, value)
+                is Long -> data.put(key, value)
+                is Float -> data.put(key, value)
+                is Boolean -> data.put(key, value)
+            }
         }
 
         return data
@@ -151,11 +217,17 @@ object DataExportImportHelper {
         val data = JSONObject()
 
         // 收藏数据
-        val sharedPrefs = context.getSharedPreferences("bookmarks", Context.MODE_PRIVATE)
+        val sharedPrefs = context.getSharedPreferences("bookmark_prefs", Context.MODE_PRIVATE)
         val allData = sharedPrefs.all
 
         allData.forEach { (key, value) ->
-            data.put(key, value)
+            when (value) {
+                is String -> data.put(key, value)
+                is Int -> data.put(key, value)
+                is Long -> data.put(key, value)
+                is Float -> data.put(key, value)
+                is Boolean -> data.put(key, value)
+            }
         }
 
         return data
@@ -165,11 +237,17 @@ object DataExportImportHelper {
         val data = JSONObject()
 
         // 写作数据
-        val sharedPrefs = context.getSharedPreferences("essays", Context.MODE_PRIVATE)
+        val sharedPrefs = context.getSharedPreferences("essay_collection_prefs", Context.MODE_PRIVATE)
         val allData = sharedPrefs.all
 
         allData.forEach { (key, value) ->
-            data.put(key, value)
+            when (value) {
+                is String -> data.put(key, value)
+                is Int -> data.put(key, value)
+                is Long -> data.put(key, value)
+                is Float -> data.put(key, value)
+                is Boolean -> data.put(key, value)
+            }
         }
 
         return data
@@ -178,44 +256,7 @@ object DataExportImportHelper {
     // ========== 导入模块 ==========
 
     private fun importWordLearningData(context: Context, data: JSONObject) {
-        val sharedPrefs = context.getSharedPreferences("word_learning", Context.MODE_PRIVATE)
-        val editor = sharedPrefs.edit()
-
-        // 导入已记住单词
-        if (data.has("memorizedWords")) {
-            val memorized = data.getJSONObject("memorizedWords")
-            memorized.keys().forEach { key ->
-                editor.putBoolean(key, memorized.getBoolean(key))
-            }
-        }
-
-        // 导入未记住单词
-        if (data.has("unmemorizedWords")) {
-            val unmemorized = data.getJSONObject("unmemorizedWords")
-            unmemorized.keys().forEach { key ->
-                editor.putBoolean(key, unmemorized.getBoolean(key))
-            }
-        }
-
-        // 导入进度数据
-        if (data.has("wordProgress")) {
-            val progress = data.getJSONObject("wordProgress")
-            progress.keys().forEach { key ->
-                when (val value = progress.get(key)) {
-                    is Int -> editor.putInt(key, value)
-                    is Long -> editor.putLong(key, value)
-                    is Float -> editor.putFloat(key, value)
-                    is String -> editor.putString(key, value)
-                    is Boolean -> editor.putBoolean(key, value)
-                }
-            }
-        }
-
-        editor.apply()
-    }
-
-    private fun importSettingsData(context: Context, data: JSONObject) {
-        val sharedPrefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val sharedPrefs = context.getSharedPreferences("word_learning_prefs", Context.MODE_PRIVATE)
         val editor = sharedPrefs.edit()
 
         data.keys().forEach { key ->
@@ -228,7 +269,58 @@ object DataExportImportHelper {
             }
         }
 
-        editor.apply()
+        editor.commit()
+    }
+
+    private fun importLearningProgressData(context: Context, data: JSONObject) {
+        val sharedPrefs = context.getSharedPreferences("learning_progress_prefs", Context.MODE_PRIVATE)
+        val editor = sharedPrefs.edit()
+
+        data.keys().forEach { key ->
+            when (val value = data.get(key)) {
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Float -> editor.putFloat(key, value)
+                is String -> editor.putString(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+            }
+        }
+
+        editor.commit()
+    }
+
+    private fun importSettingsData(context: Context, data: JSONObject) {
+        val sharedPrefs = context.getSharedPreferences("app_config", Context.MODE_PRIVATE)
+        val editor = sharedPrefs.edit()
+
+        data.keys().forEach { key ->
+            when (val value = data.get(key)) {
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Float -> editor.putFloat(key, value)
+                is String -> editor.putString(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+            }
+        }
+
+        editor.commit()
+    }
+
+    private fun importModelConfigData(context: Context, data: JSONObject) {
+        val sharedPrefs = context.getSharedPreferences("model_config", Context.MODE_PRIVATE)
+        val editor = sharedPrefs.edit()
+
+        data.keys().forEach { key ->
+            when (val value = data.get(key)) {
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Float -> editor.putFloat(key, value)
+                is String -> editor.putString(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+            }
+        }
+
+        editor.commit()
     }
 
     private fun importStatisticsData(context: Context, data: JSONObject) {
@@ -245,11 +337,11 @@ object DataExportImportHelper {
             }
         }
 
-        editor.apply()
+        editor.commit()
     }
 
     private fun importBookmarksData(context: Context, data: JSONObject) {
-        val sharedPrefs = context.getSharedPreferences("bookmarks", Context.MODE_PRIVATE)
+        val sharedPrefs = context.getSharedPreferences("bookmark_prefs", Context.MODE_PRIVATE)
         val editor = sharedPrefs.edit()
 
         data.keys().forEach { key ->
@@ -262,11 +354,11 @@ object DataExportImportHelper {
             }
         }
 
-        editor.apply()
+        editor.commit()
     }
 
     private fun importEssaysData(context: Context, data: JSONObject) {
-        val sharedPrefs = context.getSharedPreferences("essays", Context.MODE_PRIVATE)
+        val sharedPrefs = context.getSharedPreferences("essay_collection_prefs", Context.MODE_PRIVATE)
         val editor = sharedPrefs.edit()
 
         data.keys().forEach { key ->
@@ -279,6 +371,6 @@ object DataExportImportHelper {
             }
         }
 
-        editor.apply()
+        editor.commit()
     }
 }

@@ -44,7 +44,7 @@ object LearningProgressData {
         sharedPreferences?.edit()?.apply {
             putInt(KEY_CURRENT_PAGE_INDEX, pageIndex)
             putInt(KEY_CURRENT_INDEX_IN_PAGE, indexInPage)
-            apply()
+            commit()
         }
     }
 
@@ -60,14 +60,14 @@ object LearningProgressData {
         sharedPreferences?.edit()?.apply {
             putInt(KEY_CURRENT_PAGE_INDEX, 0)
             putInt(KEY_CURRENT_INDEX_IN_PAGE, 0)
-            apply()
+            commit()
         }
     }
 
     // ========== 学习池数据 ==========
 
     fun setPoolSize(size: Int) {
-        sharedPreferences?.edit()?.putInt(KEY_POOL_SIZE, size)?.apply()
+        sharedPreferences?.edit()?.putInt(KEY_POOL_SIZE, size)?.commit()
     }
 
     fun getPoolSize(): Int {
@@ -86,7 +86,7 @@ object LearningProgressData {
 
     fun saveLearningPool(pool: List<Int>) {
         val json = gson.toJson(pool)
-        sharedPreferences?.edit()?.putString(KEY_LEARNING_POOL, json)?.apply()
+        sharedPreferences?.edit()?.putString(KEY_LEARNING_POOL, json)?.commit()
     }
 
     fun getNextWordId(): Int {
@@ -94,7 +94,7 @@ object LearningProgressData {
     }
 
     fun setNextWordId(id: Int) {
-        sharedPreferences?.edit()?.putInt(KEY_NEXT_WORD_ID, id)?.apply()
+        sharedPreferences?.edit()?.putInt(KEY_NEXT_WORD_ID, id)?.commit()
     }
 
     // ========== 每日统计数据 ==========
@@ -107,7 +107,7 @@ object LearningProgressData {
             sharedPreferences?.edit()?.apply {
                 putString(KEY_TODAY_DATE, today)
                 putInt(KEY_TODAY_MEMORIZED_COUNT, 0)
-                apply()
+                commit()
             }
         }
     }
@@ -120,6 +120,6 @@ object LearningProgressData {
     fun incrementTodayMemorizedCount() {
         checkAndResetDailyStats()
         val current = getTodayMemorizedCount()
-        sharedPreferences?.edit()?.putInt(KEY_TODAY_MEMORIZED_COUNT, current + 1)?.apply()
+        sharedPreferences?.edit()?.putInt(KEY_TODAY_MEMORIZED_COUNT, current + 1)?.commit()
     }
 }

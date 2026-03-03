@@ -2,6 +2,8 @@ package com.english.accelerator.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.english.accelerator.utils.AutoBackupManager
+import com.english.accelerator.utils.DataStateTracker
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.concurrent.ConcurrentHashMap
@@ -19,6 +21,7 @@ object WordLearningManager {
     // 使用 ConcurrentHashMap 存储单词学习记录，key 为单词 ID
     private val learningRecords = ConcurrentHashMap<Int, WordLearningRecord>()
     private var sharedPreferences: SharedPreferences? = null
+    private var context: Context? = null
     private val gson = Gson()
     private const val PREFS_NAME = "word_learning_prefs"
     private const val KEY_RECORDS = "learning_records"
@@ -27,6 +30,7 @@ object WordLearningManager {
      * 初始化，从 SharedPreferences 加载数据
      */
     fun init(context: Context) {
+        this.context = context
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         loadFromPreferences()
     }
@@ -51,7 +55,13 @@ object WordLearningManager {
      */
     private fun saveToPreferences() {
         val json = gson.toJson(learningRecords.toMap())
-        sharedPreferences?.edit()?.putString(KEY_RECORDS, json)?.apply()
+        sharedPreferences?.edit()?.putString(KEY_RECORDS, json)?.commit()
+
+        // 更新状态追踪器
+        context?.let {
+            DataStateTracker.updateState(DataStateTracker.DataType.WORD_LEARNING)
+            AutoBackupManager.autoBackup(it)
+        }
     }
 
     /**

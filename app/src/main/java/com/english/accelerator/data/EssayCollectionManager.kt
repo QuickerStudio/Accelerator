@@ -3,6 +3,8 @@ package com.english.accelerator.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.mutableStateListOf
+import com.english.accelerator.utils.AutoBackupManager
+import com.english.accelerator.utils.DataStateTracker
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -16,12 +18,14 @@ object EssayCollectionManager {
 
     private val collectedEssays = mutableStateListOf<Essay>()
     private var sharedPreferences: SharedPreferences? = null
+    private var context: Context? = null
     private val gson = Gson()
 
     /**
      * 初始化
      */
     fun init(context: Context) {
+        this.context = context
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         loadFromPreferences()
     }
@@ -46,7 +50,13 @@ object EssayCollectionManager {
      */
     private fun saveToPreferences() {
         val json = gson.toJson(collectedEssays.toList())
-        sharedPreferences?.edit()?.putString(KEY_ESSAYS, json)?.apply()
+        sharedPreferences?.edit()?.putString(KEY_ESSAYS, json)?.commit()
+
+        // 更新状态追踪器并触发自动备份
+        context?.let {
+            DataStateTracker.updateState(DataStateTracker.DataType.ESSAYS)
+            AutoBackupManager.autoBackup(it)
+        }
     }
 
     /**

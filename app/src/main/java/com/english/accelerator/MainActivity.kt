@@ -54,35 +54,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 初始化基础设施系统（必须最先初始化）
-        com.english.accelerator.utils.AppLogger.init(this)
-        com.english.accelerator.utils.DConfig.init(this)
-        com.english.accelerator.ai.model.ModelConfig.init(this)
-
-        // 记录应用启动
-        com.english.accelerator.utils.AppLogger.info("MainActivity", "Application started")
-
-        // 初始化 AI 系统
-        com.english.accelerator.ai.session.SessionManager.init(this)
-        com.english.accelerator.ai.history.HistoryManager.init(this)
-
-        // 初始化 WordLearningManager
-        com.english.accelerator.data.WordLearningManager.init(this)
-
-        // 初始化 WordRepository
-        com.english.accelerator.data.WordRepository.init(this)
-
-        // 初始化 BookmarkManager
-        com.english.accelerator.data.BookmarkManager.init(this)
-
-        // 初始化 EssayCollectionManager
-        com.english.accelerator.data.EssayCollectionManager.init(this)
-
-        // 初始化 GemmaInferenceManager
-        com.english.accelerator.ai.model.GemmaInferenceManager.init(this)
-
-        // 初始化 WordLoader（中间件层）
-        com.english.accelerator.utils.WordLoader.init(this)
+        // 记录 Activity 启动
+        com.english.accelerator.utils.AppLogger.info("MainActivity", "MainActivity started")
 
         // 自动初始化模型（如果已下载）
         scope.launch {
