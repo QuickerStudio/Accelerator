@@ -31,7 +31,7 @@ fun LearningSettingsCard(
     onNavigateToLearningGoals: () -> Unit = {}
 ) {
     // 内部状态管理
-    var learningReminderEnabled by remember { mutableStateOf(true) }
+    var learningReminderEnabled by remember { mutableStateOf(false) }
     var nightDoNotDisturbEnabled by remember { mutableStateOf(false) }
 
     Column(
