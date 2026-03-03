@@ -19,9 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import com.english.accelerator.algorithm.WordPoolManager
 import com.english.accelerator.data.BookmarkManager
-import com.english.accelerator.data.WordLearningManager
-import com.english.accelerator.data.StreamingWordLoader
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
@@ -34,20 +33,13 @@ fun VocabularyScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val wordPoolManager = remember { WordPoolManager.getInstance() }
 
-    // 流式加载：当前页和索引（从持久化存储中恢复）
-    var currentPageIndex by remember {
-        mutableIntStateOf(com.english.accelerator.data.LearningProgressManager.getCurrentPageIndex())
+    // 使用 WordPoolManager 获取单词
+    var currentBatchWords by remember {
+        mutableStateOf(wordPoolManager.getNextBatch(count = 50, includeReview = true))
     }
-    var currentIndexInPage by remember {
-        mutableIntStateOf(com.english.accelerator.data.LearningProgressManager.getCurrentIndexInPage())
-    }
-
-    // 加载单词并混入复习单词（洗牌算法）
-    var currentPageWords by remember {
-        val newWords = StreamingWordLoader.getPage(context, currentPageIndex)
-        mutableStateOf(com.english.accelerator.data.ReviewManager.shuffleWithReviewWords(newWords))
-    }
+    var currentIndexInBatch by remember { mutableIntStateOf(0) }
 
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
@@ -105,79 +97,45 @@ fun VocabularyScreen(
                 contentAlignment = Alignment.Center
             ) {
                 WordCardStack(
-                    words = currentPageWords,
-                    currentIndex = currentIndexInPage,
+                    words = currentBatchWords,
+                    currentIndex = currentIndexInBatch,
                     onSwipeLeft = {
                         // 标记为"未记住"
-                        if (currentIndexInPage < currentPageWords.size) {
-                            val currentWord = currentPageWords[currentIndexInPage]
-                            WordLearningManager.recordWord(currentWord.id, currentWord.word, false)
-                            currentIndexInPage++
-
-                            // 保存学习进度
-                            com.english.accelerator.data.LearningProgressManager.saveProgress(
-                                currentPageIndex,
-                                currentIndexInPage
-                            )
+                        if (currentIndexInBatch < currentBatchWords.size) {
+                            val currentWord = currentBatchWords[currentIndexInBatch]
+                            wordPoolManager.markAsUnmemorized(currentWord.id)
+                            currentIndexInBatch++
 
                             toastMessage = "未记住"
                             toastBackgroundColor = Color(0xFFFEE2E2) // 浅红色
                             showToast = true
 
-                            // 预加载检查：滑到第 40 个时预加载下一页
-                            if (currentIndexInPage == 40) {
-                                StreamingWordLoader.preloadNextPage(context, currentPageIndex)
-                            }
-
-                            // 换页检查：当前页学完了，加载下一页并混入复习单词
-                            if (currentIndexInPage >= currentPageWords.size) {
-                                currentPageIndex++
-                                currentIndexInPage = 0
-                                val newWords = StreamingWordLoader.getPage(context, currentPageIndex)
-                                currentPageWords = com.english.accelerator.data.ReviewManager.shuffleWithReviewWords(newWords)
-
-                                // 保存换页后的进度
-                                com.english.accelerator.data.LearningProgressManager.saveProgress(
-                                    currentPageIndex,
-                                    currentIndexInPage
-                                )
+                            // 换批检查：当前批学完了，加载下一批
+                            if (currentIndexInBatch >= currentBatchWords.size) {
+                                if (wordPoolManager.hasMoreWords()) {
+                                    currentBatchWords = wordPoolManager.getNextBatch(count = 50, includeReview = true)
+                                    currentIndexInBatch = 0
+                                }
                             }
                         }
                     },
                     onSwipeRight = {
                         // 标记为"已记住"
-                        if (currentIndexInPage < currentPageWords.size) {
-                            val currentWord = currentPageWords[currentIndexInPage]
-                            WordLearningManager.recordWord(currentWord.id, currentWord.word, true)
-                            currentIndexInPage++
-
-                            // 保存学习进度
-                            com.english.accelerator.data.LearningProgressManager.saveProgress(
-                                currentPageIndex,
-                                currentIndexInPage
-                            )
+                        if (currentIndexInBatch < currentBatchWords.size) {
+                            val currentWord = currentBatchWords[currentIndexInBatch]
+                            wordPoolManager.markAsMemorized(currentWord.id)
+                            currentIndexInBatch++
 
                             toastMessage = "已记住"
                             toastBackgroundColor = Color(0xFFDCFCE7) // 浅绿色
                             showToast = true
 
-                            // 预加载检查
-                            if (currentIndexInPage == 40) {
-                                StreamingWordLoader.preloadNextPage(context, currentPageIndex)
-                            }
-
-                            // 换页检查：当前页学完了，加载下一页并混入复习单词
-                            if (currentIndexInPage >= currentPageWords.size) {
-                                currentPageIndex++
-                                currentIndexInPage = 0
-                                val newWords = StreamingWordLoader.getPage(context, currentPageIndex)
-                                currentPageWords = com.english.accelerator.data.ReviewManager.shuffleWithReviewWords(newWords)
-
-                                // 保存换页后的进度
-                                com.english.accelerator.data.LearningProgressManager.saveProgress(
-                                    currentPageIndex,
-                                    currentIndexInPage
-                                )
+                            // 换批检查：当前批学完了，加载下一批
+                            if (currentIndexInBatch >= currentBatchWords.size) {
+                                if (wordPoolManager.hasMoreWords()) {
+                                    currentBatchWords = wordPoolManager.getNextBatch(count = 50, includeReview = true)
+                                    currentIndexInBatch = 0
+                                }
                             }
                         }
                     },
