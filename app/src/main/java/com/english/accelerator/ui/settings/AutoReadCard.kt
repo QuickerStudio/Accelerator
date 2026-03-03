@@ -37,8 +37,10 @@ fun AutoReadCard() {
     var readGrammarEnabled by remember { mutableStateOf(true) }
     var isScheduleExpanded by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(setOf(1, 2, 3, 4, 5, 6, 7)) }
-    var selectedTime by remember { mutableStateOf("20:00") }
+    var startTime by remember { mutableStateOf("00:00") }
+    var duration by remember { mutableStateOf(0) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
+    var showDurationPickerDialog by remember { mutableStateOf(false) }
 
     val weekDays = listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
@@ -226,13 +228,13 @@ fun AutoReadCard() {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // 每日几点
+                // 每日开始时间
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "每日几点:",
+                        text = "每日开始时间:",
                         fontSize = 13.sp,
                         color = Color(0xFF64748B)
                     )
@@ -245,16 +247,37 @@ fun AutoReadCard() {
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = selectedTime,
+                            text = startTime,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
+                </Row>
+
+                // 持续时间
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
-                        text = "设置",
+                        text = "持续时间:",
                         fontSize = 13.sp,
                         color = Color(0xFF64748B)
                     )
+                    OutlinedButton(
+                        onClick = { showDurationPickerDialog = true },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF8B5CF6)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "${duration}分钟",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -290,18 +313,18 @@ fun AutoReadCard() {
         )
     }
 
-    // 时间选择对话框
+    // 开始时间选择对话框
     if (showTimePickerDialog) {
         AlertDialog(
             onDismissRequest = { showTimePickerDialog = false },
-            title = { Text("设置时间") },
+            title = { Text("设置开始时间") },
             text = {
                 Column {
-                    Text("选择每日朗读时间")
+                    Text("选择每日朗读开始时间")
                     Spacer(modifier = Modifier.height(16.dp))
                     // TODO: 添加时间选择器
                     Text(
-                        text = "当前时间: $selectedTime",
+                        text = "当前时间: $startTime",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -314,6 +337,46 @@ fun AutoReadCard() {
             },
             dismissButton = {
                 TextButton(onClick = { showTimePickerDialog = false }) {
+                    Text("取消", color = Color(0xFF8B5CF6))
+                }
+            }
+        )
+    }
+
+    // 持续时间选择对话框
+    if (showDurationPickerDialog) {
+        AlertDialog(
+            onDismissRequest = { showDurationPickerDialog = false },
+            title = { Text("设置持续时间") },
+            text = {
+                Column {
+                    Text("选择朗读持续时间（分钟）")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Slider(
+                        value = duration.toFloat(),
+                        onValueChange = { duration = it.toInt() },
+                        valueRange = 0f..120f,
+                        steps = 23,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFF8B5CF6),
+                            activeTrackColor = Color(0xFF8B5CF6)
+                        )
+                    )
+                    Text(
+                        text = "$duration 分钟",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDurationPickerDialog = false }) {
+                    Text("确定", color = Color(0xFF8B5CF6))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDurationPickerDialog = false }) {
                     Text("取消", color = Color(0xFF8B5CF6))
                 }
             }
