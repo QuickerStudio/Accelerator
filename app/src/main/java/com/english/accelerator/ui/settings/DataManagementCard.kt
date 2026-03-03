@@ -33,6 +33,7 @@ fun DataManagementCard(
     onClearModelCache: () -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    var showClearCacheDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -123,7 +124,7 @@ fun DataManagementCard(
                     title = "清除模型缓存",
                     subtitle = "清除未完成的模型下载缓存",
                     buttonText = "清除",
-                    onButtonClick = onClearModelCache
+                    onButtonClick = { showClearCacheDialog = true }
                 )
 
                 Divider(color = Color(0xFFE2E8F0))
@@ -138,6 +139,30 @@ fun DataManagementCard(
                 )
             }
         }
+    }
+
+    // 清除模型缓存确认对话框
+    if (showClearCacheDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearCacheDialog = false },
+            title = { Text("确认清除") },
+            text = { Text("确定要清除模型缓存吗？这将删除未完成的模型下载文件。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showClearCacheDialog = false
+                        onClearModelCache()
+                    }
+                ) {
+                    Text("确定", color = Color(0xFFEF4444))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearCacheDialog = false }) {
+                    Text("取消", color = Color(0xFF8B5CF6))
+                }
+            }
+        )
     }
 }
 
