@@ -15,7 +15,8 @@ import java.io.File
  */
 class DConfig(private val context: Context) {
 
-    private val configFile = File(context.filesDir, "download_states/Config.json")
+    // 🔧 临时测试：改为桌面路径
+    private val configFile = File("C:\\Users\\Quick\\Desktop\\accelerator_test\\download_states\\Config.json")
     private var config: JsonObject? = null
 
     companion object {
