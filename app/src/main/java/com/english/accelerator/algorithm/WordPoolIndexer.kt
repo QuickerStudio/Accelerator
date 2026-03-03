@@ -3,18 +3,18 @@ package com.english.accelerator.algorithm
 import android.content.Context
 import com.english.accelerator.data.WordPoolStatistics
 import com.english.accelerator.data.WordPoolType
-import com.english.accelerator.data.LearningProgressManager
+import com.english.accelerator.data.LearningProgressData
 import com.english.accelerator.data.Word
 import com.english.accelerator.data.WordLearningManager
 
 /**
- * 单词池索引器
+ * 单词池索引器（索引层）
  *
  * 职责：
  * 1. 建立单词索引
- * 2. 管理单词池的索引逻辑
- * 3. 根据用户设置选择合适的推送算法（默认计划 or 每日计划）
- * 4. 协调 DefaultPlanAlgorithm、DailyPlanAlgorithm 和 ReviewAlgorithm
+ * 2. 协调各个算法（DefaultPlanAlgorithm、DailyPlanAlgorithm、ReviewAlgorithm、LearningPoolAlgorithm）
+ * 3. 根据用户设置选择合适的推送算法
+ * 4. 提供统一的索引访问接口
  */
 class WordPoolIndexer private constructor() {
 
@@ -33,8 +33,8 @@ class WordPoolIndexer private constructor() {
      * 初始化
      */
     fun init(context: Context) {
-        // 初始化依赖的管理器
-        LearningProgressManager.init(context)
+        // 初始化数据层
+        LearningProgressData.init(context)
         WordLearningManager.init(context)
     }
 
@@ -49,7 +49,7 @@ class WordPoolIndexer private constructor() {
         count: Int = 50,
         includeReview: Boolean = true
     ): List<Word> {
-        val poolSize = LearningProgressManager.getPoolSize()
+        val poolSize = LearningProgressData.getPoolSize()
 
         return if (poolSize == 0) {
             // 默认计划模式
@@ -61,7 +61,7 @@ class WordPoolIndexer private constructor() {
             )
         } else {
             // 每日计划模式
-            val poolWordIds = LearningProgressManager.getLearningPool()
+            val poolWordIds = LearningProgressData.getLearningPool()
             DailyPlanAlgorithm.getNextBatch(
                 poolWordIds = poolWordIds,
                 count = count,
@@ -82,11 +82,8 @@ class WordPoolIndexer private constructor() {
             WordLearningManager.recordWord(wordId, word.word, isMemorized = true)
         }
 
-        // 如果是每日计划模式，更新学习池
-        val poolSize = LearningProgressManager.getPoolSize()
-        if (poolSize > 0) {
-            LearningProgressManager.markWordAsMemorized(wordId)
-        }
+        // 使用学习池算法处理
+        LearningPoolAlgorithm.markWordAsMemorized(wordId)
     }
 
     /**
@@ -107,7 +104,7 @@ class WordPoolIndexer private constructor() {
      * @param size 学习池大小
      */
     fun setPoolSize(size: Int) {
-        LearningProgressManager.setPoolSize(size)
+        LearningPoolAlgorithm.setPoolSize(size)
     }
 
     /**
@@ -116,7 +113,7 @@ class WordPoolIndexer private constructor() {
      * @return 学习池大小
      */
     fun getPoolSize(): Int {
-        return LearningProgressManager.getPoolSize()
+        return LearningProgressData.getPoolSize()
     }
 
     /**
@@ -125,7 +122,7 @@ class WordPoolIndexer private constructor() {
      * @return 单词池类型
      */
     fun getPoolType(): WordPoolType {
-        return if (LearningProgressManager.getPoolSize() == 0) {
+        return if (LearningProgressData.getPoolSize() == 0) {
             WordPoolType.DEFAULT_PLAN
         } else {
             WordPoolType.DAILY_PLAN
@@ -138,16 +135,16 @@ class WordPoolIndexer private constructor() {
      * @return 单词池统计信息
      */
     fun getStatistics(): WordPoolStatistics {
-        val poolSize = LearningProgressManager.getPoolSize()
+        val poolSize = LearningProgressData.getPoolSize()
         val poolType = getPoolType()
 
         val memorizedCount = WordLearningManager.getMemorizedWordsCount()
         val unmemorizedCount = ReviewAlgorithm.getUnmemorizedCount()
-        val studyingCount = LearningProgressManager.getStudyingWordsCount()
+        val studyingCount = LearningPoolAlgorithm.getStudyingWordsCount()
         val remainingCount = if (poolType == WordPoolType.DEFAULT_PLAN) {
             DefaultPlanAlgorithm.getRemainingCount(getCurrentIndex())
         } else {
-            DailyPlanAlgorithm.getRemainingCount(LearningProgressManager.getNextWordId())
+            DailyPlanAlgorithm.getRemainingCount(LearningProgressData.getNextWordId())
         }
 
         return WordPoolStatistics(
@@ -166,18 +163,9 @@ class WordPoolIndexer private constructor() {
      * @return 当前索引
      */
     private fun getCurrentIndex(): Int {
-        val pageIndex = LearningProgressManager.getCurrentPageIndex()
-        val indexInPage = LearningProgressManager.getCurrentIndexInPage()
+        val pageIndex = LearningProgressData.getCurrentPageIndex()
+        val indexInPage = LearningProgressData.getCurrentIndexInPage()
         return pageIndex * 50 + indexInPage
-    }
-
-    /**
-     * 获取下一个要补充的单词ID（每日计划模式使用）
-     *
-     * @return 下一个单词ID
-     */
-    private fun getNextWordId(): Int {
-        return LearningProgressManager.getNextWordId()
     }
 
     /**
@@ -190,8 +178,8 @@ class WordPoolIndexer private constructor() {
         return if (poolType == WordPoolType.DEFAULT_PLAN) {
             DefaultPlanAlgorithm.hasMoreWords(getCurrentIndex())
         } else {
-            val poolWordIds = LearningProgressManager.getLearningPool()
-            poolWordIds.isNotEmpty() || DailyPlanAlgorithm.hasMoreWords(getNextWordId())
+            val poolWordIds = LearningProgressData.getLearningPool()
+            poolWordIds.isNotEmpty() || DailyPlanAlgorithm.hasMoreWords(LearningProgressData.getNextWordId())
         }
     }
 }

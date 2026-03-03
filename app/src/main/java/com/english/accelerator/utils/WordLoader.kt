@@ -3,23 +3,37 @@ package com.english.accelerator.utils
 import android.content.Context
 import com.english.accelerator.algorithm.WordPoolIndexer
 import com.english.accelerator.data.Word
+import com.english.accelerator.data.WordPoolStatistics
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
- * 单词加载器 - 核心逻辑和界面的中间件
+ * 单词加载器（加载层）
  *
  * 职责：
  * - 加载索引（通过 WordPoolIndexer）
  * - 管理分块加载
- * - 内存加载管理
- * - 作为 UI 层和算法层之间的桥梁
+ * - 内存管理和缓存
+ * - 预加载优化
+ * - 作为 UI 层和索引层之间的桥梁
  * - 提供简化的 API 供 UI 层调用
  *
  * 架构层次：
- * data (数据层) → algorithm (算法层) → WordLoader (中间件层) → UI (界面层)
+ * data (数据层) → algorithm (算法层) → indexer (索引层) → WordLoader (加载层) → UI (界面层)
  */
 object WordLoader {
     private lateinit var wordPoolIndexer: WordPoolIndexer
     private var isInitialized = false
+
+    // 缓存管理
+    private var cachedBatch: List<Word>? = null
+    private var cacheTimestamp: Long = 0
+    private const val CACHE_VALIDITY_MS = 5000L // 缓存有效期 5 秒
+
+    // 预加载管理
+    private var isPreloading = false
+    private var preloadedBatch: List<Word>? = null
 
     /**
      * 初始化
@@ -33,7 +47,7 @@ object WordLoader {
     }
 
     /**
-     * 获取下一批单词（分块加载）
+     * 获取下一批单词（分块加载，带缓存）
      *
      * @param count 获取的单词数量（默认50个）
      * @param includeReview 是否包含复习单词（默认true）
@@ -44,7 +58,50 @@ object WordLoader {
         includeReview: Boolean = true
     ): List<Word> {
         checkInitialized()
-        return wordPoolIndexer.getNextBatch(count, includeReview)
+
+        // 检查预加载的数据
+        preloadedBatch?.let { preloaded ->
+            preloadedBatch = null // 清空预加载缓存
+            triggerPreload(count, includeReview) // 触发下一次预加载
+            return preloaded
+        }
+
+        // 检查缓存
+        val now = System.currentTimeMillis()
+        if (cachedBatch != null && (now - cacheTimestamp) < CACHE_VALIDITY_MS) {
+            return cachedBatch!!
+        }
+
+        // 从索引器加载
+        val batch = wordPoolIndexer.getNextBatch(count, includeReview)
+
+        // 更新缓存
+        cachedBatch = batch
+        cacheTimestamp = now
+
+        // 触发预加载
+        triggerPreload(count, includeReview)
+
+        return batch
+    }
+
+    /**
+     * 触发预加载（异步）
+     */
+    private fun triggerPreload(count: Int, includeReview: Boolean) {
+        if (isPreloading) return
+
+        isPreloading = true
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 预加载下一批数据
+                preloadedBatch = wordPoolIndexer.getNextBatch(count, includeReview)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isPreloading = false
+            }
+        }
     }
 
     /**
@@ -55,6 +112,7 @@ object WordLoader {
     fun markAsMemorized(wordId: Int) {
         checkInitialized()
         wordPoolIndexer.markAsMemorized(wordId)
+        invalidateCache() // 标记后使缓存失效
     }
 
     /**
@@ -65,6 +123,7 @@ object WordLoader {
     fun markAsUnmemorized(wordId: Int) {
         checkInitialized()
         wordPoolIndexer.markAsUnmemorized(wordId)
+        invalidateCache() // 标记后使缓存失效
     }
 
     /**
@@ -85,6 +144,7 @@ object WordLoader {
     fun setPoolSize(size: Int) {
         checkInitialized()
         wordPoolIndexer.setPoolSize(size)
+        invalidateCache() // 设置后使缓存失效
     }
 
     /**
@@ -102,9 +162,25 @@ object WordLoader {
      *
      * @return 单词池统计信息
      */
-    fun getStatistics(): com.english.accelerator.data.WordPoolStatistics {
+    fun getStatistics(): WordPoolStatistics {
         checkInitialized()
         return wordPoolIndexer.getStatistics()
+    }
+
+    /**
+     * 使缓存失效
+     */
+    private fun invalidateCache() {
+        cachedBatch = null
+        preloadedBatch = null
+        cacheTimestamp = 0
+    }
+
+    /**
+     * 清空所有缓存
+     */
+    fun clearCache() {
+        invalidateCache()
     }
 
     /**

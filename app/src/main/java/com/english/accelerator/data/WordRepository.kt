@@ -3,6 +3,7 @@ package com.english.accelerator.data
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.io.InputStreamReader
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -32,9 +33,25 @@ object WordRepository {
      * 加载内置词库数据
      */
     private fun loadBuiltInWords() {
-        val words = JsonWordLoader.loadWords(appContext)
-        words.forEach { word ->
-            allWords[word.id] = word
+        try {
+            val inputStream = appContext.resources.openRawResource(
+                appContext.resources.getIdentifier(
+                    "ecdict_words",
+                    "raw",
+                    appContext.packageName
+                )
+            )
+
+            val reader = InputStreamReader(inputStream, Charsets.UTF_8)
+            val type = object : TypeToken<List<Word>>() {}.type
+            val words: List<Word> = gson.fromJson(reader, type)
+            reader.close()
+
+            words.forEach { word ->
+                allWords[word.id] = word
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
