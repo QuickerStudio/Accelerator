@@ -130,7 +130,7 @@ fun ModelDownloadCard(
         }
     }
 
-    // 单行布局：标题 + 线路切换按钮 + 下载控制按钮
+    // 单行布局：标题 + 进度/网速 + 线路切换按钮 + 下载控制按钮
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -138,13 +138,35 @@ fun ModelDownloadCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 左侧：动画标题
-        Text(
-            text = currentTitle,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF8B5CF6)
-        )
+        // 左侧：动画标题 + 进度/网速
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = currentTitle,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF8B5CF6)
+            )
+
+            // 显示进度百分比和网速（下载中或暂停时）
+            if (isDownloading || isPaused) {
+                Text(
+                    text = "${(downloadProgress * 100).toInt()}%",
+                    fontSize = 14.sp,
+                    color = Color(0xFF64748B)
+                )
+
+                if (isDownloading && downloadSpeed > 0) {
+                    Text(
+                        text = formatSpeed(downloadSpeed),
+                        fontSize = 14.sp,
+                        color = Color(0xFF10B981)
+                    )
+                }
+            }
+        }
 
         // 右侧：线路切换按钮 + 下载控制按钮
         Row(

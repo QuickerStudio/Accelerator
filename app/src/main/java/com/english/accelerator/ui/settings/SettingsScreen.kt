@@ -51,6 +51,14 @@ fun SettingsScreen() {
     // 文件浏览器对话框状态
     var showFileExplorer by remember { mutableStateOf(false) }
 
+    // Toast 状态
+    var showToast by remember { mutableStateOf(false) }
+    var toastMessage by remember { mutableStateOf("") }
+    var toastBackgroundColor by remember { mutableStateOf(Color.White) }
+
+    // 加载模型状态
+    var isLoadingModel by remember { mutableStateOf(false) }
+
     // 学习计划页面导航状态
     var showLearningPlanScreen by remember { mutableStateOf(false) }
     var showLearningStatsScreen by remember { mutableStateOf(false) }
@@ -102,7 +110,22 @@ fun SettingsScreen() {
             ModelDownloadCard(
                 onLoadModel = {
                     scope.launch {
-                        gemmaManager.initialize()
+                        isLoadingModel = true
+                        toastMessage = "正在加载模型..."
+                        toastBackgroundColor = Color(0xFFBFDBFE)
+                        showToast = true
+
+                        try {
+                            gemmaManager.initialize()
+                            toastMessage = "模型加载成功！"
+                            toastBackgroundColor = Color(0xFFDCFCE7)
+                        } catch (e: Exception) {
+                            toastMessage = "模型加载失败: ${e.message}"
+                            toastBackgroundColor = Color(0xFFFEE2E2)
+                        } finally {
+                            isLoadingModel = false
+                            showToast = true
+                        }
                     }
                 },
                 onOpenDirectory = {
@@ -162,6 +185,22 @@ fun SettingsScreen() {
         // 其他
         SettingsSection(title = "其他") {
             AboutCard()
+        }
+    }
+
+    // Toast 提示
+    if (showToast) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            com.english.accelerator.ui.components.CustomToast(
+                message = toastMessage,
+                visible = showToast,
+                onDismiss = { showToast = false },
+                backgroundColor = toastBackgroundColor,
+                modifier = Modifier.padding(top = 80.dp)
+            )
         }
     }
 }
