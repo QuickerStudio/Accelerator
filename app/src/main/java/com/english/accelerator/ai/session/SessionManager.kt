@@ -62,10 +62,12 @@ class SessionManager private constructor(context: Context) {
     /**
      * 创建新会话
      */
-    fun createSession(title: String, agentRole: AgentRole): Session {
+    fun createSession(title: String, type: Session.Type = Session.Type.CONVERSATION): Session {
+        val sessionId = "session_${System.currentTimeMillis()}"
         val session = Session(
+            id = sessionId,
             title = title,
-            agentRole = agentRole
+            type = type
         )
 
         sessions.add(session)
