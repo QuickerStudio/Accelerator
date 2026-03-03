@@ -1,5 +1,8 @@
 package com.english.accelerator.ai.agent
 
+import com.english.accelerator.ai.model.GemmaInferenceManager
+import com.english.accelerator.ai.inference.InferenceResult
+import com.english.accelerator.ai.inference.SuggestionType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

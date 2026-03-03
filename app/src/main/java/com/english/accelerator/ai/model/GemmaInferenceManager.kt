@@ -2,6 +2,10 @@ package com.english.accelerator.ai.model
 
 import android.content.Context
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
+import com.english.accelerator.ai.inference.InferenceResult
+import com.english.accelerator.ai.inference.GrammarSuggestion
+import com.english.accelerator.ai.inference.PromptTemplates
+import com.english.accelerator.ai.inference.SuggestionType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
