@@ -105,8 +105,8 @@ class DManager(private val context: Context) {
      * 获取当前线路名称
      */
     fun getCurrentRouteName(): String = when (selectedRoute) {
-        DownloadRoute.HUGGINGFACE -> "HuggingFace"
-        DownloadRoute.MODELSCOPE -> "魔塔社区"
+        DownloadRoute.HUGGINGFACE -> "备用线路" // HuggingFace
+        DownloadRoute.MODELSCOPE -> "默认线路" // 魔塔社区
     }
 
     /**

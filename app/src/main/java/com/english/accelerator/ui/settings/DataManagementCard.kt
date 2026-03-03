@@ -21,13 +21,17 @@ import androidx.compose.ui.unit.sp
  * 数据管理卡片 - 自包含组件（可折叠）
  *
  * 功能：
+ * - AI 模型数据管理
  * - 数据备份
  * - 数据恢复
  * - 清除缓存
  * - 重置应用
  */
 @Composable
-fun DataManagementCard() {
+fun DataManagementCard(
+    onOpenModelDirectory: () -> Unit = {},
+    onClearModelCache: () -> Unit = {}
+) {
     var isExpanded by remember { mutableStateOf(false) }
 
     Column(
@@ -102,6 +106,28 @@ fun DataManagementCard() {
 
                 Divider(color = Color(0xFFE2E8F0))
 
+                // 打开模型文件夹
+                DataManagementItem(
+                    icon = Icons.Default.FolderOpen,
+                    title = "打开模型文件夹",
+                    subtitle = "查看 AI 模型文件",
+                    showArrow = false,
+                    onClick = onOpenModelDirectory
+                )
+
+                Divider(color = Color(0xFFE2E8F0))
+
+                // 清除模型缓存
+                DataManagementItemWithButton(
+                    icon = Icons.Default.DeleteOutline,
+                    title = "清除模型缓存",
+                    subtitle = "清除未完成的模型下载缓存",
+                    buttonText = "清除",
+                    onButtonClick = onClearModelCache
+                )
+
+                Divider(color = Color(0xFFE2E8F0))
+
                 // 重置应用
                 DataManagementItem(
                     icon = Icons.Default.RestartAlt,
@@ -121,6 +147,7 @@ private fun DataManagementItem(
     title: String,
     subtitle: String,
     textColor: Color = Color(0xFF1E293B),
+    showArrow: Boolean = true,
     onClick: () -> Unit
 ) {
     Row(
@@ -150,11 +177,63 @@ private fun DataManagementItem(
                 color = Color(0xFF64748B)
             )
         }
+        if (showArrow) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFF94A3B8),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DataManagementItemWithButton(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    buttonText: String,
+    onButtonClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF94A3B8),
-            modifier = Modifier.size(20.dp)
+            tint = Color(0xFF8B5CF6),
+            modifier = Modifier.size(24.dp)
         )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF1E293B)
+            )
+            Text(
+                text = subtitle,
+                fontSize = 13.sp,
+                color = Color(0xFF64748B)
+            )
+        }
+        OutlinedButton(
+            onClick = onButtonClick,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Color(0xFFEF4444)
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444)),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = buttonText,
+                fontSize = 13.sp
+            )
+        }
     }
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.ai.downloader.DManager
 import com.english.accelerator.ai.model.GemmaInferenceManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,6 +44,7 @@ fun SettingsScreen() {
     val scrollState = rememberScrollState()
     val context = androidx.compose.ui.platform.LocalContext.current
     val gemmaManager = remember { GemmaInferenceManager.getInstance() }
+    val dManager = remember { DManager(context) }
     val modelState by gemmaManager.modelState.collectAsState()
     val scope = rememberCoroutineScope()
 
@@ -66,6 +68,20 @@ fun SettingsScreen() {
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
+        // AI 模型管理部分
+        SettingsSection(title = "AI 模型管理") {
+            ModelDownloadCard(
+                onLoadModel = {
+                    scope.launch {
+                        gemmaManager.initialize()
+                    }
+                },
+                onOpenDirectory = {
+                    showFileExplorer = true
+                }
+            )
+        }
+
         // 学习设置
         SettingsSection(title = "学习设置") {
             LearningSettingsCard()
@@ -79,20 +95,6 @@ fun SettingsScreen() {
         // 权限管理
         SettingsSection(title = "权限管理") {
             PermissionsCard()
-        }
-
-        // AI 模型管理部分
-        SettingsSection(title = "AI 模型管理") {
-            ModelDownloadCard(
-                onLoadModel = {
-                    scope.launch {
-                        gemmaManager.initialize()
-                    }
-                },
-                onOpenDirectory = {
-                    showFileExplorer = true
-                }
-            )
         }
 
         // 文件浏览器对话框
@@ -111,7 +113,17 @@ fun SettingsScreen() {
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
-            DataManagementCard()
+            DataManagementCard(
+                onOpenModelDirectory = {
+                    showFileExplorer = true
+                },
+                onClearModelCache = {
+                    scope.launch {
+                        dManager.cancelDownload()
+                        dManager.deleteModel()
+                    }
+                }
+            )
         }
 
         // 其他

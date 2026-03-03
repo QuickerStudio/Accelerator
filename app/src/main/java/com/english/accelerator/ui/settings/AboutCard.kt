@@ -1,5 +1,7 @@
 package com.english.accelerator.ui.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -10,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,6 +28,9 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun AboutCard() {
+    val context = LocalContext.current
+    var showVersionDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -33,18 +39,40 @@ fun AboutCard() {
             icon = Icons.Default.Info,
             title = "版本信息",
             subtitle = "v0.5.0",
-            onClick = { /* TODO: 显示版本详情 */ }
+            showArrow = false,
+            onClick = { showVersionDialog = true }
         )
 
         Divider(color = Color(0xFFE2E8F0))
 
         // 公司信息
-        AboutItem(
-            icon = Icons.Default.Business,
-            title = "公司信息",
-            subtitle = "查看公司介绍",
-            onClick = { /* TODO: 显示公司信息 */ }
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Business,
+                contentDescription = null,
+                tint = Color(0xFF8B5CF6),
+                modifier = Modifier.size(24.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "公司信息",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF1E293B)
+                )
+                Text(
+                    text = "QuickerStudio",
+                    fontSize = 13.sp,
+                    color = Color(0xFF64748B)
+                )
+            }
+        }
 
         Divider(color = Color(0xFFE2E8F0))
 
@@ -53,6 +81,7 @@ fun AboutCard() {
             icon = Icons.Default.Description,
             title = "用户协议",
             subtitle = "查看用户协议和隐私政策",
+            showArrow = false,
             onClick = { /* TODO: 显示用户协议 */ }
         )
 
@@ -62,8 +91,52 @@ fun AboutCard() {
         AboutItem(
             icon = Icons.Default.SystemUpdate,
             title = "检查更新",
-            subtitle = "检查应用更新",
-            onClick = { /* TODO: 检查更新 */ }
+            subtitle = "查看最新版本",
+            showArrow = false,
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/QuickerStudio/Accelerator"))
+                context.startActivity(intent)
+            }
+        )
+    }
+
+    // 版本历史对话框
+    if (showVersionDialog) {
+        AlertDialog(
+            onDismissRequest = { showVersionDialog = false },
+            title = { Text("版本历史") },
+            text = {
+                Column {
+                    Text(
+                        text = "v0.5.0 (当前版本)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "• 实现模块化设置界面\n• 添加 AI 模型管理功能\n• 优化下载体验",
+                        fontSize = 13.sp,
+                        color = Color(0xFF64748B)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "v0.4.0",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "• 初始版本发布",
+                        fontSize = 13.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showVersionDialog = false }) {
+                    Text("关闭", color = Color(0xFF8B5CF6))
+                }
+            }
         )
     }
 }
@@ -73,6 +146,7 @@ private fun AboutItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    showArrow: Boolean = true,
     onClick: () -> Unit
 ) {
     Row(
@@ -102,11 +176,13 @@ private fun AboutItem(
                 color = Color(0xFF64748B)
             )
         }
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = Color(0xFF94A3B8),
-            modifier = Modifier.size(20.dp)
-        )
+        if (showArrow) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFF94A3B8),
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
