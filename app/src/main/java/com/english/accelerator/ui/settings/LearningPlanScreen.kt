@@ -1,5 +1,6 @@
 package com.english.accelerator.ui.settings
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -51,10 +53,33 @@ fun LearningPlanScreen(
     var dailyEndHour by remember { mutableStateOf(22) }
     var dailyEndMinute by remember { mutableStateOf(0) }
 
+    // 错误提示状态
+    var showTimeError by remember { mutableStateOf(false) }
+
     // 对话框状态
     var showReminderTimePicker by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
+
+    // 闪烁动画
+    val infiniteTransition = rememberInfiniteTransition(label = "blink")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
+    // 自动隐藏错误提示
+    LaunchedEffect(showTimeError) {
+        if (showTimeError) {
+            kotlinx.coroutines.delay(3000)
+            showTimeError = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -128,12 +153,70 @@ fun LearningPlanScreen(
                         Divider(color = Color(0xFFE2E8F0))
 
                         // 提醒时间
-                        TimeSettingItem(
-                            icon = Icons.Default.AccessTime,
-                            title = "提醒时间",
-                            time = TimeFormatter.format(reminderHour, reminderMinute),
-                            onClick = { showReminderTimePicker = true }
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (!showTimeError) {
+                                TimeSettingItem(
+                                    icon = Icons.Default.AccessTime,
+                                    title = "提醒时间",
+                                    time = TimeFormatter.format(reminderHour, reminderMinute),
+                                    onClick = { showReminderTimePicker = true },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else {
+                                // 错误提示（替代时间选择器显示）
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccessTime,
+                                        contentDescription = null,
+                                        tint = Color(0xFF8B5CF6),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "提醒时间",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF1E293B)
+                                    )
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Card(
+                                        modifier = Modifier.alpha(alpha),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color(0xFFFEE2E2)
+                                        ),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Warning,
+                                                contentDescription = null,
+                                                tint = Color(0xFFDC2626),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Text(
+                                                text = "超出每日学习时间段",
+                                                fontSize = 12.sp,
+                                                color = Color(0xFFDC2626),
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         Divider(color = Color(0xFFE2E8F0))
 
@@ -261,10 +344,11 @@ fun LearningPlanScreen(
                 if (reminderMinutes >= startMinutes && reminderMinutes <= endMinutes) {
                     reminderHour = hour
                     reminderMinute = minute
+                    showTimeError = false
                     showReminderTimePicker = false
                 } else {
-                    // 提示用户时间超出范围
-                    // TODO: 显示错误提示
+                    // 显示错误提示
+                    showTimeError = true
                     showReminderTimePicker = false
                 }
             }
@@ -472,11 +556,11 @@ private fun TimeSettingItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     time: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .clickable(onClick = onClick)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
