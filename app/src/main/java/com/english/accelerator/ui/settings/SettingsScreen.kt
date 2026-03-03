@@ -46,10 +46,21 @@ fun SettingsScreen() {
     val modelDownloadManager = remember { com.english.accelerator.ai.downloader.DManager(context) }
     val scope = rememberCoroutineScope()
 
+    // 从 DConfig 恢复下载状态
+    val savedState = remember { modelDownloadManager.getFullState() }
+
     var isDownloading by remember { mutableStateOf(false) }
-    var isPaused by remember { mutableStateOf(false) }
+    var isPaused by remember { mutableStateOf(savedState.configState?.isPaused ?: false) }
     var isError by remember { mutableStateOf(false) }
-    var downloadProgress by remember { mutableStateOf(0f) }
+    var downloadProgress by remember {
+        mutableStateOf(
+            if (savedState.fileSize > 0 && savedState.expectedSize > 0) {
+                savedState.fileSize.toFloat() / savedState.expectedSize.toFloat()
+            } else {
+                0f
+            }
+        )
+    }
     var downloadSpeed by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(modelDownloadManager.getCurrentRouteName()) }
 
