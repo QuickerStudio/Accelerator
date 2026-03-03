@@ -1,6 +1,7 @@
 package com.english.accelerator.ai.download
 
 import android.content.Context
+import com.english.accelerator.ai.model.ModelConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -16,6 +17,7 @@ class ModelDownloadManager(private val context: Context) {
     private val modelScopeUrl = "https://www.modelscope.cn/models/google/gemma-3n-E2B-it-litert-lm/resolve/master/gemma-3n-E2B-it-int4.litertlm"
 
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
+    private val modelConfig = ModelConfig.getInstance()
 
     // 下载引擎
     private val downloadEngine = DownloadEngine()
@@ -27,6 +29,18 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     private var selectedRoute: DownloadRoute = DownloadRoute.HUGGINGFACE
+
+    init {
+        // 从配置中恢复下载线路
+        val savedRoute = modelConfig.getDownloadRoute()
+        if (savedRoute != null) {
+            selectedRoute = try {
+                DownloadRoute.valueOf(savedRoute)
+            } catch (e: Exception) {
+                DownloadRoute.HUGGINGFACE
+            }
+        }
+    }
 
     /**
      * 获取当前选择的下载地址
@@ -68,7 +82,14 @@ class ModelDownloadManager(private val context: Context) {
         }
 
         // 使用当前选择的线路下载
-        downloadEngine.download(getSelectedUrl(), modelFile, onProgress)
+        val result = downloadEngine.download(getSelectedUrl(), modelFile, onProgress)
+
+        // 下载成功后保存配置
+        if (result.isSuccess) {
+            modelConfig.markModelDownloaded(modelFile.absolutePath, modelFile.length())
+        }
+
+        result
     }
 
     /**

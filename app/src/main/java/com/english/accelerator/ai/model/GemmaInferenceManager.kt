@@ -6,6 +6,7 @@ import com.english.accelerator.ai.inference.InferenceResult
 import com.english.accelerator.ai.inference.GrammarSuggestion
 import com.english.accelerator.ai.inference.PromptTemplates
 import com.english.accelerator.ai.inference.SuggestionType
+import com.english.accelerator.utils.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,6 +27,7 @@ class GemmaInferenceManager private constructor(
     private var llmInference: LlmInference? = null
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
+    private val modelConfig = ModelConfig.getInstance()
 
     /**
      * Represents the current state of the model
@@ -40,6 +42,8 @@ class GemmaInferenceManager private constructor(
     val modelState: StateFlow<ModelState> = _modelState.asStateFlow()
 
     companion object {
+        private const val TAG = "GemmaInferenceManager"
+
         @Volatile
         private var instance: GemmaInferenceManager? = null
 
@@ -68,9 +72,14 @@ class GemmaInferenceManager private constructor(
     }
 
     init {
+        AppLogger.info(TAG, "Initializing GemmaInferenceManager")
+
         // Check if model is already downloaded
         if (isModelDownloaded()) {
             _modelState.value = ModelState.Ready
+            AppLogger.info(TAG, "Model file found at: ${modelFile.absolutePath}")
+        } else {
+            AppLogger.warn(TAG, "Model file not found at: ${modelFile.absolutePath}")
         }
     }
 
@@ -90,7 +99,17 @@ class GemmaInferenceManager private constructor(
     /**
      * Check if the model is already downloaded
      */
-    fun isModelDownloaded(): Boolean = modelFile.exists() && modelFile.length() > 0
+    fun isModelDownloaded(): Boolean {
+        val exists = modelFile.exists() && modelFile.length() > 0
+
+        // 同步 ModelConfig 状态
+        if (exists && !modelConfig.isModelDownloaded()) {
+            modelConfig.markModelDownloaded(modelFile.absolutePath, modelFile.length())
+            AppLogger.info(TAG, "Updated ModelConfig: model found at ${modelFile.absolutePath}")
+        }
+
+        return exists
+    }
 
     /**
      * Initialize the LLM inference engine
@@ -98,17 +117,26 @@ class GemmaInferenceManager private constructor(
      */
     suspend fun initialize() = withContext(Dispatchers.IO) {
         try {
+            AppLogger.info(TAG, "Starting model initialization")
+
             if (!isModelDownloaded()) {
-                _modelState.value = ModelState.Error("Model not downloaded")
+                val error = "Model not downloaded"
+                AppLogger.error(TAG, error)
+                _modelState.value = ModelState.Error(error)
+                modelConfig.markInitializationFailed(error)
                 return@withContext
             }
 
             // Check memory availability
             if (!checkMemoryAvailability()) {
-                _modelState.value = ModelState.Error("内存不足。请关闭其他应用后重试。")
+                val error = "内存不足。请关闭其他应用后重试。"
+                AppLogger.error(TAG, "Insufficient memory for model initialization")
+                _modelState.value = ModelState.Error(error)
+                modelConfig.markInitializationFailed(error)
                 return@withContext
             }
 
+            AppLogger.info(TAG, "Building LLM inference options")
             val options = LlmInference.LlmInferenceOptions.builder()
                 .setModelPath(modelFile.absolutePath)
                 .setMaxTokens(2048)
@@ -117,10 +145,19 @@ class GemmaInferenceManager private constructor(
                 .setRandomSeed(0)
                 .build()
 
+            AppLogger.info(TAG, "Creating LLM inference instance")
             llmInference = LlmInference.createFromOptions(context, options)
             _modelState.value = ModelState.Ready
+
+            // 标记初始化成功
+            modelConfig.markInitializationSuccess()
+            AppLogger.info(TAG, "Model initialized successfully")
         } catch (e: Exception) {
-            _modelState.value = ModelState.Error("Failed to initialize model: ${e.message}")
+            val error = "Failed to initialize model: ${e.message}"
+            AppLogger.error(TAG, error)
+            AppLogger.error(TAG, "Stack trace: ${e.stackTraceToString()}")
+            _modelState.value = ModelState.Error(error)
+            modelConfig.markInitializationFailed(error)
         }
     }
 
@@ -134,8 +171,12 @@ class GemmaInferenceManager private constructor(
         try {
             val inference = llmInference
             if (inference == null) {
-                return@withContext InferenceResult.Error("Model not initialized")
+                val error = "Model not initialized"
+                AppLogger.error(TAG, error)
+                return@withContext InferenceResult.Error(error)
             }
+
+            AppLogger.debug(TAG, "Generating suggestions for type: $type")
 
             // Generate prompt based on type
             val prompt = when (type) {
@@ -145,14 +186,19 @@ class GemmaInferenceManager private constructor(
             }
 
             // Run inference
+            AppLogger.debug(TAG, "Running inference")
             val response = inference.generateResponse(prompt)
+            AppLogger.debug(TAG, "Inference completed, response length: ${response.length}")
 
             // Parse response into suggestions
             val suggestions = parseResponse(response, type)
 
             InferenceResult.Success(suggestions, response)
         } catch (e: Exception) {
-            InferenceResult.Error("Inference failed: ${e.message}")
+            val error = "Inference failed: ${e.message}"
+            AppLogger.error(TAG, error)
+            AppLogger.error(TAG, "Stack trace: ${e.stackTraceToString()}")
+            InferenceResult.Error(error)
         }
     }
 
@@ -214,6 +260,7 @@ class GemmaInferenceManager private constructor(
      * Cleanup resources
      */
     fun cleanup() {
+        AppLogger.info(TAG, "Cleaning up resources")
         llmInference?.close()
         llmInference = null
         scope.cancel()
@@ -223,6 +270,7 @@ class GemmaInferenceManager private constructor(
      * Handle low memory situations
      */
     fun onLowMemory() {
+        AppLogger.warn(TAG, "Low memory detected, releasing model")
         llmInference?.close()
         llmInference = null
         // Will reinitialize on next request
