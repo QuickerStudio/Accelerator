@@ -49,6 +49,10 @@ class MainActivity : ComponentActivity() {
         // 记录应用启动
         com.english.accelerator.utils.AppLogger.info("MainActivity", "Application started")
 
+        // 初始化 AI 系统
+        com.english.accelerator.ai.session.SessionManager.init(this)
+        com.english.accelerator.ai.history.HistoryManager.init(this)
+
         // 初始化 WordLearningManager
         com.english.accelerator.data.WordLearningManager.init(this)
 
