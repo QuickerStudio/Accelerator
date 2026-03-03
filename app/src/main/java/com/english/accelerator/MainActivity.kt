@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,9 +19,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.english.accelerator.ui.components.BottomInputArea
+import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.navigation.BottomNavigationBar
 import com.english.accelerator.ui.navigation.Screen
 import com.english.accelerator.ui.settings.SettingsScreen
@@ -104,6 +109,11 @@ fun AcceleratorApp() {
     var showInputArea by rememberSaveable { mutableStateOf(false) }
     var hideBottomBar by rememberSaveable { mutableStateOf(false) }
 
+    // Toast 状态
+    var toastMessage by remember { mutableStateOf("") }
+    var toastBackgroundColor by remember { mutableStateOf(Color.White) }
+    var showToast by remember { mutableStateOf(false) }
+
     // 临时测试模式 - 设置为 true 启用测试界面
     val testMode = false
 
@@ -123,7 +133,12 @@ fun AcceleratorApp() {
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
                     BottomInputArea(
-                        modifier = Modifier.padding(bottom = 15.dp)
+                        modifier = Modifier.padding(bottom = 15.dp),
+                        onShowToast = { message, color ->
+                            toastMessage = message
+                            toastBackgroundColor = color
+                            showToast = true
+                        }
                     )
                 }
 
@@ -147,22 +162,37 @@ fun AcceleratorApp() {
             }
         }
     ) { innerPadding ->
-        when (currentRoute) {
-            Screen.Vocabulary.route -> VocabularyScreen(
-                showInputArea = showInputArea,
-                onToggleInputArea = { showInputArea = !showInputArea },
-                onNavigateToSettings = { currentRoute = Screen.Settings.route }
-            )
-            Screen.Writing.route -> WritingScreen(
-                onNavigateToSettings = { currentRoute = Screen.Settings.route },
-                onKeyboardVisibilityChanged = { isVisible ->
-                    hideBottomBar = isVisible
-                }
-            )
-            Screen.Speaking.route -> SpeakingScreen(
-                onNavigateToSettings = { currentRoute = Screen.Settings.route }
-            )
-            Screen.Settings.route -> SettingsScreen()
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (currentRoute) {
+                Screen.Vocabulary.route -> VocabularyScreen(
+                    showInputArea = showInputArea,
+                    onToggleInputArea = { showInputArea = !showInputArea },
+                    onNavigateToSettings = { currentRoute = Screen.Settings.route }
+                )
+                Screen.Writing.route -> WritingScreen(
+                    onNavigateToSettings = { currentRoute = Screen.Settings.route },
+                    onKeyboardVisibilityChanged = { isVisible ->
+                        hideBottomBar = isVisible
+                    }
+                )
+                Screen.Speaking.route -> SpeakingScreen(
+                    onNavigateToSettings = { currentRoute = Screen.Settings.route }
+                )
+                Screen.Settings.route -> SettingsScreen()
+            }
+
+            // Toast 提示（全局显示）
+            if (showToast) {
+                com.english.accelerator.ui.components.CustomToast(
+                    message = toastMessage,
+                    visible = showToast,
+                    onDismiss = { showToast = false },
+                    backgroundColor = toastBackgroundColor,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 80.dp)
+                )
+            }
         }
     }
 }

@@ -2,6 +2,8 @@ package com.english.accelerator.ui.settings
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,11 +18,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.utils.DataExportImportHelper
+import kotlinx.coroutines.launch
 
 /**
  * 关于卡片 - 自包含组件
  *
  * 功能：
+ * - 数据导出导入
  * - 显示应用版本信息
  * - 公司信息
  * - 用户协议
@@ -30,10 +35,87 @@ import androidx.compose.ui.unit.sp
 fun AboutCard() {
     val context = LocalContext.current
     var showVersionDialog by remember { mutableStateOf(false) }
+    var showToast by remember { mutableStateOf(false) }
+    var toastMessage by remember { mutableStateOf("") }
+    var toastColor by remember { mutableStateOf(Color.White) }
+    val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    // 文件选择器 - 导入数据
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                val result = DataExportImportHelper.importData(context, it)
+                result.onSuccess { message ->
+                    toastMessage = message
+                    toastColor = Color(0xFFDCFCE7)
+                    showToast = true
+                }.onFailure { error ->
+                    toastMessage = "导入失败: ${error.message}"
+                    toastColor = Color(0xFFFEE2E2)
+                    showToast = true
+                }
+            }
+        }
+    }
+
+    // 文件创建器 - 导出数据
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                val result = DataExportImportHelper.exportData(context)
+                result.onSuccess { file ->
+                    // 复制文件到用户选择的位置
+                    context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                        file.inputStream().use { inputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
+                    }
+                    toastMessage = "数据导出成功"
+                    toastColor = Color(0xFFDCFCE7)
+                    showToast = true
+                }.onFailure { error ->
+                    toastMessage = "导出失败: ${error.message}"
+                    toastColor = Color(0xFFFEE2E2)
+                    showToast = true
+                }
+            }
+        }
+    }
+
+    Box {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // 数据导出
+            AboutItem(
+                icon = Icons.Default.Upload,
+                title = "数据导出",
+                subtitle = "导出学习数据和设置",
+                showArrow = true,
+                onClick = {
+                    val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                    exportLauncher.launch("Accelerator_Backup_$timestamp.Accele")
+                }
+            )
+
+            Divider(color = Color(0xFFE2E8F0))
+
+            // 数据导入
+            AboutItem(
+                icon = Icons.Default.Download,
+                title = "数据导入",
+                subtitle = "导入学习数据和设置",
+                showArrow = true,
+                onClick = {
+                    importLauncher.launch("*/*")
+                }
+            )
+
+            Divider(color = Color(0xFFE2E8F0))
         // 版本信息
         AboutItem(
             icon = Icons.Default.Info,
@@ -98,6 +180,17 @@ fun AboutCard() {
                 context.startActivity(intent)
             }
         )
+    }
+
+    // Toast 提示
+    if (showToast) {
+        androidx.compose.material3.Snackbar(
+            modifier = Modifier.padding(16.dp),
+            containerColor = toastColor,
+            contentColor = Color(0xFF1E293B)
+        ) {
+            Text(toastMessage)
+        }
     }
 
     // 版本历史对话框

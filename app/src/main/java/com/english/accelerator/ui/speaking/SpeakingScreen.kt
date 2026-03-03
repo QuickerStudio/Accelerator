@@ -32,6 +32,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ui.sidebar.Sidebar
+import com.english.accelerator.ui.components.CustomToast
+import com.english.accelerator.utils.rememberScreenshotCapture
 import com.english.accelerator.ai.model.GemmaInferenceManager
 import com.english.accelerator.ai.model.GemmaInferenceManager.ModelState
 import com.english.accelerator.ai.inference.InferenceResult
@@ -89,6 +91,25 @@ fun SpeakingScreen(
     var isContinuousMode by remember { mutableStateOf(false) }
     var showHistoryScreen by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+
+    // Toast 状态
+    var toastMessage by remember { mutableStateOf("") }
+    var toastBackgroundColor by remember { mutableStateOf(Color.White) }
+    var showToast by remember { mutableStateOf(false) }
+
+    // 截图功能
+    val captureScreenshot = rememberScreenshotCapture(
+        onSuccess = { message ->
+            toastMessage = message
+            toastBackgroundColor = Color(0xFFDCFCE7)
+            showToast = true
+        },
+        onError = { error ->
+            toastMessage = error
+            toastBackgroundColor = Color(0xFFFEE2E2)
+            showToast = true
+        }
+    )
 
     // AI 集成
     val gemmaManager = remember { GemmaInferenceManager.getInstance() }
@@ -221,7 +242,7 @@ fun SpeakingScreen(
                                 }
                             }
                         },
-                        onCamera = { /* TODO: Open camera */ },
+                        onCamera = { captureScreenshot() },
                         onAttach = { /* TODO: Attach file */ }
                     )
 
@@ -287,6 +308,19 @@ fun SpeakingScreen(
                     // TODO: Load conversation
                     showHistoryScreen = false
                 }
+            )
+        }
+
+        // Toast 提示
+        if (showToast) {
+            CustomToast(
+                message = toastMessage,
+                visible = showToast,
+                onDismiss = { showToast = false },
+                backgroundColor = toastBackgroundColor,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 80.dp)
             )
         }
     }

@@ -36,14 +36,26 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.utils.rememberScreenshotCapture
 
 @Composable
 fun BottomInputArea(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShowToast: (String, Color) -> Unit = { _, _ -> }
 ) {
     var inputText by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+
+    // 截图功能
+    val captureScreenshot = rememberScreenshotCapture(
+        onSuccess = { message ->
+            onShowToast(message, Color(0xFF10B981))
+        },
+        onError = { error ->
+            onShowToast(error, Color(0xFFEF4444))
+        }
+    )
 
     Box(
         modifier = modifier
@@ -88,7 +100,7 @@ fun BottomInputArea(
 
                 // 相机按钮
                 IconButton(
-                    onClick = { /* TODO: 打开相机 */ },
+                    onClick = { captureScreenshot() },
                     modifier = Modifier
                         .size(36.dp)
                         .align(Alignment.CenterStart)
@@ -96,7 +108,7 @@ fun BottomInputArea(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "相机",
+                        contentDescription = "截图",
                         tint = Color(0xFF64748B),
                         modifier = Modifier.size(20.dp)
                     )
