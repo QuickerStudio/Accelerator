@@ -30,6 +30,7 @@ import android.content.pm.PackageManager
  * - 存储权限管理
  * - 通知权限管理
  * - 麦克风权限管理
+ * - 截图权限管理
  */
 @Composable
 fun PermissionsCard() {
@@ -44,6 +45,9 @@ fun PermissionsCard() {
     }
     var microphonePermissionGranted by remember {
         mutableStateOf(checkMicrophonePermission(context))
+    }
+    var screenshotPermissionGranted by remember {
+        mutableStateOf(checkScreenshotPermission(context))
     }
 
     // 存储权限请求启动器
@@ -72,6 +76,16 @@ fun PermissionsCard() {
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         microphonePermissionGranted = isGranted
+        if (!isGranted) {
+            openAppSettings(context)
+        }
+    }
+
+    // 截图权限请求启动器
+    val screenshotPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        screenshotPermissionGranted = isGranted
         if (!isGranted) {
             openAppSettings(context)
         }
@@ -137,6 +151,25 @@ fun PermissionsCard() {
                 }
             }
         )
+
+        Divider(color = Color(0xFFE2E8F0))
+
+        // 截图权限
+        PermissionItemWithSwitch(
+            icon = Icons.Default.CameraAlt,
+            title = "截图权限",
+            subtitle = "用于保存学习截图",
+            checked = screenshotPermissionGranted,
+            onCheckedChange = { enabled ->
+                if (enabled) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        screenshotPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                    }
+                } else {
+                    openAppSettings(context)
+                }
+            }
+        )
     }
 }
 
@@ -179,6 +212,21 @@ private fun checkMicrophonePermission(context: android.content.Context): Boolean
         context,
         Manifest.permission.RECORD_AUDIO
     ) == PackageManager.PERMISSION_GRANTED
+}
+
+/**
+ * 检查截图权限
+ */
+private fun checkScreenshotPermission(context: android.content.Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_MEDIA_IMAGES
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        // Android 12 及以下默认有读取图片权限
+        true
+    }
 }
 
 /**
