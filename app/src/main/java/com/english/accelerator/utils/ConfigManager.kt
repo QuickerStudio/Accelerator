@@ -17,7 +17,7 @@ import com.google.gson.reflect.TypeToken
  */
 class ConfigManager private constructor(context: Context) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(
+    internal val prefs: SharedPreferences = context.getSharedPreferences(
         "app_config",
         Context.MODE_PRIVATE
     )
@@ -118,10 +118,10 @@ class ConfigManager private constructor(context: Context) {
         AppLogger.debug("ConfigManager", "Set object: $key")
     }
 
-    inline fun <reified T> getObject(key: String): T? {
-        val json = getString(key) ?: return null
+    fun <T> getObject(key: String, clazz: Class<T>): T? {
+        val json = prefs.getString(key, null) ?: return null
         return try {
-            gson.fromJson(json, T::class.java)
+            gson.fromJson(json, clazz)
         } catch (e: Exception) {
             AppLogger.error("ConfigManager", "Failed to parse object: $key", e)
             null
@@ -136,10 +136,10 @@ class ConfigManager private constructor(context: Context) {
         AppLogger.debug("ConfigManager", "Set list: $key (${list.size} items)")
     }
 
-    inline fun <reified T> getList(key: String): List<T>? {
-        val json = getString(key) ?: return null
+    fun <T> getList(key: String, type: java.lang.reflect.Type): List<T>? {
+        val json = prefs.getString(key, null) ?: return null
         return try {
-            gson.fromJson(json, object : TypeToken<List<T>>() {}.type)
+            gson.fromJson(json, type)
         } catch (e: Exception) {
             AppLogger.error("ConfigManager", "Failed to parse list: $key", e)
             null
