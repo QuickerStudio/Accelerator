@@ -1,7 +1,7 @@
 {
   "model": {
     "name": "gemma-3n-e2b-it-int4",
-    "expectedSize": 1932735488,
+    "expectedSize": 3655827456,
     "sizeTolerance": 1048576,
     "fileName": "gemma-3n-e2b-it-int4.litertlm"
   },
@@ -27,7 +27,7 @@
     "currentDownload": {
       "modelPath": "",
       "downloadedBytes": 0,
-      "totalBytes": 1932735488,
+      "totalBytes": 3655827456,
       "isComplete": false,
       "isPaused": false,
       "lastUpdateTime": 0,
