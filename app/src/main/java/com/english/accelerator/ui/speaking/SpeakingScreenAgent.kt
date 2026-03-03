@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.english.accelerator.data.ConversationTurn
 import com.english.accelerator.ui.sidebar.Sidebar
 import kotlinx.coroutines.launch
@@ -37,7 +36,7 @@ import java.util.*
 @Composable
 fun SpeakingScreenWithAgent(
     onNavigateToSettings: () -> Unit = {},
-    viewModel: SpeakingViewModel = viewModel()
+    viewModel: SpeakingViewModel = SpeakingViewModel()
 ) {
     val messages by viewModel.messages.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -160,10 +159,7 @@ fun SpeakingScreenWithAgent(
             Sidebar(
                 isOpen = showSidebar,
                 onClose = { showSidebar = false },
-                onNavigateToSettings = onNavigateToSettings,
-                onNavigateToVocabulary = { /* TODO */ },
-                onNavigateToWriting = { /* TODO */ },
-                onNavigateToSpeaking = { showSidebar = false }
+                onNavigateToSettings = onNavigateToSettings
             )
         }
     }

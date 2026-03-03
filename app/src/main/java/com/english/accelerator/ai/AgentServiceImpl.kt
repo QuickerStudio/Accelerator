@@ -132,6 +132,7 @@ class AgentServiceImpl(
         return when (result) {
             is InferenceResult.Success -> result.rawResponse
             is InferenceResult.Error -> throw Exception(result.message)
+            InferenceResult.Loading -> throw Exception("Inference is still loading")
         }
     }
 }
