@@ -66,6 +66,21 @@ fun SettingsScreen() {
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
+        // 学习设置
+        SettingsSection(title = "学习设置") {
+            LearningSettingsCard()
+        }
+
+        // 自动朗读设置
+        SettingsSection(title = "自动朗读设置") {
+            AutoReadCard()
+        }
+
+        // 权限管理
+        SettingsSection(title = "权限管理") {
+            PermissionsCard()
+        }
+
         // AI 模型管理部分
         SettingsSection(title = "AI 模型管理") {
             ModelDownloadCard(
@@ -88,8 +103,19 @@ fun SettingsScreen() {
             )
         }
 
-        // 关于部分
-        SettingsSection(title = "关于") {
+        // 数据管理（可折叠）
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            DataManagementCard()
+        }
+
+        // 其他
+        SettingsSection(title = "其他") {
             AboutCard()
         }
     }

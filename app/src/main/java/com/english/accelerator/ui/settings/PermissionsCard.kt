@@ -15,64 +15,57 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * 关于卡片 - 自包含组件
+ * 权限管理卡片 - 自包含组件
  *
  * 功能：
- * - 显示应用版本信息
- * - 公司信息
- * - 用户协议
- * - 检查更新
+ * - 存储权限管理
+ * - 通知权限管理
+ * - 麦克风权限管理
  */
 @Composable
-fun AboutCard() {
+fun PermissionsCard() {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // 版本信息
-        AboutItem(
-            icon = Icons.Default.Info,
-            title = "版本信息",
-            subtitle = "v0.5.0",
-            onClick = { /* TODO: 显示版本详情 */ }
+        // 存储权限
+        PermissionItem(
+            icon = Icons.Default.Storage,
+            title = "存储权限",
+            subtitle = "用于保存学习数据和模型文件",
+            status = "已授权",
+            onClick = { /* TODO: 打开权限设置 */ }
         )
 
         Divider(color = Color(0xFFE2E8F0))
 
-        // 公司信息
-        AboutItem(
-            icon = Icons.Default.Business,
-            title = "公司信息",
-            subtitle = "查看公司介绍",
-            onClick = { /* TODO: 显示公司信息 */ }
+        // 通知权限
+        PermissionItem(
+            icon = Icons.Default.Notifications,
+            title = "通知权限",
+            subtitle = "用于发送学习提醒",
+            status = "已授权",
+            onClick = { /* TODO: 打开权限设置 */ }
         )
 
         Divider(color = Color(0xFFE2E8F0))
 
-        // 用户协议
-        AboutItem(
-            icon = Icons.Default.Description,
-            title = "用户协议",
-            subtitle = "查看用户协议和隐私政策",
-            onClick = { /* TODO: 显示用户协议 */ }
-        )
-
-        Divider(color = Color(0xFFE2E8F0))
-
-        // 检查更新
-        AboutItem(
-            icon = Icons.Default.SystemUpdate,
-            title = "检查更新",
-            subtitle = "检查应用更新",
-            onClick = { /* TODO: 检查更新 */ }
+        // 麦克风权限
+        PermissionItem(
+            icon = Icons.Default.Mic,
+            title = "麦克风权限",
+            subtitle = "用于语音练习功能",
+            status = "未授权",
+            onClick = { /* TODO: 打开权限设置 */ }
         )
     }
 }
 
 @Composable
-private fun AboutItem(
+private fun PermissionItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    status: String,
     onClick: () -> Unit
 ) {
     Row(
@@ -102,6 +95,12 @@ private fun AboutItem(
                 color = Color(0xFF64748B)
             )
         }
+        Text(
+            text = status,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (status == "已授权") Color(0xFF10B981) else Color(0xFF64748B)
+        )
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
