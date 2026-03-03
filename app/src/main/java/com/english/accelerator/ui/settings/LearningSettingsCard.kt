@@ -26,7 +26,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun LearningSettingsCard(
     onNavigateToLearningPlan: () -> Unit = {},
-    onNavigateToLearningStats: () -> Unit = {}
+    onNavigateToLearningStats: () -> Unit = {},
+    onNavigateToLearningGoals: () -> Unit = {}
 ) {
     // 内部状态管理
     var learningReminderEnabled by remember { mutableStateOf(true) }
@@ -48,8 +49,8 @@ fun LearningSettingsCard(
         SettingItemWithArrow(
             icon = Icons.Default.TrackChanges,
             title = "每日学习目标",
-            subtitle = "设置每日学习目标",
-            onClick = { /* TODO: 进入目标设置页面 */ }
+            subtitle = "设置单词、写作、对话的每日目标",
+            onClick = onNavigateToLearningGoals
         )
 
         Divider(color = Color(0xFFE2E8F0))
@@ -58,7 +59,7 @@ fun LearningSettingsCard(
         SettingItemWithArrow(
             icon = Icons.Default.CalendarToday,
             title = "学习计划",
-            subtitle = "设置学习计划和提醒时间",
+            subtitle = "设置学习时间和提醒",
             onClick = onNavigateToLearningPlan
         )
 

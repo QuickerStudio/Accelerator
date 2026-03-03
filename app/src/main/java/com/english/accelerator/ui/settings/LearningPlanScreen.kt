@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.utils.WordLoader
 
 /**
  * 学习计划设置页面
@@ -25,8 +24,6 @@ import com.english.accelerator.utils.WordLoader
  * - 每日开始时间设置（使用专业时间选择器）
  * - 每日结束时间设置（使用专业时间选择器）
  * - 学习提醒时间设置
- * - 学习目标设置
- * - 每日学习单词数设置（集成 WordLoader）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +32,7 @@ fun LearningPlanScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    // 状态管理 - 从 WordLoader 加载初始值
+    // 状态管理
     var dailyStartHour by remember { mutableStateOf(9) }
     var dailyStartMinute by remember { mutableStateOf(0) }
     var dailyEndHour by remember { mutableStateOf(22) }
@@ -43,13 +40,6 @@ fun LearningPlanScreen(
     var reminderEnabled by remember { mutableStateOf(true) }
     var reminderHour by remember { mutableStateOf(20) }
     var reminderMinute by remember { mutableStateOf(0) }
-    var dailyGoalMinutes by remember { mutableStateOf(30) }
-    var dailyWordGoal by remember { mutableStateOf(WordLoader.getPoolSize()) }
-
-    // 保存设置到 WordLoader
-    LaunchedEffect(dailyWordGoal) {
-        WordLoader.setPoolSize(dailyWordGoal)
-    }
 
     // 对话框状态
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -155,156 +145,6 @@ fun LearningPlanScreen(
                 }
             }
 
-            // 每日学习目标
-            SettingsCard(title = "每日学习目标") {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // 学习时长
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.TrackChanges,
-                            contentDescription = null,
-                            tint = Color(0xFF8B5CF6),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "每日学习时长",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF1E293B)
-                        )
-                    }
-
-                    // 时长滑块
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "$dailyGoalMinutes 分钟",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF8B5CF6)
-                        )
-
-                        Slider(
-                            value = dailyGoalMinutes.toFloat(),
-                            onValueChange = { dailyGoalMinutes = it.toInt() },
-                            valueRange = 10f..120f,
-                            steps = 21,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color(0xFF8B5CF6),
-                                activeTrackColor = Color(0xFF8B5CF6),
-                                inactiveTrackColor = Color(0xFFE2E8F0)
-                            )
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "10分钟",
-                                fontSize = 12.sp,
-                                color = Color(0xFF64748B)
-                            )
-                            Text(
-                                text = "120分钟",
-                                fontSize = 12.sp,
-                                color = Color(0xFF64748B)
-                            )
-                        }
-                    }
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    // 每日学习单词数
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MenuBook,
-                            contentDescription = null,
-                            tint = Color(0xFF8B5CF6),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "每日学习单词数",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF1E293B)
-                        )
-                    }
-
-                    // 单词数滑块
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = if (dailyWordGoal == 0) "不限制" else "$dailyWordGoal 个",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF8B5CF6)
-                            )
-                            if (dailyWordGoal == 0) {
-                                Text(
-                                    text = "（默认模式）",
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF64748B)
-                                )
-                            }
-                        }
-
-                        Slider(
-                            value = dailyWordGoal.toFloat(),
-                            onValueChange = { dailyWordGoal = it.toInt() },
-                            valueRange = 0f..200f,
-                            steps = 19,
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color(0xFF8B5CF6),
-                                activeTrackColor = Color(0xFF8B5CF6),
-                                inactiveTrackColor = Color(0xFFE2E8F0)
-                            )
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "0（不限制）",
-                                fontSize = 12.sp,
-                                color = Color(0xFF64748B)
-                            )
-                            Text(
-                                text = "200个",
-                                fontSize = 12.sp,
-                                color = Color(0xFF64748B)
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 说明文字
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF1F5F9)
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(

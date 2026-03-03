@@ -54,6 +54,7 @@ fun SettingsScreen() {
     // 学习计划页面导航状态
     var showLearningPlanScreen by remember { mutableStateOf(false) }
     var showLearningStatsScreen by remember { mutableStateOf(false) }
+    var showLearningGoalsScreen by remember { mutableStateOf(false) }
 
     // 如果显示学习计划页面，则显示该页面
     if (showLearningPlanScreen) {
@@ -67,6 +68,14 @@ fun SettingsScreen() {
     if (showLearningStatsScreen) {
         LearningStatsScreen(
             onNavigateBack = { showLearningStatsScreen = false }
+        )
+        return
+    }
+
+    // 如果显示学习目标页面，则显示该页面
+    if (showLearningGoalsScreen) {
+        LearningGoalsScreen(
+            onNavigateBack = { showLearningGoalsScreen = false }
         )
         return
     }
@@ -106,7 +115,8 @@ fun SettingsScreen() {
         SettingsSection(title = "学习设置") {
             LearningSettingsCard(
                 onNavigateToLearningPlan = { showLearningPlanScreen = true },
-                onNavigateToLearningStats = { showLearningStatsScreen = true }
+                onNavigateToLearningStats = { showLearningStatsScreen = true },
+                onNavigateToLearningGoals = { showLearningGoalsScreen = true }
             )
         }
 
