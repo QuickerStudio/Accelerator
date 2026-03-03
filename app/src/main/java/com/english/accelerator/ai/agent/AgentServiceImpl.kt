@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.agent
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

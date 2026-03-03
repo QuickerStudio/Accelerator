@@ -23,9 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.ai.GemmaInferenceManager
-import com.english.accelerator.ai.InferenceResult
-import com.english.accelerator.ai.SuggestionType
+import com.english.accelerator.ai.model.GemmaInferenceManager
+import com.english.accelerator.ai.inference.InferenceResult
+import com.english.accelerator.ai.inference.SuggestionType
 import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar

@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.download
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers

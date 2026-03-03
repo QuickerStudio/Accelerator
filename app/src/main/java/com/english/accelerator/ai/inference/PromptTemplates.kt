@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.inference
 
 /**
  * Prompt templates for different LLM inference tasks

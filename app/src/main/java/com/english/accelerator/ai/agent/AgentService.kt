@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.agent
 
 /**
  * Service for managing AI agent roles and generating responses.

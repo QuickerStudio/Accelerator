@@ -2,11 +2,11 @@ package com.english.accelerator.ui.speaking
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.english.accelerator.ai.AgentRole
-import com.english.accelerator.ai.AgentService
-import com.english.accelerator.ai.AgentServiceImpl
-import com.english.accelerator.ai.GemmaInferenceManager
-import com.english.accelerator.ai.Message
+import com.english.accelerator.ai.agent.AgentRole
+import com.english.accelerator.ai.agent.AgentService
+import com.english.accelerator.ai.agent.AgentServiceImpl
+import com.english.accelerator.ai.model.GemmaInferenceManager
+import com.english.accelerator.ai.agent.Message
 import com.english.accelerator.data.ConversationManager
 import com.english.accelerator.data.ConversationTurn
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.model
 
 import android.content.Context
 import com.google.mediapipe.tasks.genai.llminference.LlmInference

@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.agent
 
 /**
  * Represents a single message in a conversation with the AI.

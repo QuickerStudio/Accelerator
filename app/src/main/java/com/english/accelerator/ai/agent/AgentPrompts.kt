@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.agent
 
 /**
  * Predefined system prompts for each agent role.

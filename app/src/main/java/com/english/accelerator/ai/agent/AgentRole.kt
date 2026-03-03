@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.agent
 
 /**
  * Defines the different AI agent roles available in the application.

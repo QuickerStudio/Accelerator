@@ -1,4 +1,4 @@
-package com.english.accelerator.ai
+package com.english.accelerator.ai.agent
 
 /**
  * Configuration for an AI agent including its system prompt and generation parameters.

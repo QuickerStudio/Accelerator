@@ -32,10 +32,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ui.sidebar.Sidebar
-import com.english.accelerator.ai.GemmaInferenceManager
-import com.english.accelerator.ai.GemmaInferenceManager.ModelState
-import com.english.accelerator.ai.InferenceResult
-import com.english.accelerator.ai.SuggestionType
+import com.english.accelerator.ai.model.GemmaInferenceManager
+import com.english.accelerator.ai.model.GemmaInferenceManager.ModelState
+import com.english.accelerator.ai.inference.InferenceResult
+import com.english.accelerator.ai.inference.SuggestionType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.SimpleDateFormat
