@@ -48,9 +48,8 @@ class DStateMonitor(
     private val configManager: DConfig  // 接收 DManager 传递的配置实例
 ) {
 
-    // 🔧 临时测试：改为桌面路径
     private val modelFile: File
-        get() = File("C:\\Users\\Quick\\Desktop\\accelerator_test\\models\\${configManager.getModelFileName()}")
+        get() = File(context.filesDir, "models/${configManager.getModelFileName()}")
 
     /**
      * 获取模型文件的当前状态

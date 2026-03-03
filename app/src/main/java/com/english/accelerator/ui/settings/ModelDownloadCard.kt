@@ -210,8 +210,8 @@ fun ModelDownloadCard(
                             text = when {
                                 isDownloaded -> "已就绪"
                                 isError -> "请重试"
-                                isPaused -> "已暂停"
-                                isDownloading -> "正在下载..."
+                                isPaused -> "已暂停 ${String.format("%.2f%%", downloadProgress * 100)}"
+                                isDownloading -> "正在下载... ${String.format("%.2f%%", downloadProgress * 100)} ${formatSpeed(downloadSpeed)}"
                                 else -> "开始下载"
                             },
                             fontSize = 14.sp,
@@ -223,38 +223,6 @@ fun ModelDownloadCard(
                             fontWeight = FontWeight.Medium
                         )
                     }
-                }
-            }
-        }
-
-        // 进度条和网速（仅在下载时显示）
-        if (isDownloading && !isDownloaded) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                LinearProgressIndicator(
-                    progress = { downloadProgress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp),
-                    color = Color(0xFF8B5CF6),
-                    trackColor = Color(0xFFE2E8F0)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = String.format("%.2f%%", downloadProgress * 100),
-                        fontSize = 12.sp,
-                        color = Color(0xFF64748B)
-                    )
-                    Text(
-                        text = formatSpeed(downloadSpeed),
-                        fontSize = 12.sp,
-                        color = Color(0xFF64748B)
-                    )
                 }
             }
         }
