@@ -221,6 +221,19 @@ class DManager(private val context: Context) {
      */
     fun pauseDownload() {
         downloadEngine.pause()
+
+        // 保存当前下载进度到 config.json
+        val currentSize = stateMonitor.getFileSize()
+        val expectedSize = configManager.getExpectedModelSize()
+        configManager.updateDownloadState(
+            modelPath = stateMonitor.getFilePath(),
+            downloadedBytes = currentSize,
+            totalBytes = expectedSize,
+            isComplete = false,
+            isPaused = true,
+            downloadRoute = selectedRoute.name
+        )
+        configManager.addDownloadLog("Download paused at $currentSize bytes")
     }
 
     /**
