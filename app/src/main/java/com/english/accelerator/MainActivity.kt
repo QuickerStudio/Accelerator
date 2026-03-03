@@ -65,9 +65,6 @@ class MainActivity : ComponentActivity() {
         // 初始化 BookmarkManager
         com.english.accelerator.data.BookmarkManager.init(this)
 
-        // 初始化 ReviewManager
-        com.english.accelerator.data.ReviewManager.init(this)
-
         // 初始化 EssayCollectionManager
         com.english.accelerator.data.EssayCollectionManager.init(this)
 

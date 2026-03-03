@@ -1,5 +1,9 @@
 # 单词推送算法模块
+algorithm 文件夹应该只包含：
 
+纯算法逻辑
+不直接操作 SharedPreferences
+通过数据层获取数据
 本文件夹包含单词学习系统的核心推送算法。
 
 ## 文件结构
@@ -10,10 +14,7 @@ algorithm/
 ├── WordPoolManager.kt                 # 单词池管理器（核心）
 ├── DefaultPlanAlgorithm.kt           # 默认计划算法
 ├── DailyPlanAlgorithm.kt             # 每日计划算法
-├── ReviewAlgorithm.kt                # 复习算法（洗牌混合）
-└── types/
-    ├── WordPoolType.kt               # 单词池类型定义
-    └── WordStatus.kt                 # 单词状态定义
+└── ReviewAlgorithm.kt                # 复习算法（洗牌混合）
 ```
 
 ## 数据类型
