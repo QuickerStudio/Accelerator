@@ -145,6 +145,19 @@ fun SettingsScreen() {
                     scope.launch {
                         gemmaManager.initialize()
                     }
+                },
+                onClearCache = {
+                    // 长按5秒清空下载缓存
+                    scope.launch {
+                        modelDownloadManager.cancelDownload()
+                        modelDownloadManager.deleteModel()
+                        isDownloading = false
+                        isPaused = false
+                        isError = false
+                        downloadProgress = 0f
+                        downloadSpeed = 0L
+                        downloadStatus = modelDownloadManager.getDStatus()
+                    }
                 }
             )
         }
