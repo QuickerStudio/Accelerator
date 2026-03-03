@@ -52,7 +52,10 @@ fun SettingsScreen() {
     var downloadProgress by remember { mutableStateOf(0f) }
     var downloadSpeed by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(modelDownloadManager.getCurrentRouteName()) }
-    var isDownloadComplete by remember { mutableStateOf(modelDownloadManager.isModelDownloaded()) }
+
+    // 使用新的下载状态判断
+    var downloadStatus by remember { mutableStateOf(modelDownloadManager.getDownloadStatus()) }
+    val isDownloadComplete = downloadStatus == com.english.accelerator.ai.download.ModelDownloadManager.DownloadStatus.COMPLETE
 
     Column(
         modifier = Modifier
@@ -94,7 +97,7 @@ fun SettingsScreen() {
                                     downloadSpeed = speed
                                 }.onSuccess {
                                     isDownloading = false
-                                    isDownloadComplete = true
+                                    downloadStatus = modelDownloadManager.getDownloadStatus()
                                 }.onFailure {
                                     isDownloading = false
                                     isError = true
@@ -121,7 +124,7 @@ fun SettingsScreen() {
                                     downloadSpeed = speed
                                 }.onSuccess {
                                     isDownloading = false
-                                    isDownloadComplete = true
+                                    downloadStatus = modelDownloadManager.getDownloadStatus()
                                 }.onFailure {
                                     isDownloading = false
                                     isError = true
@@ -136,7 +139,7 @@ fun SettingsScreen() {
                 },
                 onDelete = {
                     modelDownloadManager.deleteModel()
-                    isDownloadComplete = false
+                    downloadStatus = modelDownloadManager.getDownloadStatus()
                 },
                 onLoadModel = {
                     scope.launch {
