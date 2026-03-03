@@ -145,20 +145,35 @@ fun LearningPlanScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarMonth,
-                                    contentDescription = null,
-                                    tint = Color(0xFF8B5CF6),
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarMonth,
+                                        contentDescription = null,
+                                        tint = Color(0xFF8B5CF6),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "选择提醒日期",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF1E293B)
+                                    )
+                                }
                                 Text(
-                                    text = "选择提醒日期",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF1E293B)
+                                    text = if (selectedDays.isEmpty()) {
+                                        "点击日期选择提醒日"
+                                    } else {
+                                        "已选择 ${selectedDays.size} 天"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF64748B)
                                 )
                             }
 
@@ -172,17 +187,6 @@ fun LearningPlanScreen(
                                         selectedDays + day
                                     }
                                 }
-                            )
-
-                            // 提示文本
-                            Text(
-                                text = if (selectedDays.isEmpty()) {
-                                    "点击日期选择提醒日"
-                                } else {
-                                    "已选择 ${selectedDays.size} 天"
-                                },
-                                fontSize = 13.sp,
-                                color = Color(0xFF64748B)
                             )
                         }
                     }
