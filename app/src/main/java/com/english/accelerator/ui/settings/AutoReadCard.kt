@@ -387,7 +387,7 @@ fun AutoReadCard() {
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF8B5CF6)
                         )
-                    )
+                    }
                     Slider(
                         value = readVolume,
                         onValueChange = { readVolume = it },
