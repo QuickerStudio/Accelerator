@@ -456,12 +456,3 @@ private fun TimeSettingItem(
         )
     }
 }
-
-/**
- * 时间格式化工具
- */
-object TimeFormatter {
-    fun format(hour: Int, minute: Int): String {
-        return String.format("%02d:%02d", hour, minute)
-    }
-}
