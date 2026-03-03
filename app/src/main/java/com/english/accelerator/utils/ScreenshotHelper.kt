@@ -28,11 +28,13 @@ object ScreenshotHelper {
     /**
      * 截取视图并保存到图片库
      * @param cropRatio 裁剪比例，例如 6f/9f 表示 6:9 的比例，null 表示不裁剪
+     * @param offsetDp 向上偏移量（单位：dp），默认为 0
      */
     fun captureAndSave(
         context: Context,
         view: View,
         cropRatio: Float? = null,
+        offsetDp: Int = 0,
         onSuccess: (File) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -59,9 +61,9 @@ object ScreenshotHelper {
                     viewWidth to cropHeight
                 }
 
-                // 计算居中裁剪的起始位置，向上偏移20dp
+                // 计算居中裁剪的起始位置，根据参数向上偏移
                 val density = context.resources.displayMetrics.density
-                val offsetPx = (20 * density).toInt() // 20dp转换为像素
+                val offsetPx = (offsetDp * density).toInt() // dp转换为像素
                 val startX = (viewWidth - finalWidth) / 2
                 val startY = ((viewHeight - finalHeight) / 2 - offsetPx).coerceAtLeast(0)
 
@@ -102,10 +104,12 @@ object ScreenshotHelper {
 /**
  * Composable 函数：获取当前视图用于截图
  * @param cropRatio 裁剪比例，例如 6f/9f 表示 6:9 的比例，null 表示不裁剪
+ * @param offsetDp 向上偏移量（单位：dp），默认为 0
  */
 @Composable
 fun rememberScreenshotCapture(
     cropRatio: Float? = null,
+    offsetDp: Int = 0,
     onSuccess: (File) -> Unit = {},
     onError: (String) -> Unit = {}
 ): () -> Unit {
@@ -114,7 +118,7 @@ fun rememberScreenshotCapture(
 
     return remember {
         {
-            ScreenshotHelper.captureAndSave(context, view.rootView, cropRatio, onSuccess, onError)
+            ScreenshotHelper.captureAndSave(context, view.rootView, cropRatio, offsetDp, onSuccess, onError)
         }
     }
 }

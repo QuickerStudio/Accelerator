@@ -110,7 +110,8 @@ fun SpeakingScreen(
 
     // 截图功能
     val captureScreenshot = rememberScreenshotCapture(
-        cropRatio = 4f / 5f, // 4:5 比例裁剪
+        cropRatio = 3f / 5f, // 3:5 比例裁剪
+        offsetDp = 10, // 向上偏移 10dp
         onSuccess = { file ->
             screenshotFile = file
         },
