@@ -58,16 +58,16 @@ fun ModelDownloadCard(
     }
     var downloadSpeed by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(dManager.getCurrentRouteName()) }
+    var isDownloading by remember { mutableStateOf(false) } // 跟踪下载中状态
 
     // 从 downloadStatus 派生所有 UI 状态
     val isDownloaded = downloadStatus == DStatus.COMPLETE
-    val isDownloading = downloadStatus == DStatus.DOWNLOADING
-    val isPaused = downloadStatus == DStatus.PARTIAL
-    val hasCache = isPaused || isDownloading
+    val isPaused = downloadStatus == DStatus.PARTIAL && !isDownloading
+    val hasCache = downloadStatus == DStatus.PARTIAL
 
-    // 定时刷新进度（仅在下载中或暂停时）
-    LaunchedEffect(downloadStatus) {
-        while (downloadStatus == DStatus.DOWNLOADING || downloadStatus == DStatus.PARTIAL) {
+    // 定时刷新进度（仅在暂停或下载中时）
+    LaunchedEffect(downloadStatus, isDownloading) {
+        while (downloadStatus == DStatus.PARTIAL || isDownloading) {
             delay(1000)
             val state = dManager.getFullState()
             if (state.expectedSize > 0) {
@@ -79,36 +79,23 @@ fun ModelDownloadCard(
 
     // 内部业务逻辑
     fun handleDownloadClick() {
-        when (downloadStatus) {
-            DStatus.PARTIAL -> {
-                // 继续下载
-                scope.launch {
-                    downloadStatus = DStatus.DOWNLOADING
-                    dManager.downloadModel { downloaded, total, speed ->
-                        downloadSpeed = speed
-                    }.onSuccess {
-                        downloadStatus = dManager.getDStatus()
-                    }.onFailure {
-                        downloadStatus = dManager.getDStatus()
-                    }
-                }
-            }
-            DStatus.DOWNLOADING -> {
-                // 暂停
-                dManager.pauseDownload()
-                downloadStatus = DStatus.PARTIAL
-            }
-            else -> {
-                // 开始下载
-                scope.launch {
-                    downloadStatus = DStatus.DOWNLOADING
-                    dManager.downloadModel { downloaded, total, speed ->
-                        downloadSpeed = speed
-                    }.onSuccess {
-                        downloadStatus = dManager.getDStatus()
-                    }.onFailure {
-                        downloadStatus = dManager.getDStatus()
-                    }
+        if (isDownloading) {
+            // 暂停下载
+            dManager.pauseDownload()
+            isDownloading = false
+            downloadStatus = DStatus.PARTIAL
+        } else {
+            // 开始或继续下载
+            scope.launch {
+                isDownloading = true
+                dManager.downloadModel { downloaded, total, speed ->
+                    downloadSpeed = speed
+                }.onSuccess {
+                    isDownloading = false
+                    downloadStatus = dManager.getDStatus()
+                }.onFailure {
+                    isDownloading = false
+                    downloadStatus = dManager.getDStatus()
                 }
             }
         }
