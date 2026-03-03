@@ -25,6 +25,9 @@ class ModelDownloadManager(private val context: Context) {
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
     private val modelConfig = ModelConfig.getInstance()
 
+    // Config.json 管理器
+    private val configManager = com.english.accelerator.ai.download.States.ConfigManager(context)
+
     // 下载引擎
     private val downloadEngine = DownloadEngine()
 
@@ -34,7 +37,7 @@ class ModelDownloadManager(private val context: Context) {
         MODELSCOPE
     }
 
-    private var selectedRoute: DownloadRoute = DownloadRoute.HUGGINGFACE
+    private var selectedRoute: DownloadRoute = DownloadRoute.MODELSCOPE // 默认使用 ModelScope
 
     init {
         // 从配置中恢复下载线路
@@ -43,9 +46,19 @@ class ModelDownloadManager(private val context: Context) {
             selectedRoute = try {
                 DownloadRoute.valueOf(savedRoute)
             } catch (e: Exception) {
-                DownloadRoute.HUGGINGFACE
+                DownloadRoute.MODELSCOPE
+            }
+        } else {
+            // 如果没有保存的线路，使用 Config.json 中的默认线路
+            val defaultRoute = configManager.getDefaultRoute()
+            selectedRoute = try {
+                DownloadRoute.valueOf(defaultRoute)
+            } catch (e: Exception) {
+                DownloadRoute.MODELSCOPE
             }
         }
+
+        configManager.addDownloadLog("ModelDownloadManager initialized with route: $selectedRoute")
     }
 
     /**
@@ -84,8 +97,27 @@ class ModelDownloadManager(private val context: Context) {
     ): Result<File> = withContext(Dispatchers.IO) {
         // 检查模型是否已完整下载
         if (isModelComplete()) {
+            configManager.addDownloadLog("Model already complete, skipping download")
             return@withContext Result.success(modelFile)
         }
+
+        // 检查是否可以恢复下载
+        val existingSize = if (modelFile.exists()) modelFile.length() else 0L
+        if (existingSize > 0) {
+            configManager.addResumeLog("Resuming download from $existingSize bytes")
+        } else {
+            configManager.addDownloadLog("Starting new download from ${selectedRoute.name}")
+        }
+
+        // 更新下载状态
+        configManager.updateDownloadState(
+            modelPath = modelFile.absolutePath,
+            downloadedBytes = existingSize,
+            totalBytes = EXPECTED_MODEL_SIZE,
+            isComplete = false,
+            isPaused = false,
+            downloadRoute = selectedRoute.name
+        )
 
         // 使用当前选择的线路下载
         val result = downloadEngine.download(getSelectedUrl(), modelFile, onProgress)
@@ -94,11 +126,23 @@ class ModelDownloadManager(private val context: Context) {
         if (result.isSuccess) {
             if (isModelComplete()) {
                 modelConfig.markModelDownloaded(modelFile.absolutePath, modelFile.length())
-            } else {
-                return@withContext Result.failure(
-                    Exception("下载完成但文件大小不匹配。预期: ${EXPECTED_MODEL_SIZE / (1024 * 1024)}MB, 实际: ${modelFile.length() / (1024 * 1024)}MB")
+                configManager.updateDownloadState(
+                    modelPath = modelFile.absolutePath,
+                    downloadedBytes = modelFile.length(),
+                    totalBytes = EXPECTED_MODEL_SIZE,
+                    isComplete = true,
+                    isPaused = false,
+                    downloadRoute = selectedRoute.name
                 )
+                configManager.addDownloadLog("Download completed successfully: ${modelFile.length()} bytes")
+            } else {
+                val errorMsg = "下载完成但文件大小不匹配。预期: ${EXPECTED_MODEL_SIZE / (1024 * 1024)}MB, 实际: ${modelFile.length() / (1024 * 1024)}MB"
+                configManager.addErrorLog(errorMsg)
+                return@withContext Result.failure(Exception(errorMsg))
             }
+        } else {
+            val errorMsg = result.exceptionOrNull()?.message ?: "Unknown download error"
+            configManager.addErrorLog("Download failed: $errorMsg")
         }
 
         result
