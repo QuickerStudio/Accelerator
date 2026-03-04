@@ -68,15 +68,23 @@ fun ModelDownloadCard(
     val isDownloaded = downloadStatus == DStatus.COMPLETE
     val hasCache = downloadStatus == DStatus.PARTIAL
 
-    // 定时刷新进度（每秒检测文件大小计算百分比）
-    LaunchedEffect(isDownloading, isPaused) {
-        while (isDownloading || isPaused) {
+    // 定时刷新进度和状态（每秒检测文件大小计算百分比）
+    LaunchedEffect(Unit) {
+        while (true) {
             delay(1000)
             val state = dManager.getFullState()
             if (state.expectedSize > 0) {
                 downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
             }
             downloadStatus = dManager.getDStatus()
+
+            // 从配置文件同步状态
+            val configState = state.configState
+            if (configState != null) {
+                isPaused = configState.isPaused
+                // 如果文件在增长且未暂停，说明正在下载
+                isDownloading = !configState.isPaused && !configState.isComplete && downloadStatus == DStatus.PARTIAL
+            }
         }
     }
 
