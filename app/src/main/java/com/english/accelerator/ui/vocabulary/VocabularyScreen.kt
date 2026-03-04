@@ -61,7 +61,7 @@ fun VocabularyScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (showBookmarkScreen) {
-            BookmarkScreen(onBackClick = { showBookmarkScreen = false })
+            BookmarkNode(onBackClick = { showBookmarkScreen = false }).Render()
         } else {
             Column(modifier = Modifier.fillMaxSize()) {
                 VocabularyTopBar(
