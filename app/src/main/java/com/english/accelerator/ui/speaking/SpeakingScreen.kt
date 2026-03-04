@@ -114,6 +114,7 @@ fun SpeakingScreen(
     val viewModel = remember { ConversationViewModel(context) }
     val messages by viewModel.messages.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val currentSession by viewModel.currentSession.collectAsState()
 
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -151,7 +152,13 @@ fun SpeakingScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("对话", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
+                    title = {
+                        Text(
+                            text = currentSession?.title ?: "对话",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = { showSidebar = true }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.english.accelerator.ai.agent.AgentRole
 import com.english.accelerator.ai.agent.AgentServiceImpl
+import com.english.accelerator.ai.agent.ThreadTitleAgent
 import com.english.accelerator.ai.agent.Message as AgentMessage
 import com.english.accelerator.ai.history.HistoryManager
 import com.english.accelerator.ai.session.Session
@@ -27,6 +28,7 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
     private val TAG = "ConversationViewModel"
 
     private val agentService = AgentServiceImpl(context)
+    private val threadTitleAgent = ThreadTitleAgent(context)
     private val sessionManager = SessionManager.getInstance()
     private val historyManager = HistoryManager.getInstance()
 
@@ -166,6 +168,24 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                     sessionId = sessionId,
                     message = AgentMessage(role = "user", content = userInput)
                 )
+
+                // Generate thread title if this is the first user message
+                val history = historyManager.getHistory(sessionId)
+                if (history?.messages?.count { it.role == "user" } == 1) {
+                    // This is the first user message, generate title
+                    launch {
+                        val titleResult = threadTitleAgent.generateTitle(userInput)
+                        titleResult.onSuccess { title ->
+                            val currentSession = _currentSession.value
+                            if (currentSession != null) {
+                                val updatedSession = currentSession.copy(title = title)
+                                sessionManager.updateSession(updatedSession)
+                                _currentSession.value = updatedSession
+                                AppLogger.info(TAG, "Generated thread title: $title")
+                            }
+                        }
+                    }
+                }
 
                 // Set loading state
                 _isLoading.value = true
