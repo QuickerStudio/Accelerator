@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.util.UUID
 
 /**
@@ -187,13 +188,21 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                 _messages.value = _messages.value + streamingMessage
 
                 // Generate AI response using AgentService with streaming
+                var lastUpdateTime = 0L
+                val updateIntervalMs = 50L // 限制更新频率为每 50ms
+
                 inferenceJob = launch {
                     val result = agentService.generateStreaming(
                         userInput = userInput,
                         context = context
                     ) { partialResult, done ->
-                        // Only update if we have content to avoid blank messages
-                        if (partialResult.isNotEmpty()) {
+                        val currentTime = System.currentTimeMillis()
+
+                        // 防抖：只在间隔足够长或完成时更新 UI
+                        if (partialResult.isNotEmpty() &&
+                            (done || currentTime - lastUpdateTime >= updateIntervalMs)) {
+                            lastUpdateTime = currentTime
+
                             _messages.value = _messages.value.map { msg ->
                                 if (msg.id == streamingMessageId) {
                                     msg.copy(content = partialResult)

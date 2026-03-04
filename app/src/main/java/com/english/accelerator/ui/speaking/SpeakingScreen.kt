@@ -36,7 +36,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.compose.animation.core.*
-import dev.jeziellago.compose.markdowntext.MarkdownText
+import com.mikepenz.markdown.m3.Markdown
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.ScreenshotNotification
@@ -395,11 +395,8 @@ fun MessageBubble(message: Message) {
                         )
                     } else {
                         // AI messages: Markdown rendering
-                        MarkdownText(
-                            markdown = message.content,
-                            fontSize = 16.sp,
-                            lineHeight = 24.sp,
-                            color = Color(0xFF1E293B),
+                        Markdown(
+                            content = message.content,
                             modifier = Modifier.weight(1f, fill = false)
                         )
                     }

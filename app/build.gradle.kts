@@ -57,7 +57,8 @@ dependencies {
     implementation("com.google.mediapipe:tasks-genai:0.10.32")
 
     // Markdown rendering for Compose
-    implementation("com.github.jeziellago:compose-markdown:0.5.4")
+    implementation("com.mikepenz:multiplatform-markdown-renderer:0.25.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.25.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
