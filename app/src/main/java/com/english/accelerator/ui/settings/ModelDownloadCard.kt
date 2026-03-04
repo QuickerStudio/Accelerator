@@ -68,52 +68,55 @@ fun ModelDownloadCard(
     val isDownloaded = downloadStatus == DStatus.COMPLETE
     val hasCache = downloadStatus == DStatus.PARTIAL
 
-    // 定时刷新进度和状态
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(500) // 更频繁地刷新以保持 UI 响应
+    // 定时刷新进度（每秒检测文件大小计算百分比）
+    LaunchedEffect(isDownloading, isPaused) {
+        while (isDownloading || isPaused) {
+            delay(1000)
             val state = dManager.getFullState()
             if (state.expectedSize > 0) {
                 downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
             }
             downloadStatus = dManager.getDStatus()
-
-            // 从配置状态更新下载和暂停状态
-            val configState = state.configState
-            if (configState != null && !configState.isComplete) {
-                // 只有在未完成时才更新状态
-                if (!isPaused && !isDownloading) {
-                    // 避免覆盖用户刚点击的状态
-                    isPaused = configState.isPaused
-                    isDownloading = !configState.isPaused
-                }
-                downloadSpeed = configState.downloadSpeed
-            } else if (configState?.isComplete == true) {
-                // 下载完成，重置状态
-                isPaused = false
-                isDownloading = false
-                downloadSpeed = 0L
-            }
         }
     }
 
     // 内部业务逻辑
     fun handleDownloadClick() {
         if (isDownloading) {
-            // 暂停下载 - 立即更新本地状态
+            // 暂停下载
+            dManager.pauseDownload()
             isDownloading = false
             isPaused = true
-            DownloadService.pauseDownload(context)
         } else if (isPaused) {
-            // 恢复下载 - 立即更新本地状态
-            isDownloading = true
+            // 恢复下载
+            dManager.resumeDownload()
             isPaused = false
-            DownloadService.resumeDownload(context)
+            scope.launch {
+                isDownloading = true
+                dManager.downloadModel { downloaded, total, speed ->
+                    downloadSpeed = speed
+                }.onSuccess {
+                    isDownloading = false
+                    downloadStatus = dManager.getDStatus()
+                }.onFailure {
+                    isDownloading = false
+                    downloadStatus = dManager.getDStatus()
+                }
+            }
         } else {
-            // 开始下载 - 立即更新本地状态
-            isDownloading = true
-            isPaused = false
-            DownloadService.startDownload(context)
+            // 开始下载
+            scope.launch {
+                isDownloading = true
+                dManager.downloadModel { downloaded, total, speed ->
+                    downloadSpeed = speed
+                }.onSuccess {
+                    isDownloading = false
+                    downloadStatus = dManager.getDStatus()
+                }.onFailure {
+                    isDownloading = false
+                    downloadStatus = dManager.getDStatus()
+                }
+            }
         }
     }
 
@@ -129,7 +132,7 @@ fun ModelDownloadCard(
 
     fun handleClearCache() {
         scope.launch {
-            DownloadService.cancelDownload(context)
+            dManager.cancelDownload()
             dManager.deleteModel()
             downloadSpeed = 0L
             downloadStatus = dManager.getDStatus()
