@@ -24,8 +24,6 @@ import com.english.accelerator.ai.session.Session
 import com.english.accelerator.ai.session.SessionManager
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.speaking.nodes.*
-import com.english.accelerator.ui.speaking.models.Message
-import com.english.accelerator.ui.speaking.models.InferenceStats
 import com.english.accelerator.utils.AppLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +31,38 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
+
+/**
+ * UI Message - 用于界面显示的消息模型
+ */
+data class Message(
+    val id: String,
+    val content: String,
+    val isFromUser: Boolean,
+    val timestamp: Long = System.currentTimeMillis(),
+    val inferenceStats: InferenceStats? = null
+)
+
+data class InferenceStats(
+    val startTime: Long,
+    val endTime: Long,
+    val tokensGenerated: Int,
+    val memoryUsedMB: Long
+) {
+    val durationSeconds: Float get() = (endTime - startTime) / 1000f
+    val tokensPerSecond: Float get() = if (durationSeconds > 0) tokensGenerated / durationSeconds else 0f
+}
+
+/**
+ * Conversation - 用于历史记录显示
+ */
+data class Conversation(
+    val id: String,
+    val title: String,
+    val timestamp: Long,
+    val messageCount: Int,
+    val preview: String
+)
 
 /**
  * SpeakingScreen - 节点管理器

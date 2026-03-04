@@ -13,19 +13,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import com.english.accelerator.ui.speaking.Node
-import com.english.accelerator.ui.speaking.models.Message
+import com.english.accelerator.ui.speaking.Message
 
 /**
  * 对话主窗口节点
  */
 class ChatWindow(
     private val messages: List<Message>
-) : Node {
-    override val id = "chat_window"
+) {
+    val id = "chat_window"
 
     @Composable
-    override fun Render() {
+    fun Render() {
         val listState = rememberLazyListState()
         val focusManager = LocalFocusManager.current
 

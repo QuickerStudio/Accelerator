@@ -4,6 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 
 /**
+ * Model State - 表示模型的运行状态
+ */
+sealed class ModelState {
+    object Idle : ModelState()
+    object Loading : ModelState()
+    object Ready : ModelState()
+    data class Error(val message: String) : ModelState()
+}
+
+/**
  * 模型配置管理器
  *
  * 持久化保存模型相关的配置信息，解决应用"健忘症"问题

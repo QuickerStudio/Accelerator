@@ -11,18 +11,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.ui.speaking.Node
 
 /**
  * 底部导航栏节点
  */
 class NavBar(
     private val onNavigateToSettings: () -> Unit
-) : Node {
-    override val id = "nav_bar"
+) {
+    val id = "nav_bar"
 
     @Composable
-    override fun Render() {
+    fun Render() {
         Surface(
             color = Color.White,
             shadowElevation = 8.dp

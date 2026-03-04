@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.english.accelerator.ai.downloader.DManager
 import com.english.accelerator.ai.llm.InferenceEngine
 import com.english.accelerator.ai.llm.InferenceConfig
-import com.english.accelerator.ai.llm.ModelState
+import com.english.accelerator.ai.model.ModelState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

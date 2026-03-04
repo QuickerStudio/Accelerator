@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.ui.speaking.Node
 
 /**
  * 输入框节点
@@ -30,11 +29,11 @@ class InputBox(
     private val onTextChange: (String) -> Unit,
     private val onSend: () -> Unit,
     private val onCamera: () -> Unit
-) : Node {
-    override val id = "input_box"
+) {
+    val id = "input_box"
 
     @Composable
-    override fun Render() {
+    fun Render() {
         val focusManager = LocalFocusManager.current
 
         Box(

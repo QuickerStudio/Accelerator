@@ -13,19 +13,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.ui.speaking.Node
-import com.english.accelerator.ui.speaking.models.Message
+import com.english.accelerator.ui.speaking.Message
 import java.text.SimpleDateFormat
 import java.util.*
 
 /**
  * 用户消息框节点
  */
-class UserBubble(private val message: Message) : Node {
-    override val id = "user_bubble_${message.id}"
+class UserBubble(private val message: Message) {
+    val id = "user_bubble_${message.id}"
 
     @Composable
-    override fun Render() {
+    fun Render() {
         val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
         Row(

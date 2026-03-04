@@ -21,8 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.english.accelerator.ai.history.HistoryManager
 import com.english.accelerator.ai.session.Session
 import com.english.accelerator.ai.session.SessionManager
-import com.english.accelerator.ui.speaking.Node
-import com.english.accelerator.ui.speaking.models.Conversation
+import com.english.accelerator.ui.speaking.Conversation
 
 /**
  * 历史记录节点
@@ -30,12 +29,12 @@ import com.english.accelerator.ui.speaking.models.Conversation
 class History(
     private val onBackClick: () -> Unit,
     private val onConversationClick: (Conversation) -> Unit
-) : Node {
-    override val id = "history"
+) {
+    val id = "history"
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    override fun Render() {
+    fun Render() {
         val context = LocalContext.current
         val sessionManager = remember { SessionManager.getInstance() }
         val historyManager = remember { HistoryManager.getInstance() }
