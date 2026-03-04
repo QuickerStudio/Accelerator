@@ -3,6 +3,7 @@ package com.english.accelerator.ai.agent
 import android.content.Context
 import com.english.accelerator.ai.llm.InferenceEngine
 import com.english.accelerator.ai.llm.InferenceConfig
+import com.english.accelerator.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -11,6 +12,7 @@ import kotlinx.coroutines.withContext
  *
  * This agent analyzes the user's first message and generates a short,
  * descriptive title (max 10 characters) for the conversation thread.
+ * Uses async streaming to avoid blocking the main conversation inference.
  */
 class ThreadTitleAgent(private val context: Context) {
 
@@ -27,32 +29,41 @@ class ThreadTitleAgent(private val context: Context) {
     suspend fun generateTitle(userMessage: String): Result<String> = withContext(Dispatchers.Default) {
         try {
             val systemPrompt = """
-You are a thread title generator. Your task is to create a very short, concise title for a conversation based on the user's first message.
+你是一个对话标题生成器。根据用户的第一条消息，生成一个非常简短的标题。
 
-Rules:
-- Maximum 10 characters (including spaces)
-- Use Chinese or English based on the user's message language
-- Be descriptive but extremely brief
-- Focus on the main topic or intent
-- No punctuation marks
-- Examples:
-  - "学习英语" (for English learning)
-  - "日常对话" (for daily conversation)
-  - "语法问题" (for grammar questions)
-  - "单词练习" (for vocabulary practice)
-  - "English" (for general English topics)
+规则：
+- 最多10个字符（包括空格）
+- 根据用户消息的语言使用中文或英文
+- 要简洁但有描述性
+- 聚焦主要话题或意图
+- 不要标点符号
+- 示例：
+  - "学习英语"
+  - "日常对话"
+  - "语法问题"
+  - "单词练习"
+  - "English"
 
-Respond with ONLY the title, nothing else.
+只返回标题，不要其他内容。
 """.trimIndent()
 
             val prompt = buildPromptString(systemPrompt, userMessage)
-            val rawTitle = inferenceEngine.generateSync(prompt)
+
+            // Use async streaming to avoid blocking main conversation
+            var titleResult = ""
+            inferenceEngine.generateAsync(prompt) { partialResult, done ->
+                if (done) {
+                    titleResult = partialResult
+                }
+            }
 
             // Clean and validate the title
-            val cleanedTitle = cleanTitle(rawTitle)
+            val cleanedTitle = cleanTitle(titleResult)
 
+            AppLogger.info("ThreadTitleAgent", "Generated title: $cleanedTitle")
             Result.success(cleanedTitle)
         } catch (e: Exception) {
+            AppLogger.error("ThreadTitleAgent", "Failed to generate title: ${e.message}", e)
             Result.failure(e)
         }
     }
