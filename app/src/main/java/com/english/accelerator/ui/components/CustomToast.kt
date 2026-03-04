@@ -26,11 +26,12 @@ fun CustomToast(
     visible: Boolean,
     onDismiss: () -> Unit,
     backgroundColor: Color = Color.White,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    duration: Long = 1500
 ) {
     LaunchedEffect(visible) {
         if (visible) {
-            delay(1500)
+            delay(duration)
             onDismiss()
         }
     }

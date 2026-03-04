@@ -216,7 +216,8 @@ fun SettingsScreen() {
                 visible = showToast,
                 onDismiss = { showToast = false },
                 backgroundColor = toastBackgroundColor,
-                modifier = Modifier.padding(top = 80.dp)
+                modifier = Modifier.padding(top = 80.dp),
+                duration = if (toastBackgroundColor == Color(0xFFFEE2E2)) 5000 else 1500
             )
         }
     }
