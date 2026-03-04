@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.core
+package com.english.accelerator.ai.llm
 
 import com.google.mediapipe.tasks.genai.llminference.LlmInference.Backend
 import java.io.File

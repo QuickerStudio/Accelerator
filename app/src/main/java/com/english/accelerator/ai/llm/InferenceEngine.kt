@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.core
+package com.english.accelerator.ai.llm
 
 import android.content.Context
 import com.english.accelerator.utils.AppLogger
