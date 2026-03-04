@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.utils.rememberScreenshotCapture
+import java.io.File
 
 /**
  * 输入框节点
@@ -31,8 +32,7 @@ class InputBox(
     private val text: String,
     private val onTextChange: (String) -> Unit,
     private val onSend: () -> Unit,
-    private val onCamera: () -> Unit,
-    private val onShowToast: (String, Color) -> Unit = { _, _ -> }
+    private val onScreenshotCaptured: (File) -> Unit = {}
 ) {
     val id = "input_box"
 
@@ -46,11 +46,10 @@ class InputBox(
             cropRatio = 3f / 4f,
             offsetDp = 10,
             onSuccess = { file ->
-                onCamera()
-                onShowToast("截图已保存", Color(0xFF10B981))
+                onScreenshotCaptured(file)
             },
             onError = { error ->
-                onShowToast(error, Color(0xFFEF4444))
+                // 错误处理可以通过 toast 显示
             }
         )
 

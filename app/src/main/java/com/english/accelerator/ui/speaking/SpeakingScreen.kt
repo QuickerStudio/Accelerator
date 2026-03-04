@@ -1,9 +1,12 @@
 package com.english.accelerator.ui.speaking
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -11,11 +14,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.english.accelerator.ai.agent.AgentService
@@ -24,6 +30,7 @@ import com.english.accelerator.ai.history.HistoryManager
 import com.english.accelerator.ai.session.Session
 import com.english.accelerator.ai.session.SessionManager
 import com.english.accelerator.ui.components.CustomToast
+import com.english.accelerator.ui.components.ScreenshotNotification
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.speaking.nodes.*
 import com.english.accelerator.utils.AppLogger
@@ -32,6 +39,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.UUID
 
 /**
@@ -88,9 +96,8 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
     var showSidebar by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
 
-    var toastMessage by remember { mutableStateOf("") }
-    var toastBackgroundColor by remember { mutableStateOf(Color.White) }
-    var showToast by remember { mutableStateOf(false) }
+    var screenshotFile by remember { mutableStateOf<File?>(null) }
+    var showImageViewer by remember { mutableStateOf(false) }
 
     // 节点管理器
     val nodeManager = remember { NodeManager() }
@@ -170,11 +177,8 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
                                 vm.send(msg)
                             }
                         },
-                        onCamera = { },
-                        onShowToast = { message, color ->
-                            toastMessage = message
-                            toastBackgroundColor = color
-                            showToast = true
+                        onScreenshotCaptured = { file ->
+                            screenshotFile = file
                         }
                     ).Render()
 
@@ -187,17 +191,19 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
                 ChatWindow(
                     messages = messages
                 ).Render()
-
-                CustomToast(
-                    message = toastMessage,
-                    visible = showToast,
-                    onDismiss = { showToast = false },
-                    backgroundColor = toastBackgroundColor,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 20.dp)
-                )
             }
+        }
+
+        // 截图通知
+        if (screenshotFile != null) {
+            ScreenshotNotification(
+                imageFile = screenshotFile!!,
+                onDismiss = { screenshotFile = null },
+                onOpenImage = {
+                    showImageViewer = true
+                },
+                context = context
+            )
         }
 
         if (showSidebar) {
@@ -224,6 +230,63 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
                     showHistory = false
                 }
             ).Render()
+        }
+
+        // 图片查看器
+        if (showImageViewer && screenshotFile != null) {
+            ImageViewDialog(
+                imageFile = screenshotFile!!,
+                onDismiss = {
+                    showImageViewer = false
+                    screenshotFile = null
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ImageViewDialog(
+    imageFile: File,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFF1E293B)
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                val bitmap = remember(imageFile) {
+                    try {
+                        BitmapFactory.decodeFile(imageFile.absolutePath)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = imageFile.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "关闭",
+                        tint = Color.White
+                    )
+                }
+            }
         }
     }
 }
