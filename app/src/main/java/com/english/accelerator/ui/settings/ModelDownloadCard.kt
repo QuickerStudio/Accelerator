@@ -58,6 +58,7 @@ fun ModelDownloadCard(
         )
     }
     var downloadSpeed by remember { mutableStateOf(0L) }
+    var lastSpeedUpdateTime by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(dManager.getCurrentRouteName()) }
 
     // 从配置文件获取下载状态，而不是从 DEngine
@@ -106,7 +107,12 @@ fun ModelDownloadCard(
             dManager.resumeDownload()
             scope.launch {
                 dManager.downloadModel { downloaded, total, speed ->
-                    downloadSpeed = speed
+                    // 降低网速更新频率，避免数字跳动太快（每2秒更新一次）
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastSpeedUpdateTime >= 2000) {
+                        downloadSpeed = speed
+                        lastSpeedUpdateTime = currentTime
+                    }
                 }.onSuccess {
                     isDownloading = false
                     downloadStatus = dManager.getDStatus()
@@ -120,7 +126,12 @@ fun ModelDownloadCard(
             isDownloading = true
             scope.launch {
                 dManager.downloadModel { downloaded, total, speed ->
-                    downloadSpeed = speed
+                    // 降低网速更新频率，避免数字跳动太快（每2秒更新一次）
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastSpeedUpdateTime >= 2000) {
+                        downloadSpeed = speed
+                        lastSpeedUpdateTime = currentTime
+                    }
                 }.onSuccess {
                     isDownloading = false
                     downloadStatus = dManager.getDStatus()
@@ -184,7 +195,7 @@ fun ModelDownloadCard(
             // 显示进度百分比和网速（下载中或暂停时）
             if (isDownloading || isPaused) {
                 Text(
-                    text = "${(downloadProgress * 100).toInt()}%",
+                    text = String.format("%.3f%%", downloadProgress * 100),
                     fontSize = 14.sp,
                     color = Color(0xFF64748B)
                 )
