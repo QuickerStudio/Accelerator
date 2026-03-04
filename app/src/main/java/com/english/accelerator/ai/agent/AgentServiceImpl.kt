@@ -71,12 +71,53 @@ class AgentServiceImpl(
             val promptString = buildPromptString(messages)
 
             // Use InferenceEngine for sync inference
-            val response = inferenceEngine.generateSync(promptString)
+            val rawResponse = inferenceEngine.generateSync(promptString)
 
-            Result.success(response)
+            // Clean up response by removing special tokens and stop sequences
+            val cleanedResponse = cleanResponse(rawResponse)
+
+            Result.success(cleanedResponse)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /**
+     * Clean up model response by removing special tokens and stop sequences
+     */
+    private fun cleanResponse(response: String): String {
+        var cleaned = response
+
+        // Remove common stop tokens and special sequences
+        val stopTokens = listOf(
+            "<|im_end|>",
+            "<|im_start|>",
+            "<end_of_turn>",
+            "<llm_end>",
+            "<eos>",
+            "</s>",
+            "[INST]",
+            "[/INST]"
+        )
+
+        // Find the first occurrence of any stop token
+        var firstStopIndex = cleaned.length
+        for (token in stopTokens) {
+            val index = cleaned.indexOf(token)
+            if (index != -1 && index < firstStopIndex) {
+                firstStopIndex = index
+            }
+        }
+
+        // Truncate at the first stop token
+        if (firstStopIndex < cleaned.length) {
+            cleaned = cleaned.substring(0, firstStopIndex)
+        }
+
+        // Remove any trailing whitespace
+        cleaned = cleaned.trim()
+
+        return cleaned
     }
 
     /**
