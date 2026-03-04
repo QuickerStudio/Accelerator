@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
+import androidx.compose.animation.core.*
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.ScreenshotNotification
@@ -234,7 +235,7 @@ fun SpeakingScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                items(messages) { message ->
+                items(messages.filter { it.content.isNotEmpty() }) { message ->
                     MessageBubble(message = message)
                 }
             }
@@ -312,73 +313,93 @@ fun SpeakingScreen(
 @Composable
 fun MessageBubble(message: Message) {
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    val isStreaming = !message.isFromUser && message.content.isNotEmpty() && message.inferenceStats == null
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isFromUser) Arrangement.End else Arrangement.Start
     ) {
         if (!message.isFromUser) {
-            // AI avatar
+            // AI avatar with gradient background
             Box(
                 modifier = Modifier
-                    .size(32.dp)
-                    .background(Color(0xFF8B5CF6), CircleShape),
+                    .size(36.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFF8B5CF6), Color(0xFF6366F1))
+                        ),
+                        shape = CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.SmartToy,
                     contentDescription = "AI",
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
         }
 
         Column(
-            modifier = Modifier
-                .widthIn(min = 48.dp, max = 280.dp)
-                .wrapContentWidth(),
             horizontalAlignment = if (message.isFromUser) Alignment.End else Alignment.Start
         ) {
-            // Message bubble
+            // Message bubble with dynamic width based on content
             Surface(
                 shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = if (message.isFromUser) 16.dp else 4.dp,
-                    bottomEnd = if (message.isFromUser) 4.dp else 16.dp
+                    topStart = 18.dp,
+                    topEnd = 18.dp,
+                    bottomStart = if (message.isFromUser) 18.dp else 6.dp,
+                    bottomEnd = if (message.isFromUser) 6.dp else 18.dp
                 ),
                 color = if (message.isFromUser) Color.Transparent else Color.White,
-                border = if (message.isFromUser) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                shadowElevation = if (message.isFromUser) 0.dp else 2.dp,
-                modifier = Modifier.then(
-                    if (message.isFromUser) {
-                        Modifier.background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
-                            ),
-                            shape = RoundedCornerShape(
-                                topStart = 16.dp,
-                                topEnd = 16.dp,
-                                bottomStart = 16.dp,
-                                bottomEnd = 4.dp
+                border = if (message.isFromUser) null else androidx.compose.foundation.BorderStroke(
+                    width = 1.5.dp,
+                    color = if (isStreaming) Color(0xFF8B5CF6).copy(alpha = 0.3f) else Color(0xFFE2E8F0)
+                ),
+                shadowElevation = if (message.isFromUser) 0.dp else 3.dp,
+                modifier = Modifier
+                    .then(
+                        if (message.isFromUser) {
+                            Modifier.background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
+                                ),
+                                shape = RoundedCornerShape(
+                                    topStart = 18.dp,
+                                    topEnd = 18.dp,
+                                    bottomStart = 18.dp,
+                                    bottomEnd = 6.dp
+                                )
                             )
-                        )
-                    } else Modifier
-                )
+                        } else Modifier
+                    )
             ) {
-                Text(
-                    text = message.content,
-                    fontSize = 16.sp,
-                    color = if (message.isFromUser) Color.White else Color(0xFF1E293B),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Message content
+                    Text(
+                        text = message.content,
+                        fontSize = 16.sp,
+                        lineHeight = 24.sp,
+                        color = if (message.isFromUser) Color.White else Color(0xFF1E293B),
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+
+                    // Typing indicator for streaming messages
+                    if (isStreaming) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        TypingIndicator()
+                    }
+                }
             }
 
-            // Timestamp
+            // Timestamp and stats
             Row(
-                modifier = Modifier.padding(top = 4.dp, start = 4.dp, end = 4.dp),
+                modifier = Modifier.padding(top = 6.dp, start = 4.dp, end = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -388,7 +409,7 @@ fun MessageBubble(message: Message) {
                     color = Color(0xFF94A3B8)
                 )
 
-                // Show inference stats for AI messages
+                // Show inference stats for completed AI messages
                 if (!message.isFromUser && message.inferenceStats != null) {
                     val stats = message.inferenceStats
                     Text(
@@ -406,6 +427,29 @@ fun MessageBubble(message: Message) {
             Spacer(modifier = Modifier.width(48.dp))
         }
     }
+}
+
+@Composable
+fun TypingIndicator() {
+    val infiniteTransition = rememberInfiniteTransition(label = "typing")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(6.dp)
+            .background(
+                color = Color(0xFF8B5CF6).copy(alpha = alpha),
+                shape = CircleShape
+            )
+    )
 }
 
 @Composable

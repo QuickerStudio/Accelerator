@@ -177,7 +177,7 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                 val runtime = Runtime.getRuntime()
                 val memoryBefore = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
 
-                // Create a placeholder message for streaming
+                // Create a placeholder message for streaming (start with empty content)
                 val streamingMessageId = UUID.randomUUID().toString()
                 val streamingMessage = Message(
                     id = streamingMessageId,
@@ -192,12 +192,14 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                         userInput = userInput,
                         context = context
                     ) { partialResult, done ->
-                        // Update the streaming message with partial result
-                        _messages.value = _messages.value.map { msg ->
-                            if (msg.id == streamingMessageId) {
-                                msg.copy(content = partialResult)
-                            } else {
-                                msg
+                        // Only update if we have content to avoid blank messages
+                        if (partialResult.isNotEmpty()) {
+                            _messages.value = _messages.value.map { msg ->
+                                if (msg.id == streamingMessageId) {
+                                    msg.copy(content = partialResult)
+                                } else {
+                                    msg
+                                }
                             }
                         }
                     }
