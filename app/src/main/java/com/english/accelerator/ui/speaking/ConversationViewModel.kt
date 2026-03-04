@@ -122,25 +122,14 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                     }
                     AppLogger.info(TAG, "Loaded ${history.messages.size} messages from session: $sessionId")
                 } else {
-                    // No history, add welcome message
-                    addWelcomeMessage()
+                    // No history, start with empty messages
+                    _messages.value = emptyList()
                 }
             } catch (e: Exception) {
                 AppLogger.error(TAG, "Failed to load session history", e)
-                addWelcomeMessage()
+                _messages.value = emptyList()
             }
         }
-    }
-
-    /**
-     * Add welcome message
-     */
-    private fun addWelcomeMessage() {
-        val welcomeMessage = Message(
-            content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
-            isFromUser = false
-        )
-        _messages.value = listOf(welcomeMessage)
     }
 
     /**
