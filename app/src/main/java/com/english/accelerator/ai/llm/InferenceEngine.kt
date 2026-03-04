@@ -6,6 +6,8 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import java.io.File
 import kotlin.math.max
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Unified LLM inference engine for offline use
@@ -21,6 +23,9 @@ class InferenceEngine private constructor(
 ) {
     private lateinit var llmInference: LlmInference
     private val TAG: String = InferenceEngine::class.qualifiedName ?: "InferenceEngine"
+
+    // Mutex to prevent concurrent inference calls
+    private val inferenceMutex = Mutex()
 
     init {
         if (!modelExists()) {
@@ -39,13 +44,16 @@ class InferenceEngine private constructor(
 
     /**
      * Sync inference - the only inference method
+     * Thread-safe: uses mutex to prevent concurrent calls
      */
-    fun generateSync(prompt: String): String {
-        try {
-            return llmInference.generateResponse(prompt) ?: ""
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to generate response: ${e.message}", e)
-            throw e
+    suspend fun generateSync(prompt: String): String {
+        return inferenceMutex.withLock {
+            try {
+                llmInference.generateResponse(prompt) ?: ""
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Failed to generate response: ${e.message}", e)
+                throw e
+            }
         }
     }
 
