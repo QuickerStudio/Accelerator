@@ -238,101 +238,102 @@ fun ModelDownloadCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-            // 线路切换按钮（下载完成后隐藏）
-            if (!isDownloaded) {
-                TextButton(
-                    onClick = ::handleSwitchRoute,
-                    enabled = !isDownloading || isPaused,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFF8B5CF6),
-                        disabledContentColor = Color(0xFF94A3B8)
-                    ),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SwapHoriz,
-                        contentDescription = "切换线路",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = currentRoute,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            // 下载控制按钮区域
-            when {
-                // 已下载：显示加载模型和清除模型按钮
-                isDownloaded -> {
-                    // 加载模型按钮
-                    Button(
-                        onClick = onLoadModel,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B5CF6)
+                // 线路切换按钮（下载完成后隐藏）
+                if (!isDownloaded) {
+                    TextButton(
+                        onClick = ::handleSwitchRoute,
+                        enabled = !isDownloading || isPaused,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color(0xFF8B5CF6),
+                            disabledContentColor = Color(0xFF94A3B8)
                         ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "加载模型",
-                            modifier = Modifier.size(18.dp)
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = "切换线路",
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "加载模型",
-                            fontSize = 14.sp
-                        )
-                    }
-
-                    // 清除模型按钮
-                    OutlinedButton(
-                        onClick = ::handleDelete,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFEF4444)
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444)),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "清除模型",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "清除",
-                            fontSize = 14.sp
+                            text = currentRoute,
+                            fontSize = 12.sp
                         )
                     }
                 }
 
-                // 未下载或下载中：显示下载按钮
-                else -> {
-                    // 下载/暂停/继续按钮
-                    IconButton(
-                        onClick = ::handleDownloadClick,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = when {
-                                isPaused -> Icons.Default.PlayArrow
-                                isDownloading -> Icons.Default.Pause
-                                else -> Icons.Default.CloudDownload
-                            },
-                            contentDescription = when {
-                                isPaused -> "继续"
-                                isDownloading -> "暂停"
-                                else -> "下载"
-                            },
-                            tint = when {
-                                isPaused -> Color(0xFF10B981)
-                                isDownloading -> Color(0xFFF59E0B)
-                                else -> Color(0xFF8B5CF6)
-                            },
-                            modifier = Modifier.size(28.dp)
-                        )
+                // 下载控制按钮区域
+                when {
+                    // 已下载：显示加载模型和清除模型按钮
+                    isDownloaded -> {
+                        // 加载模型按钮
+                        Button(
+                            onClick = onLoadModel,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF8B5CF6)
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "加载模型",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "加载模型",
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        // 清除模型按钮
+                        OutlinedButton(
+                            onClick = ::handleDelete,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFEF4444)
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444)),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "清除模型",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "清除",
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    // 未下载或下载中：显示下载按钮
+                    else -> {
+                        // 下载/暂停/继续按钮
+                        IconButton(
+                            onClick = ::handleDownloadClick,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = when {
+                                    isPaused -> Icons.Default.PlayArrow
+                                    isDownloading -> Icons.Default.Pause
+                                    else -> Icons.Default.CloudDownload
+                                },
+                                contentDescription = when {
+                                    isPaused -> "继续"
+                                    isDownloading -> "暂停"
+                                    else -> "下载"
+                                },
+                                tint = when {
+                                    isPaused -> Color(0xFF10B981)
+                                    isDownloading -> Color(0xFFF59E0B)
+                                    else -> Color(0xFF8B5CF6)
+                                },
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
             }
