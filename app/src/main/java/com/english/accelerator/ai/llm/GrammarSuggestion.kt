@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.inference
+package com.english.accelerator.ai.llm
 
 /**
  * Represents a grammar suggestion with correction details
