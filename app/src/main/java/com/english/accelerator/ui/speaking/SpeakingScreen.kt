@@ -151,51 +151,71 @@ fun SpeakingScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = currentSession?.title ?: "对话",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Medium
+                Column {
+                    // First row: Menu, title, and action buttons
+                    TopAppBar(
+                        title = { Text("对话", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
+                        navigationIcon = {
+                            IconButton(onClick = { showSidebar = true }) {
+                                Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            }
+                        },
+                        actions = {
+                            // New conversation thread
+                            IconButton(onClick = {
+                                // Use ViewModel to create new session
+                                viewModel.createNewSession()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "新建对话",
+                                    tint = Color(0xFF64748B)
+                                )
+                            }
+                            // Toggle continuous conversation mode
+                            IconButton(onClick = { isContinuousMode = !isContinuousMode }) {
+                                Icon(
+                                    imageVector = if (isContinuousMode) Icons.Default.Phone else Icons.Default.PhonePaused,
+                                    contentDescription = "持续对话",
+                                    tint = if (isContinuousMode) Color(0xFF8B5CF6) else Color(0xFF64748B)
+                                )
+                            }
+                            // Conversation history
+                            IconButton(onClick = { showHistoryScreen = true }) {
+                                Icon(Icons.Default.History, contentDescription = "对话历史")
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.White,
+                            titleContentColor = Color(0xFF1E293B),
+                            navigationIconContentColor = Color(0xFF64748B),
+                            actionIconContentColor = Color(0xFF64748B)
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { showSidebar = true }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
-                        }
-                    },
-                    actions = {
-                        // New conversation thread
-                        IconButton(onClick = {
-                            // Use ViewModel to create new session
-                            viewModel.createNewSession()
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "新建对话",
-                                tint = Color(0xFF64748B)
-                            )
-                        }
-                        // Toggle continuous conversation mode
-                        IconButton(onClick = { isContinuousMode = !isContinuousMode }) {
-                            Icon(
-                                imageVector = if (isContinuousMode) Icons.Default.Phone else Icons.Default.PhonePaused,
-                                contentDescription = "持续对话",
-                                tint = if (isContinuousMode) Color(0xFF8B5CF6) else Color(0xFF64748B)
-                            )
-                        }
-                        // Conversation history
-                        IconButton(onClick = { showHistoryScreen = true }) {
-                            Icon(Icons.Default.History, contentDescription = "对话历史")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
-                        titleContentColor = Color(0xFF1E293B),
-                        navigationIconContentColor = Color(0xFF64748B),
-                        actionIconContentColor = Color(0xFF64748B)
                     )
-                )
+
+                    // Second row: Thread title
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.White,
+                        shadowElevation = 2.dp
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = currentSession?.title ?: "对话",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF8B5CF6),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
             },
             bottomBar = {
                 Column {
