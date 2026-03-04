@@ -309,6 +309,11 @@ class DManager(private val context: Context) {
     fun deleteModel(): Boolean = stateMonitor.deleteFile()
 
     /**
+     * 获取下载线路列表
+     */
+    fun getDownloadRoutes(): List<DRoute> = configManager.getDownloadRoutes()
+
+    /**
      * 更新下载速度
      */
     fun updateDownloadSpeed(speed: Long) {

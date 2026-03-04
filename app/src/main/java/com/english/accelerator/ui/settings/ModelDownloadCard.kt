@@ -346,7 +346,7 @@ fun ModelDownloadCard(
 /**
  * 格式化下载速度
  */
-private fun formatSpeed(bytesPerSecond: Long): String {
+fun formatSpeed(bytesPerSecond: Long): String {
     return when {
         bytesPerSecond < 1024 -> "${bytesPerSecond} B/s"
         bytesPerSecond < 1024 * 1024 -> String.format("%.1f KB/s", bytesPerSecond / 1024.0)
