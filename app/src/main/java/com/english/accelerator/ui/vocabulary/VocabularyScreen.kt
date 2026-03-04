@@ -42,6 +42,8 @@ fun VocabularyScreen(
 
     val words by vm.words.collectAsState()
     val currentIndex by vm.currentIndex.collectAsState()
+    val memorizedCount by vm.memorizedCount.collectAsState()
+    val unmemorizedCount by vm.unmemorizedCount.collectAsState()
 
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
@@ -69,7 +71,9 @@ fun VocabularyScreen(
                     onMenuClick = { showSidebar = true },
                     onConversationClick = onToggleInputArea,
                     onBookmarkClick = { showBookmarkScreen = true },
-                    isConversationMode = showInputArea
+                    isConversationMode = showInputArea,
+                    memorizedCount = memorizedCount,
+                    unmemorizedCount = unmemorizedCount
                 )
 
                 Box(
@@ -88,15 +92,9 @@ fun VocabularyScreen(
                         currentIndex = currentIndex,
                         onSwipeLeft = {
                             vm.markUnmemorized()
-                            toastMessage = "未记住"
-                            toastBackgroundColor = Color(0xFFFEE2E2)
-                            showToast = true
                         },
                         onSwipeRight = {
                             vm.markMemorized()
-                            toastMessage = "已记住"
-                            toastBackgroundColor = Color(0xFFDCFCE7)
-                            showToast = true
                         },
                         onLongPress = { word ->
                             BookmarkManager.addBookmark(word)
@@ -149,6 +147,12 @@ class VocabularyVM(private val context: Context) : ViewModel() {
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
 
+    private val _memorizedCount = MutableStateFlow(0)
+    val memorizedCount: StateFlow<Int> = _memorizedCount.asStateFlow()
+
+    private val _unmemorizedCount = MutableStateFlow(0)
+    val unmemorizedCount: StateFlow<Int> = _unmemorizedCount.asStateFlow()
+
     init {
         loadWords()
     }
@@ -169,6 +173,7 @@ class VocabularyVM(private val context: Context) : ViewModel() {
         if (index < _words.value.size) {
             val word = _words.value[index]
             WordLoader.markAsMemorized(word.id)
+            _memorizedCount.value += 1
             _currentIndex.value = index + 1
 
             if (_currentIndex.value >= _words.value.size && WordLoader.hasMoreWords()) {
@@ -182,6 +187,7 @@ class VocabularyVM(private val context: Context) : ViewModel() {
         if (index < _words.value.size) {
             val word = _words.value[index]
             WordLoader.markAsUnmemorized(word.id)
+            _unmemorizedCount.value += 1
             _currentIndex.value = index + 1
 
             if (_currentIndex.value >= _words.value.size && WordLoader.hasMoreWords()) {

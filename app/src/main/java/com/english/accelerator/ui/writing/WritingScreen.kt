@@ -108,8 +108,8 @@ fun WritingScreen(
                 },
                 isConversationMode = showAiPanel,
                 isCollectionMode = showEssayCollection,
-                grammarScore = grammarScore,
-                currentWordType = currentWordType
+                memorizedCount = 0,
+                unmemorizedCount = 0
             )
 
             // 编辑器区域

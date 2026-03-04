@@ -36,7 +36,8 @@ fun VocabularyTopBar(
     onBookmarkClick: () -> Unit,
     isConversationMode: Boolean = false,
     isCollectionMode: Boolean = false,
-    grammarScore: Int = 0,
+    memorizedCount: Int = 0,
+    unmemorizedCount: Int = 0,
     currentWordType: String = "",
     modifier: Modifier = Modifier
 ) {
@@ -69,7 +70,7 @@ fun VocabularyTopBar(
                 )
             }
 
-            // 语法评分
+            // 已记住/未记住统计
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
@@ -79,20 +80,18 @@ fun VocabularyTopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "语法评分：${grammarScore.toString().padStart(3, '0')}",
+                    text = "已记住：$memorizedCount",
                     fontSize = 12.sp,
-                    color = Color(0xFF64748B),
+                    color = Color(0xFF10B981),
                     fontWeight = FontWeight.Medium
                 )
 
-                if (currentWordType.isNotEmpty()) {
-                    Text(
-                        text = "词语类型：$currentWordType",
-                        fontSize = 12.sp,
-                        color = Color(0xFF8B5CF6),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Text(
+                    text = "未记住：$unmemorizedCount",
+                    fontSize = 12.sp,
+                    color = Color(0xFFEF4444),
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
 
