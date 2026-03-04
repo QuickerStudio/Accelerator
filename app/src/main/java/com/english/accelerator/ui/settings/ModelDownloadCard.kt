@@ -71,7 +71,7 @@ fun ModelDownloadCard(
     var downloadSpeed by remember { mutableStateOf(0L) }
     var lastSpeedUpdateTime by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(dManager.getCurrentRouteName()) }
-    var supportsRange by remember { mutableStateOf(true) } // 默认假设支持
+    var supportsRange by remember { mutableStateOf<Boolean?>(null) } // null 表示未检测
 
     // 从配置文件获取下载状态，而不是从 DEngine
     var isDownloading by remember { mutableStateOf(false) }
@@ -340,15 +340,15 @@ fun ModelDownloadCard(
         }
 
         // 副标题提示：断点续传支持状态
-        if (!isDownloaded) {
+        if (!isDownloaded && supportsRange != null) {
             Text(
-                text = if (supportsRange) {
+                text = if (supportsRange == true) {
                     "✓ 支持断点续传"
                 } else {
                     "⚠ 不支持断点续传，暂停会重新下载"
                 },
                 fontSize = 12.sp,
-                color = if (supportsRange) Color(0xFF10B981) else Color(0xFFF59E0B),
+                color = if (supportsRange == true) Color(0xFF10B981) else Color(0xFFF59E0B),
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
