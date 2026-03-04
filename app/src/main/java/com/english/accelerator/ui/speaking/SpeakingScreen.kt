@@ -42,6 +42,9 @@ import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.ScreenshotNotification
 import com.english.accelerator.utils.rememberScreenshotCapture
 import com.english.accelerator.ai.llm.ModelState
+import com.english.accelerator.ai.session.SessionManager
+import com.english.accelerator.ai.session.Session
+import com.english.accelerator.ai.history.HistoryManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
@@ -739,25 +742,30 @@ fun ConversationHistoryScreen(
     onBackClick: () -> Unit,
     onConversationClick: (Conversation) -> Unit
 ) {
-    // TODO: Load from database/storage
-    val conversations = remember { mutableStateListOf<Conversation>() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val sessionManager = remember { SessionManager.getInstance() }
+    val historyManager = remember { HistoryManager.getInstance() }
 
-    LaunchedEffect(Unit) {
-        // Mock data for now
-        conversations.addAll(
-            listOf(
+    val sessions by sessionManager.sessionList.collectAsState()
+
+    // Convert sessions to conversations with real data
+    val conversations = remember(sessions) {
+        sessions
+            .filter { it.type == Session.Type.CONVERSATION }
+            .map { session ->
+                val history = historyManager.getHistory(session.id)
+                val messageCount = history?.messages?.size ?: 0
+                val preview = history?.messages?.lastOrNull()?.content?.take(50) ?: "No messages yet"
+
                 Conversation(
-                    title = "English Practice",
-                    preview = "Hello! Let's practice English...",
-                    messageCount = 15
-                ),
-                Conversation(
-                    title = "Daily Conversation",
-                    preview = "How was your day?",
-                    messageCount = 8
+                    id = session.id,
+                    title = session.title,
+                    preview = preview,
+                    timestamp = session.createdAt,
+                    messageCount = messageCount
                 )
-            )
-        )
+            }
+            .sortedByDescending { it.timestamp }
     }
 
     Column(
@@ -803,7 +811,7 @@ fun ConversationHistoryScreen(
                         conversation = conversation,
                         onClick = { onConversationClick(conversation) },
                         onDelete = {
-                            conversations.remove(conversation)
+                            sessionManager.deleteSession(conversation.id)
                         }
                     )
                 }

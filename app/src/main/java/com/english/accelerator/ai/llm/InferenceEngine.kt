@@ -65,24 +65,28 @@ class InferenceEngine private constructor(
      * Async streaming inference - generates response token by token
      * Thread-safe: uses mutex to prevent concurrent calls
      * @param prompt The input prompt
-     * @param onPartialResult Callback for each generated token chunk
+     * @param onPartialResult Callback for each generated token chunk (partialResult, done)
      * @return The complete generated response
      */
     suspend fun generateAsync(
         prompt: String,
         onPartialResult: (String, Boolean) -> Unit
-    ): String = suspendCancellableCoroutine { continuation ->
-        inferenceMutex.tryLock().let { acquired ->
-            if (!acquired) {
-                continuation.resumeWithException(
-                    IllegalStateException("Another inference is already in progress")
-                )
-                return@suspendCancellableCoroutine
-            }
-
+    ): String = inferenceMutex.withLock {
+        suspendCancellableCoroutine { continuation ->
             try {
+                var isCompleted = false
+
                 val progressListener = ProgressListener<String> { partialResult, done ->
-                    onPartialResult(partialResult, done)
+                    try {
+                        onPartialResult(partialResult, done)
+
+                        // Mark as completed when done=true
+                        if (done) {
+                            isCompleted = true
+                        }
+                    } catch (e: Exception) {
+                        AppLogger.error(TAG, "Error in progress listener: ${e.message}", e)
+                    }
                 }
 
                 val future = llmInference.generateResponseAsync(prompt, progressListener)
@@ -90,10 +94,14 @@ class InferenceEngine private constructor(
                 future.addListener({
                     try {
                         val result = future.get() ?: ""
-                        inferenceMutex.unlock()
+
+                        // Ensure we call the callback one final time with done=true
+                        if (!isCompleted) {
+                            onPartialResult(result, true)
+                        }
+
                         continuation.resume(result)
                     } catch (e: Exception) {
-                        inferenceMutex.unlock()
                         AppLogger.error(TAG, "Failed to generate async response: ${e.message}", e)
                         continuation.resumeWithException(e)
                     }
@@ -101,14 +109,8 @@ class InferenceEngine private constructor(
 
                 continuation.invokeOnCancellation {
                     future.cancel(true)
-                    if (inferenceMutex.isLocked) {
-                        inferenceMutex.unlock()
-                    }
                 }
             } catch (e: Exception) {
-                if (inferenceMutex.isLocked) {
-                    inferenceMutex.unlock()
-                }
                 AppLogger.error(TAG, "Failed to start async inference: ${e.message}", e)
                 continuation.resumeWithException(e)
             }
