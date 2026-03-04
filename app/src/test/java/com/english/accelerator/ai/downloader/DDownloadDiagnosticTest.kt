@@ -1,6 +1,8 @@
 package com.english.accelerator.ai.downloader
 
 import android.content.Context
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.Assert.*
@@ -21,7 +23,14 @@ class DDownloadDiagnosticTest {
         println("\n=== 测试1: 文件路径和目录 ===")
 
         // 模拟 Android Context
-        val mockContext = MockContext()
+        val testFilesDir = File(System.getProperty("java.io.tmpdir"), "test_accelerator")
+        testFilesDir.mkdirs()
+
+        val mockContext = mockk<Context>(relaxed = true)
+        every { mockContext.filesDir } returns testFilesDir
+        every { mockContext.applicationContext } returns mockContext
+        every { mockContext.packageName } returns "com.english.accelerator.test"
+
         val configManager = DConfig(mockContext)
         val stateMonitor = DStateMonitor(mockContext, configManager)
 
@@ -48,7 +57,14 @@ class DDownloadDiagnosticTest {
     fun testDownloadStatePersistence() {
         println("\n=== 测试2: 下载状态持久化 ===")
 
-        val mockContext = MockContext()
+        val testFilesDir = File(System.getProperty("java.io.tmpdir"), "test_accelerator")
+        testFilesDir.mkdirs()
+
+        val mockContext = mockk<Context>(relaxed = true)
+        every { mockContext.filesDir } returns testFilesDir
+        every { mockContext.applicationContext } returns mockContext
+        every { mockContext.packageName } returns "com.english.accelerator.test"
+
         val configManager = DConfig(mockContext)
 
         // 模拟下载进度
@@ -85,7 +101,14 @@ class DDownloadDiagnosticTest {
     fun testFileSizeDetection() {
         println("\n=== 测试3: 文件大小检测 ===")
 
-        val mockContext = MockContext()
+        val testFilesDir = File(System.getProperty("java.io.tmpdir"), "test_accelerator")
+        testFilesDir.mkdirs()
+
+        val mockContext = mockk<Context>(relaxed = true)
+        every { mockContext.filesDir } returns testFilesDir
+        every { mockContext.applicationContext } returns mockContext
+        every { mockContext.packageName } returns "com.english.accelerator.test"
+
         val configManager = DConfig(mockContext)
         val stateMonitor = DStateMonitor(mockContext, configManager)
 
@@ -123,7 +146,14 @@ class DDownloadDiagnosticTest {
     fun testProgressCalculation() {
         println("\n=== 测试4: 进度计算 ===")
 
-        val mockContext = MockContext()
+        val testFilesDir = File(System.getProperty("java.io.tmpdir"), "test_accelerator")
+        testFilesDir.mkdirs()
+
+        val mockContext = mockk<Context>(relaxed = true)
+        every { mockContext.filesDir } returns testFilesDir
+        every { mockContext.applicationContext } returns mockContext
+        every { mockContext.packageName } returns "com.english.accelerator.test"
+
         val configManager = DConfig(mockContext)
         val stateMonitor = DStateMonitor(mockContext, configManager)
 
@@ -151,20 +181,4 @@ class DDownloadDiagnosticTest {
         testFile.delete()
     }
 
-    /**
-     * Mock Context for testing
-     */
-    private class MockContext : Context() {
-        private val testFilesDir = File(System.getProperty("java.io.tmpdir"), "test_accelerator")
-
-        init {
-            testFilesDir.mkdirs()
-        }
-
-        override fun getFilesDir(): File = testFilesDir
-
-        // 其他必需的方法可以返回 null 或抛出异常
-        override fun getApplicationContext(): Context = this
-        override fun getPackageName(): String = "com.english.accelerator.test"
-    }
 }
