@@ -3,6 +3,7 @@ package com.english.accelerator.ai.model
 import android.content.Context
 import android.app.ActivityManager
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
+import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import com.english.accelerator.ai.inference.InferenceResult
 import com.english.accelerator.ai.inference.GrammarSuggestion
 import com.english.accelerator.ai.inference.PromptTemplates
@@ -21,11 +22,13 @@ import java.io.File
 /**
  * Singleton manager for gemma-3n-E2B-it-litert-lm LLM inference
  * Handles model initialization, inference requests, and lifecycle management
+ * Based on official MediaPipe LLM inference example
  */
 class GemmaInferenceManager private constructor(
     private val context: Context
 ) {
     private var llmInference: LlmInference? = null
+    private var llmInferenceSession: LlmInferenceSession? = null
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val modelFile = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm")
     private val modelConfig = ModelConfig.getInstance()
@@ -120,6 +123,7 @@ class GemmaInferenceManager private constructor(
     /**
      * Initialize the LLM inference engine
      * Should be called after model is downloaded
+     * Based on official MediaPipe example architecture
      */
     suspend fun initialize() = withContext(Dispatchers.IO) {
         try {
@@ -145,22 +149,15 @@ class GemmaInferenceManager private constructor(
                 return@withContext
             }
 
-            AppLogger.info(TAG, "Building LLM inference options")
-            val options = LlmInference.LlmInferenceOptions.builder()
-                .setModelPath(modelFile.absolutePath)
-                .setMaxTokens(2048)
-                .setTemperature(0.3f)
-                .setTopK(40)
-                .setRandomSeed(0)
-                .build()
+            // Step 1: Create LLM Inference Engine
+            AppLogger.info(TAG, "Creating LLM inference engine...")
+            createEngine()
 
-            AppLogger.info(TAG, "Creating LLM inference instance with MediaPipe")
-            AppLogger.info(TAG, "This may take 1-2 minutes for first-time initialization...")
+            // Step 2: Create LLM Inference Session
+            AppLogger.info(TAG, "Creating LLM inference session...")
+            createSession()
 
-            llmInference = LlmInference.createFromOptions(context, options)
             _modelState.value = ModelState.Ready
-
-            // 标记初始化成功
             modelConfig.markInitializationSuccess()
             AppLogger.info(TAG, "Model initialized successfully")
         } catch (e: Exception) {
@@ -174,6 +171,45 @@ class GemmaInferenceManager private constructor(
     }
 
     /**
+     * Create the LLM inference engine (Step 1)
+     */
+    private fun createEngine() {
+        val inferenceOptions = LlmInference.LlmInferenceOptions.builder()
+            .setModelPath(modelFile.absolutePath)
+            .setMaxTokens(2048)
+            .build()
+
+        try {
+            llmInference = LlmInference.createFromOptions(context, inferenceOptions)
+            AppLogger.info(TAG, "LLM inference engine created successfully")
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to create LLM inference engine: ${e.message}")
+            throw e
+        }
+    }
+
+    /**
+     * Create the LLM inference session (Step 2)
+     */
+    private fun createSession() {
+        val inference = llmInference ?: throw IllegalStateException("LLM inference engine not created")
+
+        val sessionOptions = LlmInferenceSession.LlmInferenceSessionOptions.builder()
+            .setTemperature(0.3f)
+            .setTopK(40)
+            .setTopP(0.95f)
+            .build()
+
+        try {
+            llmInferenceSession = LlmInferenceSession.createFromOptions(inference, sessionOptions)
+            AppLogger.info(TAG, "LLM inference session created successfully")
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to create LLM inference session: ${e.message}")
+            throw e
+        }
+    }
+
+    /**
      * Generate suggestions based on the input text and suggestion type
      */
     suspend fun generateSuggestions(
@@ -181,8 +217,8 @@ class GemmaInferenceManager private constructor(
         type: SuggestionType
     ): InferenceResult = withContext(Dispatchers.Default) {
         try {
-            val inference = llmInference
-            if (inference == null) {
+            val session = llmInferenceSession
+            if (session == null) {
                 val error = "Model not initialized"
                 AppLogger.error(TAG, error)
                 return@withContext InferenceResult.Error(error)
@@ -197,9 +233,10 @@ class GemmaInferenceManager private constructor(
                 SuggestionType.CONVERSATION_PRACTICE -> PromptTemplates.conversationPractice("general", text)
             }
 
-            // Run inference
+            // Run inference using session
             AppLogger.debug(TAG, "Running inference")
-            val response = inference.generateResponse(prompt)
+            session.addQueryChunk(prompt)
+            val response = session.generateResponse()
             AppLogger.debug(TAG, "Inference completed, response length: ${response.length}")
 
             // Parse response into suggestions
@@ -273,6 +310,8 @@ class GemmaInferenceManager private constructor(
      */
     fun cleanup() {
         AppLogger.info(TAG, "Cleaning up resources")
+        llmInferenceSession?.close()
+        llmInferenceSession = null
         llmInference?.close()
         llmInference = null
         scope.cancel()
@@ -283,6 +322,8 @@ class GemmaInferenceManager private constructor(
      */
     fun onLowMemory() {
         AppLogger.warn(TAG, "Low memory detected, releasing model")
+        llmInferenceSession?.close()
+        llmInferenceSession = null
         llmInference?.close()
         llmInference = null
         // Will reinitialize on next request
