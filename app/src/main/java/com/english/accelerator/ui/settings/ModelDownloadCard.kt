@@ -89,10 +89,10 @@ fun ModelDownloadCard(
             isPaused = true
         } else if (isPaused) {
             // 恢复下载
-            dManager.resumeDownload()
+            isDownloading = true
             isPaused = false
+            dManager.resumeDownload()
             scope.launch {
-                isDownloading = true
                 dManager.downloadModel { downloaded, total, speed ->
                     downloadSpeed = speed
                 }.onSuccess {
@@ -105,8 +105,8 @@ fun ModelDownloadCard(
             }
         } else {
             // 开始下载
+            isDownloading = true
             scope.launch {
-                isDownloading = true
                 dManager.downloadModel { downloaded, total, speed ->
                     downloadSpeed = speed
                 }.onSuccess {
