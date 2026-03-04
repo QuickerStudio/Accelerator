@@ -57,8 +57,25 @@ data class Message(
     val id: String = UUID.randomUUID().toString(),
     val content: String,
     val isFromUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val inferenceStats: InferenceStats? = null
 )
+
+/**
+ * Inference performance statistics
+ */
+data class InferenceStats(
+    val startTime: Long,
+    val endTime: Long,
+    val tokensGenerated: Int,
+    val memoryUsedMB: Long
+) {
+    val durationSeconds: Float
+        get() = (endTime - startTime) / 1000f
+
+    val tokensPerSecond: Float
+        get() = if (durationSeconds > 0) tokensGenerated / durationSeconds else 0f
+}
 
 /**
  * 解析对话响应
@@ -365,12 +382,27 @@ fun MessageBubble(message: Message) {
             }
 
             // Timestamp
-            Text(
-                text = timeFormat.format(Date(message.timestamp)),
-                fontSize = 12.sp,
-                color = Color(0xFF94A3B8),
-                modifier = Modifier.padding(top = 4.dp, start = 4.dp, end = 4.dp)
-            )
+            Row(
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp, end = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = timeFormat.format(Date(message.timestamp)),
+                    fontSize = 12.sp,
+                    color = Color(0xFF94A3B8)
+                )
+
+                // Show inference stats for AI messages
+                if (!message.isFromUser && message.inferenceStats != null) {
+                    val stats = message.inferenceStats
+                    Text(
+                        text = "• ${String.format("%.1f", stats.durationSeconds)}s • ${String.format("%.1f", stats.tokensPerSecond)} tok/s • ${stats.memoryUsedMB}MB",
+                        fontSize = 10.sp,
+                        color = Color(0xFF94A3B8)
+                    )
+                }
+            }
         }
 
         if (message.isFromUser) {

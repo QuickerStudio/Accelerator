@@ -172,6 +172,11 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                 // Get conversation context from history
                 val context = historyManager.getLastMessages(sessionId, 10)
 
+                // Collect performance metrics
+                val startTime = System.currentTimeMillis()
+                val runtime = Runtime.getRuntime()
+                val memoryBefore = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+
                 // Generate AI response using AgentService
                 inferenceJob = launch {
                     val result = agentService.generate(
@@ -179,10 +184,29 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                         context = context
                     )
 
+                    val endTime = System.currentTimeMillis()
+                    val memoryAfter = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+                    val memoryUsed = memoryAfter - memoryBefore
+
                     result.fold(
                         onSuccess = { response ->
-                            // Add AI response to UI
-                            val aiMessage = Message(content = response, isFromUser = false)
+                            // Estimate tokens generated (rough approximation: 1 token ≈ 4 characters)
+                            val tokensGenerated = response.length / 4
+
+                            // Create inference stats
+                            val stats = InferenceStats(
+                                startTime = startTime,
+                                endTime = endTime,
+                                tokensGenerated = tokensGenerated,
+                                memoryUsedMB = memoryUsed
+                            )
+
+                            // Add AI response to UI with stats
+                            val aiMessage = Message(
+                                content = response,
+                                isFromUser = false,
+                                inferenceStats = stats
+                            )
                             _messages.value = _messages.value + aiMessage
 
                             // Save AI response to history
@@ -191,7 +215,8 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                                 message = AgentMessage(role = "assistant", content = response)
                             )
 
-                            AppLogger.info(TAG, "AI response generated successfully")
+                            AppLogger.info(TAG, "AI response generated in ${stats.durationSeconds}s, " +
+                                    "${stats.tokensPerSecond} tokens/s, ${stats.memoryUsedMB}MB memory")
                         },
                         onFailure = { error ->
                             // Add error message to UI
