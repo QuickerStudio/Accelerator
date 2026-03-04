@@ -107,8 +107,7 @@ fun WritingScreen(
                     }
                 },
                 isConversationMode = showAiPanel,
-                isCollectionMode = showEssayCollection,
-                statusMessage = ""
+                isCollectionMode = showEssayCollection
             )
 
             // 编辑器区域
