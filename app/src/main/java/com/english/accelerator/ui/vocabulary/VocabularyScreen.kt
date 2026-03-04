@@ -1,31 +1,35 @@
 package com.english.accelerator.ui.vocabulary
 
+import android.content.Context
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import com.english.accelerator.utils.WordLoader
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.english.accelerator.data.BookmarkManager
+import com.english.accelerator.data.Word
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
-import com.english.accelerator.ui.vocabulary.components.WordCardStack
+import com.english.accelerator.ui.vocabulary.nodes.CardStack
+import com.english.accelerator.utils.AppLogger
+import com.english.accelerator.utils.WordLoader
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
+/**
+ * VocabularyScreen - 节点管理器
+ */
 @Composable
 fun VocabularyScreen(
     showInputArea: Boolean = false,
@@ -33,17 +37,13 @@ fun VocabularyScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val vm = remember { VocabularyVM(context) }
 
-    // 使用 WordLoader 获取单词
-    var currentBatchWords by remember {
-        mutableStateOf(WordLoader.getNextBatch(count = 50, includeReview = true))
-    }
-    var currentIndexInBatch by remember { mutableIntStateOf(0) }
+    val words by vm.words.collectAsState()
+    val currentIndex by vm.currentIndex.collectAsState()
 
     var showBookmarkScreen by remember { mutableStateOf(false) }
     var showSidebar by remember { mutableStateOf(false) }
-
-    // 编辑器状态持久化
     var isEditorMode by remember { mutableStateOf(false) }
     var editingNoteId by remember { mutableStateOf<Int?>(null) }
     var editorTitle by remember { mutableStateOf("") }
@@ -54,7 +54,6 @@ fun VocabularyScreen(
     var showToast by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
-    // 动画：卡片底部内边距
     val cardBottomPadding by animateDpAsState(
         targetValue = if (showInputArea) 180.dp else 100.dp,
         label = "cardBottomPadding"
@@ -62,105 +61,63 @@ fun VocabularyScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (showBookmarkScreen) {
-            BookmarkScreen(
-                onBackClick = { showBookmarkScreen = false }
-            )
+            BookmarkScreen(onBackClick = { showBookmarkScreen = false })
         } else {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // 顶部栏
+            Column(modifier = Modifier.fillMaxSize()) {
                 VocabularyTopBar(
-                    onMenuClick = {
-                        showSidebar = true
-                    },
+                    onMenuClick = { showSidebar = true },
                     onConversationClick = onToggleInputArea,
-                    onBookmarkClick = {
-                        showBookmarkScreen = true
-                    },
+                    onBookmarkClick = { showBookmarkScreen = true },
                     isConversationMode = showInputArea
                 )
 
-            // 卡片区域
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f)
-                    .padding(bottom = cardBottomPadding)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        focusManager.clearFocus()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                WordCardStack(
-                    words = currentBatchWords,
-                    currentIndex = currentIndexInBatch,
-                    onSwipeLeft = {
-                        // 标记为"未记住"
-                        if (currentIndexInBatch < currentBatchWords.size) {
-                            val currentWord = currentBatchWords[currentIndexInBatch]
-                            WordLoader.markAsUnmemorized(currentWord.id)
-                            currentIndexInBatch++
-
-                            toastMessage = "未记住"
-                            toastBackgroundColor = Color(0xFFFEE2E2) // 浅红色
-                            showToast = true
-
-                            // 换批检查：当前批学完了，加载下一批
-                            if (currentIndexInBatch >= currentBatchWords.size) {
-                                if (WordLoader.hasMoreWords()) {
-                                    currentBatchWords = WordLoader.getNextBatch(count = 50, includeReview = true)
-                                    currentIndexInBatch = 0
-                                }
-                            }
-                        }
-                    },
-                    onSwipeRight = {
-                        // 标记为"已记住"
-                        if (currentIndexInBatch < currentBatchWords.size) {
-                            val currentWord = currentBatchWords[currentIndexInBatch]
-                            WordLoader.markAsMemorized(currentWord.id)
-                            currentIndexInBatch++
-
-                            toastMessage = "已记住"
-                            toastBackgroundColor = Color(0xFFDCFCE7) // 浅绿色
-                            showToast = true
-
-                            // 换批检查：当前批学完了，加载下一批
-                            if (currentIndexInBatch >= currentBatchWords.size) {
-                                if (WordLoader.hasMoreWords()) {
-                                    currentBatchWords = WordLoader.getNextBatch(count = 50, includeReview = true)
-                                    currentIndexInBatch = 0
-                                }
-                            }
-                        }
-                    },
-                    onLongPress = { word ->
-                        BookmarkManager.addBookmark(word)
-                        toastMessage = "已收藏"
-                        toastBackgroundColor = Color(0xFFDEEDFF) // 浅蓝色
-                        showToast = true
-                    }
-                )
-
-                // Toast 提示（位于卡片上方）
-                CustomToast(
-                    message = toastMessage,
-                    visible = showToast,
-                    onDismiss = { showToast = false },
-                    backgroundColor = toastBackgroundColor,
+                Box(
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 20.dp)
-                )
-            }
+                        .fillMaxSize()
+                        .weight(1f)
+                        .padding(bottom = cardBottomPadding)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { focusManager.clearFocus() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    CardStack(
+                        words = words,
+                        currentIndex = currentIndex,
+                        onSwipeLeft = {
+                            vm.markUnmemorized()
+                            toastMessage = "未记住"
+                            toastBackgroundColor = Color(0xFFFEE2E2)
+                            showToast = true
+                        },
+                        onSwipeRight = {
+                            vm.markMemorized()
+                            toastMessage = "已记住"
+                            toastBackgroundColor = Color(0xFFDCFCE7)
+                            showToast = true
+                        },
+                        onLongPress = { word ->
+                            BookmarkManager.addBookmark(word)
+                            toastMessage = "已收藏"
+                            toastBackgroundColor = Color(0xFFDEEDFF)
+                            showToast = true
+                        }
+                    ).Render()
+
+                    CustomToast(
+                        message = toastMessage,
+                        visible = showToast,
+                        onDismiss = { showToast = false },
+                        backgroundColor = toastBackgroundColor,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 20.dp)
+                    )
+                }
             }
         }
 
-        // 侧边栏
         if (showSidebar) {
             Sidebar(
                 isOpen = showSidebar,
@@ -175,6 +132,60 @@ fun VocabularyScreen(
                 editorContent = editorContent,
                 onEditorContentChange = { editorContent = it }
             )
+        }
+    }
+}
+
+/**
+ * ViewModel - 管理状态和业务逻辑
+ */
+class VocabularyVM(private val context: Context) : ViewModel() {
+    private val TAG = "VocabularyVM"
+
+    private val _words = MutableStateFlow<List<Word>>(emptyList())
+    val words: StateFlow<List<Word>> = _words.asStateFlow()
+
+    private val _currentIndex = MutableStateFlow(0)
+    val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
+
+    init {
+        loadWords()
+    }
+
+    private fun loadWords() {
+        viewModelScope.launch {
+            try {
+                _words.value = WordLoader.getNextBatch(count = 50, includeReview = true)
+                _currentIndex.value = 0
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Load words failed", e)
+            }
+        }
+    }
+
+    fun markMemorized() {
+        val index = _currentIndex.value
+        if (index < _words.value.size) {
+            val word = _words.value[index]
+            WordLoader.markAsMemorized(word.id)
+            _currentIndex.value = index + 1
+
+            if (_currentIndex.value >= _words.value.size && WordLoader.hasMoreWords()) {
+                loadWords()
+            }
+        }
+    }
+
+    fun markUnmemorized() {
+        val index = _currentIndex.value
+        if (index < _words.value.size) {
+            val word = _words.value[index]
+            WordLoader.markAsUnmemorized(word.id)
+            _currentIndex.value = index + 1
+
+            if (_currentIndex.value >= _words.value.size && WordLoader.hasMoreWords()) {
+                loadWords()
+            }
         }
     }
 }
