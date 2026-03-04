@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -269,34 +270,47 @@ fun ModelDownloadCard(
                     // 已下载：显示加载模型和清除模型按钮
                     isDownloaded -> {
                         // 加载模型按钮
-                        IconButton(
-                            onClick = onLoadModel,
-                            enabled = !isLoadingModel && !isModelLoaded,
-                            modifier = Modifier.size(48.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    when {
+                                        isModelLoaded -> Color(0xFFDCFCE7)
+                                        else -> Color(0xFFE2E8F0)
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            when {
-                                isLoadingModel -> {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        strokeWidth = 2.dp,
-                                        color = Color(0xFF8B5CF6)
-                                    )
-                                }
-                                isModelLoaded -> {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "已加载",
-                                        tint = Color(0xFF10B981),
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
-                                else -> {
-                                    Icon(
-                                        imageVector = Icons.Default.PlayArrow,
-                                        contentDescription = "加载模型",
-                                        tint = Color(0xFF8B5CF6),
-                                        modifier = Modifier.size(28.dp)
-                                    )
+                            IconButton(
+                                onClick = onLoadModel,
+                                enabled = !isLoadingModel && !isModelLoaded,
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                when {
+                                    isLoadingModel -> {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp,
+                                            color = Color(0xFF8B5CF6)
+                                        )
+                                    }
+                                    isModelLoaded -> {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = "已加载",
+                                            tint = Color(0xFF10B981),
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                    else -> {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = "加载模型",
+                                            tint = Color(0xFF8B5CF6),
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

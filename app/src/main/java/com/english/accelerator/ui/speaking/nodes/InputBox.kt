@@ -44,6 +44,7 @@ class InputBox(
         // 截图功能
         val captureScreenshot = rememberScreenshotCapture(
             cropRatio = 3f / 4f,
+            offsetDp = 10,
             onSuccess = { file ->
                 onCamera()
                 onShowToast("截图已保存", Color(0xFF10B981))
