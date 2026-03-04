@@ -35,7 +35,6 @@ import com.english.accelerator.ui.speaking.VoiceInputTestScreen
 import com.english.accelerator.ui.theme.AcceleratorTheme
 import com.english.accelerator.ui.vocabulary.VocabularyScreen
 import com.english.accelerator.ui.writing.WritingScreen
-import com.english.accelerator.ai.model.GemmaInferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,14 +56,6 @@ class MainActivity : ComponentActivity() {
         // 记录 Activity 启动
         com.english.accelerator.utils.AppLogger.info("MainActivity", "MainActivity started")
 
-        // 自动初始化模型（如果已下载）
-        scope.launch {
-            val gemmaManager = com.english.accelerator.ai.model.GemmaInferenceManager.getInstance()
-            if (gemmaManager.isModelDownloaded()) {
-                gemmaManager.initialize()
-            }
-        }
-
         enableEdgeToEdge()
         setContent {
             AcceleratorTheme {
@@ -75,12 +66,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onLowMemory() {
         super.onLowMemory()
-        com.english.accelerator.ai.model.GemmaInferenceManager.getInstance().onLowMemory()
+        // Model lifecycle is managed by InferenceEngine singleton
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        com.english.accelerator.ai.model.GemmaInferenceManager.getInstance().cleanup()
+        // Model lifecycle is managed by InferenceEngine singleton
     }
 }
 

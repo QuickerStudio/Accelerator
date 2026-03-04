@@ -39,10 +39,7 @@ import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.ScreenshotNotification
 import com.english.accelerator.utils.rememberScreenshotCapture
-import com.english.accelerator.ai.model.GemmaInferenceManager
-import com.english.accelerator.ai.model.GemmaInferenceManager.ModelState
-import com.english.accelerator.ai.inference.InferenceResult
-import com.english.accelerator.ai.inference.SuggestionType
+import com.english.accelerator.ai.llm.ModelState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
@@ -122,14 +119,11 @@ fun SpeakingScreen(
         }
     )
 
-    // AI 集成
-    val gemmaManager = remember { GemmaInferenceManager.getInstance() }
-    val modelState by gemmaManager.modelState.collectAsState()
     val scope = rememberCoroutineScope()
 
-    // 初始化欢迎消息（仅在模型就绪时）
-    LaunchedEffect(modelState) {
-        if (modelState is ModelState.Ready && messages.isEmpty()) {
+    // 初始化欢迎消息
+    LaunchedEffect(Unit) {
+        if (messages.isEmpty()) {
             messages.add(
                 Message(
                     content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
@@ -155,14 +149,12 @@ fun SpeakingScreen(
                             // 清空当前对话，开始新线程
                             messages.clear()
                             // 添加欢迎消息
-                            if (modelState is ModelState.Ready) {
-                                messages.add(
-                                    Message(
-                                        content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
-                                        isFromUser = false
-                                    )
+                            messages.add(
+                                Message(
+                                    content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
+                                    isFromUser = false
                                 )
-                            }
+                            )
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -214,32 +206,12 @@ fun SpeakingScreen(
                                 isLoading = true
                                 scope.launch {
                                     try {
-                                        val result = gemmaManager.generateSuggestions(
-                                            text = userMessage,
-                                            type = SuggestionType.CONVERSATION_PRACTICE
-                                        )
+                                        // TODO: 通过 AgentService 处理用户输入
+                                        // 暂时添加占位响应
+                                        messages.add(Message(content = "AI response placeholder", isFromUser = false))
 
-                                        when (result) {
-                                            is InferenceResult.Success -> {
-                                                // 解析响应和反馈
-                                                val response = parseConversationResponse(result.rawResponse)
-                                                messages.add(Message(content = response, isFromUser = false))
-
-                                                // 滚动到底部
-                                                listState.animateScrollToItem(messages.size)
-                                            }
-                                            is InferenceResult.Error -> {
-                                                messages.add(
-                                                    Message(
-                                                        content = "抱歉，我遇到了一些问题：${result.message}",
-                                                        isFromUser = false
-                                                    )
-                                                )
-                                            }
-                                            InferenceResult.Loading -> {
-                                                // 保持加载状态
-                                            }
-                                        }
+                                        // 滚动到底部
+                                        listState.animateScrollToItem(messages.size)
                                     } catch (e: Exception) {
                                         messages.add(
                                             Message(

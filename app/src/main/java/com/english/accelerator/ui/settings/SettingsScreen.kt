@@ -35,7 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ai.downloader.DManager
-import com.english.accelerator.ai.model.GemmaInferenceManager
+import com.english.accelerator.ai.llm.InferenceEngine
+import com.english.accelerator.ai.llm.InferenceConfig
+import com.english.accelerator.ai.llm.ModelState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -43,10 +45,12 @@ import kotlinx.coroutines.launch
 fun SettingsScreen() {
     val scrollState = rememberScrollState()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val gemmaManager = remember { GemmaInferenceManager.getInstance() }
     val dManager = remember { DManager(context) }
-    val modelState by gemmaManager.modelState.collectAsState()
     val scope = rememberCoroutineScope()
+
+    // 模型状态
+    var modelState by remember { mutableStateOf<ModelState>(ModelState.Idle) }
+    var isLoadingModel by remember { mutableStateOf(false) }
 
     // 文件浏览器对话框状态
     var showFileExplorer by remember { mutableStateOf(false) }
@@ -55,9 +59,6 @@ fun SettingsScreen() {
     var showToast by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf("") }
     var toastBackgroundColor by remember { mutableStateOf(Color.White) }
-
-    // 加载模型状态
-    var isLoadingModel by remember { mutableStateOf(false) }
 
     // 学习计划页面导航状态
     var showLearningPlanScreen by remember { mutableStateOf(false) }
@@ -111,33 +112,21 @@ fun SettingsScreen() {
                 onLoadModel = {
                     scope.launch {
                         isLoadingModel = true
+                        modelState = ModelState.Loading
                         toastMessage = "正在加载模型..."
                         toastBackgroundColor = Color(0xFFBFDBFE)
                         showToast = true
 
                         try {
-                            gemmaManager.initialize()
+                            val config = InferenceConfig.forGemma3N(context)
+                            InferenceEngine.resetInstance(context, config)
 
-                            // 检查模型状态
-                            delay(1000) // 等待状态更新
-                            val currentState = gemmaManager.modelState.value
-
-                            when (currentState) {
-                                is GemmaInferenceManager.ModelState.Ready -> {
-                                    toastMessage = "模型加载成功！"
-                                    toastBackgroundColor = Color(0xFFDCFCE7)
-                                }
-                                is GemmaInferenceManager.ModelState.Error -> {
-                                    toastMessage = "模型加载失败: ${currentState.message}"
-                                    toastBackgroundColor = Color(0xFFFEE2E2)
-                                }
-                                else -> {
-                                    toastMessage = "模型状态未知"
-                                    toastBackgroundColor = Color(0xFFFEE2E2)
-                                }
-                            }
+                            modelState = ModelState.Ready
+                            toastMessage = "模型加载成功！"
+                            toastBackgroundColor = Color(0xFFDCFCE7)
                         } catch (e: Exception) {
-                            toastMessage = "模型加载异常: ${e.message}\n${e.stackTraceToString().take(200)}"
+                            modelState = ModelState.Error(e.message ?: "Unknown error")
+                            toastMessage = "模型加载失败: ${e.message}"
                             toastBackgroundColor = Color(0xFFFEE2E2)
                         } finally {
                             isLoadingModel = false

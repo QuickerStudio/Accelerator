@@ -1,4 +1,4 @@
-package com.english.accelerator.ai.inference
+package com.english.accelerator.ai.llm
 
 /**
  * Sealed class representing the result of an LLM inference operation

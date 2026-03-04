@@ -23,9 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.ai.model.GemmaInferenceManager
-import com.english.accelerator.ai.inference.InferenceResult
-import com.english.accelerator.ai.inference.SuggestionType
+import com.english.accelerator.ai.llm.GrammarSuggestion
 import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
@@ -60,10 +58,6 @@ fun WritingScreen(
     var showAiPanel by remember { mutableStateOf(false) }
     var aiComments by remember { mutableStateOf<List<AiComment>>(emptyList()) }
 
-    // Gemma AI 状态
-    val gemmaManager = remember { GemmaInferenceManager.getInstance() }
-    val modelState by gemmaManager.modelState.collectAsState()
-    var inferenceResult by remember { mutableStateOf<InferenceResult?>(null) }
     val scope = rememberCoroutineScope()
 
     // 语法评分和词语类型
@@ -197,16 +191,7 @@ fun WritingScreen(
                             content = ""
                         },
                         onAiAssist = {
-                            // 使用 Gemma 进行语法检查
-                            scope.launch {
-                                if (content.isNotBlank()) {
-                                    inferenceResult = InferenceResult.Loading
-                                    inferenceResult = gemmaManager.generateSuggestions(
-                                        text = content,
-                                        type = SuggestionType.GRAMMAR_CHECK
-                                    )
-                                }
-                            }
+                            // TODO: 通过 AgentService 进行语法检查
                         }
                     )
                 }
@@ -214,29 +199,11 @@ fun WritingScreen(
                 // AI 辅助面板
                 if (showAiPanel) {
                     AiAssistPanel(
-                        modelState = modelState,
-                        inferenceResult = inferenceResult,
                         onCheckGrammar = {
-                            scope.launch {
-                                if (content.isNotBlank()) {
-                                    inferenceResult = InferenceResult.Loading
-                                    inferenceResult = gemmaManager.generateSuggestions(
-                                        text = content,
-                                        type = SuggestionType.GRAMMAR_CHECK
-                                    )
-                                }
-                            }
+                            // TODO: 通过 AgentService 进行语法检查
                         },
                         onGetSuggestions = {
-                            scope.launch {
-                                if (content.isNotBlank()) {
-                                    inferenceResult = InferenceResult.Loading
-                                    inferenceResult = gemmaManager.generateSuggestions(
-                                        text = content,
-                                        type = SuggestionType.WRITING_IMPROVEMENT
-                                    )
-                                }
-                            }
+                            // TODO: 通过 AgentService 获取写作建议
                         },
                         onDownloadModel = {
                             // 下载功能已移除，跳转到设置页面
@@ -244,9 +211,7 @@ fun WritingScreen(
                         },
                         onApplySuggestion = { suggestion ->
                             // 应用建议到内容
-                            if (suggestion.original.isNotEmpty()) {
-                                content = content.replace(suggestion.original, suggestion.corrected)
-                            }
+                            content = content.replace(suggestion.original, suggestion.corrected)
                         },
                         modifier = Modifier
                             .weight(0.4f)
@@ -548,12 +513,10 @@ private fun EditorToolbar(
 
 @Composable
 private fun AiAssistPanel(
-    modelState: GemmaInferenceManager.ModelState,
-    inferenceResult: InferenceResult?,
     onCheckGrammar: () -> Unit,
     onGetSuggestions: () -> Unit,
     onDownloadModel: () -> Unit,
-    onApplySuggestion: (com.english.accelerator.ai.inference.GrammarSuggestion) -> Unit,
+    onApplySuggestion: (GrammarSuggestion) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -590,100 +553,40 @@ private fun AiAssistPanel(
         Divider(color = Color(0xFFE2E8F0))
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 根据模型状态显示不同内容
-        when (modelState) {
-            is GemmaInferenceManager.ModelState.NotDownloaded -> {
-                ModelDownloadPrompt(onDownload = onDownloadModel)
-            }
-            is GemmaInferenceManager.ModelState.Ready -> {
-                // 控制按钮
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = onCheckGrammar,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B5CF6)
-                        )
-                    ) {
-                        Text("语法检查", fontSize = 12.sp)
-                    }
-                    Button(
-                        onClick = onGetSuggestions,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3B82F6)
-                        )
-                    ) {
-                        Text("写作建议", fontSize = 12.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 显示推理结果
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    when (inferenceResult) {
-                        is InferenceResult.Loading -> {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(32.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(color = Color(0xFF8B5CF6))
-                            }
-                        }
-                        is InferenceResult.Success -> {
-                            if (inferenceResult.suggestions.isEmpty()) {
-                                Text(
-                                    text = "没有发现需要改进的地方！",
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF10B981),
-                                    modifier = Modifier.padding(vertical = 16.dp)
-                                )
-                            } else {
-                                inferenceResult.suggestions.forEach { suggestion ->
-                                    SuggestionCard(
-                                        suggestion = suggestion,
-                                        onApply = { onApplySuggestion(suggestion) }
-                                    )
-                                }
-                            }
-                        }
-                        is InferenceResult.Error -> {
-                            Text(
-                                text = "错误: ${inferenceResult.message}",
-                                fontSize = 14.sp,
-                                color = Color(0xFFEF4444),
-                                modifier = Modifier.padding(vertical = 16.dp)
-                            )
-                        }
-                        null -> {
-                            Text(
-                                text = "点击上方按钮开始分析",
-                                fontSize = 14.sp,
-                                color = Color(0xFF94A3B8),
-                                modifier = Modifier.padding(vertical = 32.dp)
-                            )
-                        }
-                    }
-                }
-            }
-            is GemmaInferenceManager.ModelState.Error -> {
-                Text(
-                    text = "模型错误: ${modelState.message}",
-                    fontSize = 14.sp,
-                    color = Color(0xFFEF4444),
-                    modifier = Modifier.padding(vertical = 16.dp)
+        // 控制按钮
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = onCheckGrammar,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF8B5CF6)
                 )
+            ) {
+                Text("语法检查", fontSize = 12.sp)
+            }
+            Button(
+                onClick = onGetSuggestions,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF3B82F6)
+                )
+            ) {
+                Text("写作建议", fontSize = 12.sp)
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // TODO: 通过 AgentService 显示推理结果
+        Text(
+            text = "AI 功能将通过 AgentService 实现",
+            fontSize = 14.sp,
+            color = Color(0xFF94A3B8),
+            modifier = Modifier.padding(vertical = 32.dp)
+        )
     }
 }
 
@@ -758,7 +661,7 @@ private fun DownloadProgress(progress: Float) {
 
 @Composable
 private fun SuggestionCard(
-    suggestion: com.english.accelerator.ai.inference.GrammarSuggestion,
+    suggestion: GrammarSuggestion,
     onApply: () -> Unit
 ) {
     Card(

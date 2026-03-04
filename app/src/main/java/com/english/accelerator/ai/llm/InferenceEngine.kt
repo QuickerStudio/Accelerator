@@ -4,9 +4,6 @@ import android.content.Context
 import com.english.accelerator.utils.AppLogger
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
-import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
-import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession.LlmInferenceSessionOptions
-import com.google.mediapipe.tasks.genai.llminference.ProgressListener
 import java.io.File
 import kotlin.math.max
 
@@ -23,8 +20,7 @@ class InferenceEngine private constructor(
     private val config: InferenceConfig
 ) {
     private lateinit var llmInference: LlmInference
-    private lateinit var llmInferenceSession: LlmInferenceSession
-    private val TAG = InferenceEngine::class.qualifiedName
+    private val TAG: String = InferenceEngine::class.qualifiedName ?: "InferenceEngine"
 
     init {
         if (!modelExists()) {
@@ -32,39 +28,25 @@ class InferenceEngine private constructor(
         }
 
         createEngine()
-        createSession()
     }
 
     /**
      * Close and release resources
      */
     fun close() {
-        llmInferenceSession.close()
         llmInference.close()
     }
 
     /**
-     * Reset session (clear conversation history)
-     */
-    fun resetSession() {
-        llmInferenceSession.close()
-        createSession()
-    }
-
-    /**
-     * Async streaming inference for chat
-     */
-    fun generateAsync(prompt: String, progressListener: ProgressListener<String>): ListenableFuture<String> {
-        llmInferenceSession.addQueryChunk(prompt)
-        return llmInferenceSession.generateResponseAsync(progressListener)
-    }
-
-    /**
-     * Sync inference for grammar/writing services
+     * Sync inference - the only inference method
      */
     fun generateSync(prompt: String): String {
-        llmInferenceSession.addQueryChunk(prompt)
-        return llmInferenceSession.generateResponse()
+        try {
+            return llmInference.generateResponse(prompt) ?: ""
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to generate response: ${e.message}", e)
+            throw e
+        }
     }
 
     /**
@@ -73,16 +55,24 @@ class InferenceEngine private constructor(
     fun estimateTokensRemaining(context: String): Int {
         if (context.isEmpty()) return -1
 
-        val sizeOfAllMessages = llmInferenceSession.sizeInTokens(context)
+        val sizeOfAllMessages = llmInference.sizeInTokens(context)
         val remainingTokens = config.maxTokens - sizeOfAllMessages - config.decodeTokenOffset
         return max(0, remainingTokens)
+    }
+
+    /**
+     * Check if model is loaded and ready
+     */
+    fun isReady(): Boolean {
+        return ::llmInference.isInitialized
     }
 
     private fun createEngine() {
         val inferenceOptions = LlmInference.LlmInferenceOptions.builder()
             .setModelPath(config.modelPath)
             .setMaxTokens(config.maxTokens)
-            .apply { config.preferredBackend?.let { setPreferredBackend(it) } }
+            .setTemperature(config.temperature)
+            .setTopK(config.topK)
             .build()
 
         try {
@@ -91,22 +81,6 @@ class InferenceEngine private constructor(
         } catch (e: Exception) {
             AppLogger.error(TAG, "Failed to create LLM inference engine: ${e.message}", e)
             throw ModelLoadFailException()
-        }
-    }
-
-    private fun createSession() {
-        val sessionOptions = LlmInferenceSessionOptions.builder()
-            .setTemperature(config.temperature)
-            .setTopK(config.topK)
-            .setTopP(config.topP)
-            .build()
-
-        try {
-            llmInferenceSession = LlmInferenceSession.createFromOptions(llmInference, sessionOptions)
-            AppLogger.info(TAG, "LLM inference session created successfully")
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to create LLM inference session: ${e.message}", e)
-            throw ModelSessionCreateFailException()
         }
     }
 
@@ -132,4 +106,13 @@ class InferenceEngine private constructor(
 }
 
 class ModelLoadFailException : Exception("Failed to load model, please try again")
-class ModelSessionCreateFailException : Exception("Failed to create model session, please try again")
+
+/**
+ * Model state for UI observation
+ */
+sealed class ModelState {
+    object Idle : ModelState()
+    object Loading : ModelState()
+    object Ready : ModelState()
+    data class Error(val message: String) : ModelState()
+}

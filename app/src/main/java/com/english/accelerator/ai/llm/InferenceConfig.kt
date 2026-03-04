@@ -1,6 +1,5 @@
 package com.english.accelerator.ai.llm
 
-import com.google.mediapipe.tasks.genai.llminference.LlmInference.Backend
 import java.io.File
 
 /**
@@ -12,8 +11,7 @@ data class InferenceConfig(
     val decodeTokenOffset: Int = 256,
     val temperature: Float = 0.3f,
     val topK: Int = 40,
-    val topP: Float = 0.95f,
-    val preferredBackend: Backend? = Backend.GPU
+    val topP: Float = 0.95f
 ) {
     companion object {
         /**
@@ -27,8 +25,7 @@ data class InferenceConfig(
                 decodeTokenOffset = 256,
                 temperature = 0.3f,
                 topK = 40,
-                topP = 0.95f,
-                preferredBackend = Backend.GPU
+                topP = 0.95f
             )
         }
     }

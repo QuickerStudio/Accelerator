@@ -12,7 +12,6 @@ import com.english.accelerator.data.WordLearningManager
 import com.english.accelerator.data.WordRepository
 import com.english.accelerator.data.BookmarkManager
 import com.english.accelerator.data.EssayCollectionManager
-import com.english.accelerator.ai.model.GemmaInferenceManager
 import com.english.accelerator.utils.WordLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,9 +74,6 @@ class AcceleratorApplication : Application() {
         WordRepository.init(this)
         BookmarkManager.init(this)
         EssayCollectionManager.init(this)
-
-        // 初始化 AI 推理管理器
-        GemmaInferenceManager.init(this)
 
         // 初始化 WordLoader（中间件层）
         WordLoader.init(this)
