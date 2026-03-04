@@ -54,7 +54,7 @@ dependencies {
     implementation(libs.accompanist.flowlayout)
 
     // MediaPipe LLM Inference for Gemma
-    implementation("com.google.mediapipe:tasks-genai:0.10.14")
+    implementation("com.google.mediapipe:tasks-genai:0.10.29")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

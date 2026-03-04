@@ -71,8 +71,6 @@ class InferenceEngine private constructor(
         val inferenceOptions = LlmInference.LlmInferenceOptions.builder()
             .setModelPath(config.modelPath)
             .setMaxTokens(config.maxTokens)
-            .setTemperature(config.temperature)
-            .setTopK(config.topK)
             .build()
 
         try {
