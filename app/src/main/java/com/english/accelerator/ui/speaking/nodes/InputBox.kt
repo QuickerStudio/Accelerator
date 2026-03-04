@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -102,7 +103,12 @@ class InputBox(
                         .clickable { focusManager.clearFocus() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🎤", fontSize = 24.sp)
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "语音输入",
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
 
