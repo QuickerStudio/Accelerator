@@ -36,6 +36,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.compose.animation.core.*
+import androidx.compose.animation.*
 import com.mikepenz.markdown.m3.Markdown
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.components.CustomToast
@@ -194,7 +195,8 @@ fun SpeakingScreen(
                     )
 
                     // Second row: Thread title (only show if title is not default)
-                    val showThreadTitle = currentSession?.title != null && currentSession.title != "对话"
+                    val threadTitle = currentSession?.title ?: ""
+                    val showThreadTitle = threadTitle.isNotEmpty() && threadTitle != "对话"
                     AnimatedVisibility(
                         visible = showThreadTitle,
                         enter = slideInVertically(
