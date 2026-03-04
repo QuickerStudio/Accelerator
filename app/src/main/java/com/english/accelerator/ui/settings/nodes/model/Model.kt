@@ -269,47 +269,36 @@ fun ModelDownloadCard(
                     // 已下载：显示加载模型和清除模型按钮
                     isDownloaded -> {
                         // 加载模型按钮
-                        Button(
+                        IconButton(
                             onClick = onLoadModel,
                             enabled = !isLoadingModel && !isModelLoaded,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isModelLoaded) Color(0xFF10B981) else Color(0xFF8B5CF6),
-                                disabledContainerColor = Color(0xFFE2E8F0)
-                            ),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
                             when {
                                 isLoadingModel -> {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(18.dp),
+                                        modifier = Modifier.size(24.dp),
                                         strokeWidth = 2.dp,
-                                        color = Color(0xFF94A3B8)
+                                        color = Color(0xFF8B5CF6)
                                     )
                                 }
                                 isModelLoaded -> {
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
                                         contentDescription = "已加载",
-                                        modifier = Modifier.size(18.dp)
+                                        tint = Color(0xFF10B981),
+                                        modifier = Modifier.size(28.dp)
                                     )
                                 }
                                 else -> {
                                     Icon(
                                         imageVector = Icons.Default.PlayArrow,
                                         contentDescription = "加载模型",
-                                        modifier = Modifier.size(18.dp)
+                                        tint = Color(0xFF8B5CF6),
+                                        modifier = Modifier.size(28.dp)
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = when {
-                                    isLoadingModel -> "加载中..."
-                                    isModelLoaded -> "已加载"
-                                    else -> "加载模型"
-                                },
-                                fontSize = 14.sp
-                            )
                         }
 
                         // 清除模型按钮
