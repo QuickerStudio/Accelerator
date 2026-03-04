@@ -404,9 +404,12 @@ fun MessageBubble(message: Message) {
                             modifier = Modifier.weight(1f, fill = false)
                         )
                     } else {
-                        // AI messages: Markdown rendering
-                        Markdown(
-                            content = message.content,
+                        // AI messages: Simple text for now (Markdown causing display issues)
+                        Text(
+                            text = message.content,
+                            fontSize = 16.sp,
+                            lineHeight = 24.sp,
+                            color = Color(0xFF1E293B),
                             modifier = Modifier.weight(1f, fill = false)
                         )
                     }
