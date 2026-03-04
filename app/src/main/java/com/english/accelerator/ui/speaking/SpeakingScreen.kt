@@ -193,26 +193,39 @@ fun SpeakingScreen(
                         )
                     )
 
-                    // Second row: Thread title
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Color.White,
-                        shadowElevation = 2.dp
+                    // Second row: Thread title (only show if title is not default)
+                    val showThreadTitle = currentSession?.title != null && currentSession.title != "对话"
+                    AnimatedVisibility(
+                        visible = showThreadTitle,
+                        enter = slideInVertically(
+                            initialOffsetY = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300)),
+                        exit = slideOutVertically(
+                            targetOffsetY = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            contentAlignment = Alignment.Center
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color.White,
+                            shadowElevation = 2.dp
                         ) {
-                            Text(
-                                text = currentSession?.title ?: "对话",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF8B5CF6),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = currentSession?.title ?: "",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF8B5CF6),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
