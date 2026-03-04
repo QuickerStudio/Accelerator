@@ -108,8 +108,7 @@ fun WritingScreen(
                 },
                 isConversationMode = showAiPanel,
                 isCollectionMode = showEssayCollection,
-                memorizedCount = 0,
-                unmemorizedCount = 0
+                statusMessage = ""
             )
 
             // 编辑器区域

@@ -36,8 +36,7 @@ fun VocabularyTopBar(
     onBookmarkClick: () -> Unit,
     isConversationMode: Boolean = false,
     isCollectionMode: Boolean = false,
-    memorizedCount: Int = 0,
-    unmemorizedCount: Int = 0,
+    statusMessage: String = "",
     currentWordType: String = "",
     modifier: Modifier = Modifier
 ) {
@@ -70,28 +69,33 @@ fun VocabularyTopBar(
                 )
             }
 
-            // 已记住/未记住统计
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFF1F5F9))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "已记住：$memorizedCount",
-                    fontSize = 12.sp,
-                    color = Color(0xFF10B981),
-                    fontWeight = FontWeight.Medium
-                )
-
-                Text(
-                    text = "未记住：$unmemorizedCount",
-                    fontSize = 12.sp,
-                    color = Color(0xFFEF4444),
-                    fontWeight = FontWeight.Medium
-                )
+            // 状态通知
+            if (statusMessage.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            when (statusMessage) {
+                                "已记住" -> Color(0xFFDCFCE7)
+                                "未记住" -> Color(0xFFFEE2E2)
+                                else -> Color(0xFFF1F5F9)
+                            }
+                        )
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = statusMessage,
+                        fontSize = 12.sp,
+                        color = when (statusMessage) {
+                            "已记住" -> Color(0xFF10B981)
+                            "未记住" -> Color(0xFFEF4444)
+                            else -> Color(0xFF64748B)
+                        },
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
 
