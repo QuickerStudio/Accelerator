@@ -21,6 +21,9 @@ class DEngine {
     @Volatile
     private var isCancelled = false
 
+    @Volatile
+    private var isDownloading = false
+
     /**
      * 下载文件
      * @param url 下载地址
@@ -36,9 +39,10 @@ class DEngine {
         onRangeSupportDetected: ((String, Boolean) -> Unit)? = null
     ): Result<File> = withContext(Dispatchers.IO) {
         try {
-            // 重置状态
-            isPaused = false
+            // 设置下载状态
+            isDownloading = true
             isCancelled = false
+            // 不重置 isPaused，保留暂停状态以支持恢复
 
             // 创建父目录
             targetFile.parentFile?.mkdirs()
@@ -67,25 +71,35 @@ class DEngine {
                 HttpURLConnection.HTTP_PARTIAL -> {
                     // 206 Partial Content - 服务器支持断点续传
                     supportsRange = true
-                    totalSize = existingSize + connection.contentLength.toLong()
                     append = true
                     startOffset = existingSize
 
-                    // 可选：验证 Content-Range 响应头
+                    // 从 Content-Range 响应头获取总大小
                     val contentRange = connection.getHeaderField("Content-Range")
-                    if (contentRange != null) {
+                    totalSize = if (contentRange != null) {
                         // 格式：bytes <start>-<end>/<total>
                         // 例如：bytes 1024-3655827455/3655827456
-                        println("Content-Range: $contentRange")
+                        val parts = contentRange.split("/")
+                        if (parts.size == 2) {
+                            parts[1].toLongOrNull() ?: (existingSize + connection.contentLength.toLong())
+                        } else {
+                            existingSize + connection.contentLength.toLong()
+                        }
+                    } else {
+                        existingSize + connection.contentLength.toLong()
                     }
                 }
                 HttpURLConnection.HTTP_OK -> {
                     // 200 OK - 服务器不支持断点续传或返回完整内容
-                    if (existingSize > 0) {
-                        // 服务器不支持 Range，需要删除旧文件重新下载
+                    if (existingSize > 0 && !isPaused) {
+                        // 只有在非暂停状态下才删除文件
+                        // 如果是暂停后恢复，保留已下载的内容
                         supportsRange = false
                         targetFile.delete()
                         println("⚠️ 服务器不支持断点续传，删除旧文件重新下载")
+                    } else if (existingSize > 0 && isPaused) {
+                        // 暂停后恢复，但服务器不支持断点续传
+                        throw Exception("服务器不支持断点续传，无法恢复下载。请重新开始下载。")
                     } else {
                         // 全新下载
                         supportsRange = true  // 无法判断，假设支持
@@ -153,6 +167,8 @@ class DEngine {
                 targetFile.delete()
             }
             Result.failure(e)
+        } finally {
+            isDownloading = false
         }
     }
 
@@ -182,4 +198,9 @@ class DEngine {
      * 检查是否暂停
      */
     fun isPaused(): Boolean = isPaused
+
+    /**
+     * 检查是否正在下载
+     */
+    fun isDownloading(): Boolean = isDownloading
 }

@@ -17,6 +17,7 @@ class DConfig(private val context: Context) {
 
     private val configFile = File(context.filesDir, "download_states/Config.json")
     private var config: JsonObject? = null
+    private val configLock = Any()
 
     companion object {
         private const val TAG = "DownloadDConfig"
@@ -119,15 +120,24 @@ class DConfig(private val context: Context) {
     }
 
     /**
-     * 保存配置文件
+     * 保存配置文件（内部方法，不加锁）
      */
-    private fun saveConfig() {
+    private fun saveConfigInternal() {
         try {
             val json = Gson().toJson(config)
             configFile.writeText(json)
             AppLogger.debug(TAG, "Config saved")
         } catch (e: Exception) {
             AppLogger.error(TAG, "Failed to save config", e)
+        }
+    }
+
+    /**
+     * 保存配置文件（外部调用，加锁）
+     */
+    private fun saveConfig() {
+        synchronized(configLock) {
+            saveConfigInternal()
         }
     }
 
@@ -141,27 +151,31 @@ class DConfig(private val context: Context) {
         isComplete: Boolean,
         isPaused: Boolean,
         downloadRoute: String,
-        errorMessage: String? = null
+        errorMessage: String? = null,
+        downloadSpeed: Long = 0L
     ) {
-        try {
-            val state = config?.getAsJsonObject("state")
-            val currentDownload = state?.getAsJsonObject("currentDownload")
+        synchronized(configLock) {
+            try {
+                val state = config?.getAsJsonObject("state")
+                val currentDownload = state?.getAsJsonObject("currentDownload")
 
-            currentDownload?.apply {
-                addProperty("modelPath", modelPath)
-                addProperty("downloadedBytes", downloadedBytes)
-                addProperty("totalBytes", totalBytes)
-                addProperty("isComplete", isComplete)
-                addProperty("isPaused", isPaused)
-                addProperty("lastUpdateTime", System.currentTimeMillis())
-                addProperty("downloadRoute", downloadRoute)
-                addProperty("errorMessage", errorMessage)
+                currentDownload?.apply {
+                    addProperty("modelPath", modelPath)
+                    addProperty("downloadedBytes", downloadedBytes)
+                    addProperty("totalBytes", totalBytes)
+                    addProperty("isComplete", isComplete)
+                    addProperty("isPaused", isPaused)
+                    addProperty("lastUpdateTime", System.currentTimeMillis())
+                    addProperty("downloadRoute", downloadRoute)
+                    addProperty("errorMessage", errorMessage)
+                    addProperty("downloadSpeed", downloadSpeed)
+                }
+
+                saveConfigInternal()
+                AppLogger.debug(TAG, "Download state updated: $downloadedBytes / $totalBytes bytes")
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Failed to update download state", e)
             }
-
-            saveConfig()
-            AppLogger.debug(TAG, "Download state updated: $downloadedBytes / $totalBytes bytes")
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to update download state", e)
         }
     }
 
@@ -204,20 +218,22 @@ class DConfig(private val context: Context) {
      * 通用日志添加方法
      */
     private fun addLog(logType: String, message: String) {
-        try {
-            val logs = config?.getAsJsonObject("logs")
-            val logArray = logs?.getAsJsonArray(logType)
+        synchronized(configLock) {
+            try {
+                val logs = config?.getAsJsonObject("logs")
+                val logArray = logs?.getAsJsonArray(logType)
 
-            val logEntry = JsonObject().apply {
-                addProperty("timestamp", System.currentTimeMillis())
-                addProperty("message", message)
+                val logEntry = JsonObject().apply {
+                    addProperty("timestamp", System.currentTimeMillis())
+                    addProperty("message", message)
+                }
+
+                logArray?.add(logEntry)
+                saveConfigInternal()
+                AppLogger.debug(TAG, "Added $logType: $message")
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Failed to add log", e)
             }
-
-            logArray?.add(logEntry)
-            saveConfig()
-            AppLogger.debug(TAG, "Added $logType: $message")
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to add log", e)
         }
     }
 
@@ -231,14 +247,15 @@ class DConfig(private val context: Context) {
 
             currentDownload?.let {
                 DState(
-                    modelPath = it.get("modelPath")?.asString ?: "",
-                    downloadedBytes = it.get("downloadedBytes")?.asLong ?: 0L,
-                    totalBytes = it.get("totalBytes")?.asLong ?: 0L,
-                    isComplete = it.get("isComplete")?.asBoolean ?: false,
-                    isPaused = it.get("isPaused")?.asBoolean ?: false,
-                    lastUpdateTime = it.get("lastUpdateTime")?.asLong ?: 0L,
-                    downloadRoute = it.get("downloadRoute")?.asString ?: "MODELSCOPE",
-                    errorMessage = it.get("errorMessage")?.asString
+                    modelPath = it.get("modelPath")?.takeIf { !it.isJsonNull }?.asString ?: "",
+                    downloadedBytes = it.get("downloadedBytes")?.takeIf { !it.isJsonNull }?.asLong ?: 0L,
+                    totalBytes = it.get("totalBytes")?.takeIf { !it.isJsonNull }?.asLong ?: 0L,
+                    isComplete = it.get("isComplete")?.takeIf { !it.isJsonNull }?.asBoolean ?: false,
+                    isPaused = it.get("isPaused")?.takeIf { !it.isJsonNull }?.asBoolean ?: false,
+                    lastUpdateTime = it.get("lastUpdateTime")?.takeIf { !it.isJsonNull }?.asLong ?: 0L,
+                    downloadRoute = it.get("downloadRoute")?.takeIf { !it.isJsonNull }?.asString ?: "MODELSCOPE",
+                    errorMessage = it.get("errorMessage")?.takeIf { !it.isJsonNull }?.asString,
+                    downloadSpeed = it.get("downloadSpeed")?.takeIf { !it.isJsonNull }?.asLong ?: 0L
                 )
             }
         } catch (e: Exception) {
@@ -335,22 +352,24 @@ class DConfig(private val context: Context) {
      * 更新指定线路的断点续传支持状态
      */
     fun updateRouteRangeSupport(url: String, supportsRange: Boolean) {
-        try {
-            val download = config?.getAsJsonObject("download")
-            val routes = download?.getAsJsonArray("routes")
+        synchronized(configLock) {
+            try {
+                val download = config?.getAsJsonObject("download")
+                val routes = download?.getAsJsonArray("routes")
 
-            routes?.forEach { routeElement ->
-                val route = routeElement.asJsonObject
-                if (route.get("url")?.asString == url) {
-                    route.addProperty("supportsRange", supportsRange)
-                    route.addProperty("rangeChecked", true)
-                    saveConfig()
-                    AppLogger.info(TAG, "Updated Range support for $url: $supportsRange")
-                    return
+                routes?.forEach { routeElement ->
+                    val route = routeElement.asJsonObject
+                    if (route.get("url")?.asString == url) {
+                        route.addProperty("supportsRange", supportsRange)
+                        route.addProperty("rangeChecked", true)
+                        saveConfigInternal()
+                        AppLogger.info(TAG, "Updated Range support for $url: $supportsRange")
+                        return
+                    }
                 }
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Failed to update route Range support", e)
             }
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to update route Range support", e)
         }
     }
 

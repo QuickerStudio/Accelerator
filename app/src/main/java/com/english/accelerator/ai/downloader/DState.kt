@@ -15,7 +15,8 @@ data class DState(
     val isPaused: Boolean,
     val lastUpdateTime: Long,
     val downloadRoute: String,
-    val errorMessage: String?
+    val errorMessage: String?,
+    val downloadSpeed: Long = 0L
 )
 
 /**

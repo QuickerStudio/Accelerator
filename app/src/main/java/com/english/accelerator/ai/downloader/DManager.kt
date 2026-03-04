@@ -241,6 +241,19 @@ class DManager(private val context: Context) {
      */
     fun resumeDownload() {
         downloadEngine.resume()
+
+        // 更新状态为非暂停
+        val currentSize = stateMonitor.getFileSize()
+        val expectedSize = configManager.getExpectedModelSize()
+        configManager.updateDownloadState(
+            modelPath = stateMonitor.getFilePath(),
+            downloadedBytes = currentSize,
+            totalBytes = expectedSize,
+            isComplete = false,
+            isPaused = false,
+            downloadRoute = selectedRoute.name
+        )
+        configManager.addDownloadLog("Download resumed from $currentSize bytes")
     }
 
     /**
@@ -254,6 +267,11 @@ class DManager(private val context: Context) {
      * 检查是否暂停
      */
     fun isPaused(): Boolean = downloadEngine.isPaused()
+
+    /**
+     * 检查是否正在下载
+     */
+    fun isDownloading(): Boolean = downloadEngine.isDownloading()
 
     /**
      * 检查模型是否已下载
@@ -289,4 +307,26 @@ class DManager(private val context: Context) {
      * 删除模型
      */
     fun deleteModel(): Boolean = stateMonitor.deleteFile()
+
+    /**
+     * 更新下载速度
+     */
+    fun updateDownloadSpeed(speed: Long) {
+        val currentSize = stateMonitor.getFileSize()
+        val expectedSize = configManager.getExpectedModelSize()
+        val currentState = configManager.getCurrentDownloadState()
+
+        if (currentState != null) {
+            configManager.updateDownloadState(
+                modelPath = currentState.modelPath,
+                downloadedBytes = currentSize,
+                totalBytes = expectedSize,
+                isComplete = currentState.isComplete,
+                isPaused = currentState.isPaused,
+                downloadRoute = currentState.downloadRoute,
+                errorMessage = currentState.errorMessage,
+                downloadSpeed = speed
+            )
+        }
+    }
 }

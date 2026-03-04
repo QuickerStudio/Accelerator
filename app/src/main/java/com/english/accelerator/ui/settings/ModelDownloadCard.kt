@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ai.downloader.DManager
 import com.english.accelerator.ai.downloader.DStatus
+import com.english.accelerator.ai.downloader.DownloadService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -44,7 +45,7 @@ fun ModelDownloadCard(
     val scope = rememberCoroutineScope()
     val dManager = remember { DManager(context) }
 
-    // 初始化状态
+    // 初始化状态 - 从 DManager 获取真实状态
     var downloadStatus by remember { mutableStateOf(dManager.getDStatus()) }
     var downloadProgress by remember {
         val state = dManager.getFullState()
@@ -58,46 +59,61 @@ fun ModelDownloadCard(
     }
     var downloadSpeed by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(dManager.getCurrentRouteName()) }
-    var isDownloading by remember { mutableStateOf(false) } // 跟踪下载中状态
+
+    // 从配置文件获取下载状态，而不是从 DEngine
+    var isDownloading by remember { mutableStateOf(false) }
+    var isPaused by remember { mutableStateOf(false) }
 
     // 从 downloadStatus 派生所有 UI 状态
     val isDownloaded = downloadStatus == DStatus.COMPLETE
-    val isPaused = downloadStatus == DStatus.PARTIAL && !isDownloading
     val hasCache = downloadStatus == DStatus.PARTIAL
 
-    // 定时刷新进度（仅在暂停或下载中时）
-    LaunchedEffect(downloadStatus, isDownloading) {
-        while (downloadStatus == DStatus.PARTIAL || isDownloading) {
-            delay(1000)
+    // 定时刷新进度和状态
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(500) // 更频繁地刷新以保持 UI 响应
             val state = dManager.getFullState()
             if (state.expectedSize > 0) {
                 downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
             }
             downloadStatus = dManager.getDStatus()
+
+            // 从配置状态更新下载和暂停状态
+            val configState = state.configState
+            if (configState != null && !configState.isComplete) {
+                // 只有在未完成时才更新状态
+                if (!isPaused && !isDownloading) {
+                    // 避免覆盖用户刚点击的状态
+                    isPaused = configState.isPaused
+                    isDownloading = !configState.isPaused
+                }
+                downloadSpeed = configState.downloadSpeed
+            } else if (configState?.isComplete == true) {
+                // 下载完成，重置状态
+                isPaused = false
+                isDownloading = false
+                downloadSpeed = 0L
+            }
         }
     }
 
     // 内部业务逻辑
     fun handleDownloadClick() {
         if (isDownloading) {
-            // 暂停下载
-            dManager.pauseDownload()
+            // 暂停下载 - 立即更新本地状态
             isDownloading = false
-            downloadStatus = DStatus.PARTIAL
+            isPaused = true
+            DownloadService.pauseDownload(context)
+        } else if (isPaused) {
+            // 恢复下载 - 立即更新本地状态
+            isDownloading = true
+            isPaused = false
+            DownloadService.resumeDownload(context)
         } else {
-            // 开始或继续下载
-            scope.launch {
-                isDownloading = true
-                dManager.downloadModel { downloaded, total, speed ->
-                    downloadSpeed = speed
-                }.onSuccess {
-                    isDownloading = false
-                    downloadStatus = dManager.getDStatus()
-                }.onFailure {
-                    isDownloading = false
-                    downloadStatus = dManager.getDStatus()
-                }
-            }
+            // 开始下载 - 立即更新本地状态
+            isDownloading = true
+            isPaused = false
+            DownloadService.startDownload(context)
         }
     }
 
@@ -113,7 +129,7 @@ fun ModelDownloadCard(
 
     fun handleClearCache() {
         scope.launch {
-            dManager.cancelDownload()
+            DownloadService.cancelDownload(context)
             dManager.deleteModel()
             downloadSpeed = 0L
             downloadStatus = dManager.getDStatus()
