@@ -24,6 +24,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
+ * 格式化下载速度
+ */
+fun formatSpeed(bytesPerSecond: Long): String {
+    return when {
+        bytesPerSecond < 1024 -> "${bytesPerSecond} B/s"
+        bytesPerSecond < 1024 * 1024 -> String.format("%.1f KB/s", bytesPerSecond / 1024.0)
+        else -> String.format("%.1f MB/s", bytesPerSecond / (1024.0 * 1024.0))
+    }
+}
+
+/**
  * 模型下载卡片 - 自包含组件
  *
  * 功能：
@@ -340,16 +351,5 @@ fun ModelDownloadCard(
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
-    }
-}
-
-/**
- * 格式化下载速度
- */
-fun formatSpeed(bytesPerSecond: Long): String {
-    return when {
-        bytesPerSecond < 1024 -> "${bytesPerSecond} B/s"
-        bytesPerSecond < 1024 * 1024 -> String.format("%.1f KB/s", bytesPerSecond / 1024.0)
-        else -> String.format("%.1f MB/s", bytesPerSecond / (1024.0 * 1024.0))
     }
 }
