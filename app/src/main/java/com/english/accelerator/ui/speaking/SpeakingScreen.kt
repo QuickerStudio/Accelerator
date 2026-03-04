@@ -1,54 +1,88 @@
 package com.english.accelerator.ui.speaking
 
+import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.english.accelerator.ai.agent.AgentService
+import com.english.accelerator.ai.agent.Prompts
 import com.english.accelerator.ai.history.HistoryManager
 import com.english.accelerator.ai.session.Session
 import com.english.accelerator.ai.session.SessionManager
 import com.english.accelerator.ui.sidebar.Sidebar
-import com.english.accelerator.ui.speaking.components.*
-import com.english.accelerator.ui.speaking.models.Conversation
-import com.english.accelerator.ui.speaking.screens.HistoryScreen
+import com.english.accelerator.ui.speaking.nodes.*
+import com.english.accelerator.utils.AppLogger
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 /**
- * 对话主屏幕 - 简化版
+ * 消息数据模型
+ */
+data class Message(
+    val id: String = UUID.randomUUID().toString(),
+    val content: String,
+    val isFromUser: Boolean,
+    val timestamp: Long = System.currentTimeMillis(),
+    val inferenceStats: InferenceStats? = null
+)
+
+data class InferenceStats(
+    val startTime: Long,
+    val endTime: Long,
+    val tokensGenerated: Int,
+    val memoryUsedMB: Long
+) {
+    val durationSeconds: Float get() = (endTime - startTime) / 1000f
+    val tokensPerSecond: Float get() = if (durationSeconds > 0) tokensGenerated / durationSeconds else 0f
+}
+
+/**
+ * SpeakingScreen - 节点管理器
+ *
+ * 职责：
+ * - 管理所有 UI 节点的注册和生命周期
+ * - 提供对外接口
+ * - 协调节点之间的通信
+ * - 管理状态和数据流
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
     val context = LocalContext.current
-    val vm = remember { VM(context) }
+    val vm = remember { SpeakingVM(context) }
+
     val messages by vm.messages.collectAsState()
-    val isLoading by vm.isLoading.collectAsState()
     val currentSession by vm.currentSession.collectAsState()
 
     var inputText by remember { mutableStateOf("") }
-    val listState = rememberLazyListState()
     var showSidebar by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
-    val scope = rememberCoroutineScope()
+
+    // 节点管理器
+    val nodeManager = remember { NodeManager() }
+
+    // 注册节点
+    DisposableEffect(Unit) {
+        nodeManager.onAttach()
+        onDispose { nodeManager.onDetach() }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -92,8 +126,7 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                contentAlignment = Alignment.CenterStart
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
                             ) {
                                 Text(
                                     text = threadTitle.take(10),
@@ -110,42 +143,35 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
             },
             bottomBar = {
                 Column {
-                    InputBar(
+                    InputBox(
                         text = inputText,
                         onTextChange = { inputText = it },
                         onSend = {
                             if (inputText.isNotBlank()) {
                                 val msg = inputText
                                 inputText = ""
-                                focusManager.clearFocus()
                                 vm.send(msg)
-                                scope.launch { listState.animateScrollToItem(messages.size) }
                             }
                         },
                         onCamera = { }
-                    )
+                    ).Render()
+
                     Spacer(modifier = Modifier.height(45.dp))
-                    NavBar(onNavigateToSettings = onNavigateToSettings)
+                    NavBar(onNavigateToSettings).Render()
                 }
             }
         ) { padding ->
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFF8FAFC))
-                    .padding(padding)
-                    .padding(horizontal = 16.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { focusManager.clearFocus() },
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
-            ) {
-                items(messages.filter { it.content.isNotEmpty() }) { message ->
-                    Bubble(message = message)
-                }
+            Box(modifier = Modifier.padding(padding)) {
+                ChatWindow(
+                    messages = messages,
+                    onMessageRender = { message ->
+                        if (message.isFromUser) {
+                            UserBubble(message).Render()
+                        } else {
+                            AgentBubble(message).Render()
+                        }
+                    }
+                ).Render()
             }
         }
 
@@ -166,10 +192,178 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
         }
 
         if (showHistory) {
-            HistoryScreen(
+            History(
                 onBackClick = { showHistory = false },
                 onConversationClick = { showHistory = false }
-            )
+            ).Render()
         }
+    }
+}
+
+/**
+ * 节点管理器 - 管理所有节点的生命周期
+ */
+class NodeManager {
+    private val nodes = mutableMapOf<String, Any>()
+
+    fun register(id: String, node: Any) {
+        nodes[id] = node
+    }
+
+    fun unregister(id: String) {
+        nodes.remove(id)
+    }
+
+    fun getNode(id: String): Any? = nodes[id]
+
+    fun onAttach() {
+        AppLogger.info("NodeManager", "All nodes attached")
+    }
+
+    fun onDetach() {
+        nodes.clear()
+        AppLogger.info("NodeManager", "All nodes detached")
+    }
+}
+
+/**
+ * ViewModel - 管理状态和业务逻辑
+ */
+class SpeakingVM(private val context: Context) : ViewModel() {
+    private val TAG = "SpeakingVM"
+    private val agentService = AgentService(context)
+    private val sessionManager = SessionManager.getInstance()
+    private val historyManager = HistoryManager.getInstance()
+
+    private val _messages = MutableStateFlow<List<Message>>(emptyList())
+    val messages: StateFlow<List<Message>> = _messages.asStateFlow()
+
+    private val _currentSession = MutableStateFlow<Session?>(null)
+    val currentSession: StateFlow<Session?> = _currentSession.asStateFlow()
+
+    private var inferenceJob: Job? = null
+
+    init {
+        initSession()
+    }
+
+    private fun initSession() {
+        viewModelScope.launch {
+            try {
+                val current = sessionManager.currentSession.value
+                if (current != null && current.type == Session.Type.CONVERSATION) {
+                    _currentSession.value = current
+                    loadHistory(current.id)
+                } else {
+                    createSession()
+                }
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Init failed", e)
+                createSession()
+            }
+        }
+    }
+
+    fun createSession() {
+        viewModelScope.launch {
+            try {
+                val session = sessionManager.createSession("对话", Session.Type.CONVERSATION)
+                _currentSession.value = session
+                _messages.value = emptyList()
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Create session failed", e)
+            }
+        }
+    }
+
+    private fun loadHistory(sessionId: String) {
+        viewModelScope.launch {
+            try {
+                val history = historyManager.getHistory(sessionId)
+                _messages.value = history?.messages?.map {
+                    Message(
+                        id = UUID.randomUUID().toString(),
+                        content = it.content,
+                        isFromUser = it.role == "user",
+                        timestamp = it.timestamp
+                    )
+                } ?: emptyList()
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Load history failed", e)
+            }
+        }
+    }
+
+    fun send(input: String) {
+        if (input.isBlank()) return
+        val sessionId = _currentSession.value?.id ?: return
+        inferenceJob?.cancel()
+
+        viewModelScope.launch {
+            try {
+                val userMsg = Message(content = input, isFromUser = true)
+                _messages.value = _messages.value + userMsg
+
+                val startTime = System.currentTimeMillis()
+                val runtime = Runtime.getRuntime()
+                val memBefore = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+
+                val streamingId = UUID.randomUUID().toString()
+                val streamingMsg = Message(id = streamingId, content = "", isFromUser = false)
+                _messages.value = _messages.value + streamingMsg
+
+                var lastUpdate = 0L
+                val interval = 50L
+
+                inferenceJob = launch {
+                    val result = agentService.generateResponse(
+                        sessionId = sessionId,
+                        userInput = input,
+                        systemPrompt = Prompts.SPEAKING_PARTNER
+                    ) { partial, done ->
+                        val now = System.currentTimeMillis()
+                        if (partial.isNotEmpty() && (done || now - lastUpdate >= interval)) {
+                            lastUpdate = now
+                            _messages.value = _messages.value.map {
+                                if (it.id == streamingId) it.copy(content = partial) else it
+                            }
+                        }
+                    }
+
+                    val endTime = System.currentTimeMillis()
+                    val memAfter = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+
+                    result.fold(
+                        onSuccess = { response ->
+                            val stats = InferenceStats(
+                                startTime = startTime,
+                                endTime = endTime,
+                                tokensGenerated = response.length / 4,
+                                memoryUsedMB = memAfter - memBefore
+                            )
+                            _messages.value = _messages.value.map {
+                                if (it.id == streamingId) it.copy(content = response, inferenceStats = stats) else it
+                            }
+                        },
+                        onFailure = { error ->
+                            _messages.value = _messages.value.map {
+                                if (it.id == streamingId) it.copy(content = "错误：${error.message}") else it
+                            }
+                        }
+                    )
+                }
+
+                inferenceJob?.join()
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Send failed", e)
+            } finally {
+                inferenceJob = null
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        inferenceJob?.cancel()
     }
 }
