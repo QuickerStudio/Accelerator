@@ -215,10 +215,10 @@ fun SpeakingScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.CenterStart
                             ) {
                                 Text(
-                                    text = currentSession?.title ?: "",
+                                    text = currentSession?.title?.take(10) ?: "",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF8B5CF6),
