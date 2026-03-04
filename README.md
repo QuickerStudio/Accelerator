@@ -34,4 +34,10 @@ cd Accelerator
 
 ## 许可证
 
-待定
+Copyright © 2026 Quicker Studio
+
+本项目采用 CC BY-NC-ND 4.0 许可证授权（署名-非商业性使用-禁止演绎）
+
+版权归原作者 Quicker Studio 所有，禁止商业使用和修改。
+
+详见 [LICENSE](LICENSE) 文件
