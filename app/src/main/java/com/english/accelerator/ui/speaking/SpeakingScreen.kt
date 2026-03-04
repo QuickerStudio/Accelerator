@@ -365,31 +365,9 @@ fun MessageBubble(message: Message) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isFromUser) Arrangement.End else Arrangement.Start
     ) {
-        if (!message.isFromUser) {
-            // AI avatar with gradient background
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(Color(0xFF8B5CF6), Color(0xFF6366F1))
-                        ),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SmartToy,
-                    contentDescription = "AI",
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-        }
-
         Column(
-            horizontalAlignment = if (message.isFromUser) Alignment.End else Alignment.Start
+            horizontalAlignment = if (message.isFromUser) Alignment.End else Alignment.Start,
+            modifier = Modifier.fillMaxWidth(0.9f)
         ) {
             // Message bubble - no border, clean Markdown rendering
             Box(
