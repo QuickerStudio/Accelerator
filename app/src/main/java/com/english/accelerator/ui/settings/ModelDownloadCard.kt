@@ -50,7 +50,8 @@ fun formatSpeed(bytesPerSecond: Long): String {
 @Composable
 fun ModelDownloadCard(
     onLoadModel: () -> Unit,
-    onOpenDirectory: () -> Unit
+    onOpenDirectory: () -> Unit,
+    isLoadingModel: Boolean = false
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -269,19 +270,29 @@ fun ModelDownloadCard(
                         // 加载模型按钮
                         Button(
                             onClick = onLoadModel,
+                            enabled = !isLoadingModel,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF8B5CF6)
+                                containerColor = Color(0xFF8B5CF6),
+                                disabledContainerColor = Color(0xFFE2E8F0)
                             ),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "加载模型",
-                                modifier = Modifier.size(18.dp)
-                            )
+                            if (isLoadingModel) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color(0xFF94A3B8)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "加载模型",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "加载模型",
+                                text = if (isLoadingModel) "加载中..." else "加载模型",
                                 fontSize = 14.sp
                             )
                         }
@@ -289,10 +300,12 @@ fun ModelDownloadCard(
                         // 清除模型按钮
                         OutlinedButton(
                             onClick = ::handleDelete,
+                            enabled = !isLoadingModel,
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFFEF4444)
+                                contentColor = Color(0xFFEF4444),
+                                disabledContentColor = Color(0xFF94A3B8)
                             ),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEF4444)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isLoadingModel) Color(0xFFE2E8F0) else Color(0xFFEF4444)),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Icon(

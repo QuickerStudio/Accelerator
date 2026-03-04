@@ -206,16 +206,49 @@ fun SpeakingScreen(
                                 isLoading = true
                                 scope.launch {
                                     try {
-                                        // TODO: 通过 AgentService 处理用户输入
-                                        // 暂时添加占位响应
-                                        messages.add(Message(content = "AI response placeholder", isFromUser = false))
+                                        // 检查推理引擎是否已初始化
+                                        val config = com.english.accelerator.ai.llm.InferenceConfig.forGemma3N(context)
+                                        val engine = try {
+                                            com.english.accelerator.ai.llm.InferenceEngine.getInstance(context, config)
+                                        } catch (e: Exception) {
+                                            null
+                                        }
+
+                                        if (engine == null || !engine.isReady()) {
+                                            messages.add(
+                                                Message(
+                                                    content = "AI 提示服务未启用，请前往设置页面下载并加载模型。",
+                                                    isFromUser = false
+                                                )
+                                            )
+                                        } else {
+                                            // 构建对话上下文
+                                            val conversationHistory = messages.takeLast(10).joinToString("\n") { msg ->
+                                                if (msg.isFromUser) "User: ${msg.content}" else "Assistant: ${msg.content}"
+                                            }
+
+                                            val prompt = """You are a friendly English conversation partner. Help the user practice English naturally.
+
+Previous conversation:
+$conversationHistory
+
+User: $userMessage
+
+Respond naturally and conversationally. Keep responses concise (2-3 sentences). If you notice grammar mistakes, gently correct them."""
+
+                                            // 调用推理引擎
+                                            val response = engine.generateSync(prompt)
+                                            val parsedResponse = parseConversationResponse(response)
+
+                                            messages.add(Message(content = parsedResponse, isFromUser = false))
+                                        }
 
                                         // 滚动到底部
                                         listState.animateScrollToItem(messages.size)
                                     } catch (e: Exception) {
                                         messages.add(
                                             Message(
-                                                content = "抱歉，发生了错误。请稍后再试。",
+                                                content = "抱歉，发生了错误：${e.message}",
                                                 isFromUser = false
                                             )
                                         )

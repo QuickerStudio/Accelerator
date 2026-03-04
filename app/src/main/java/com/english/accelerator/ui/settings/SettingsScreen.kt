@@ -117,13 +117,21 @@ fun SettingsScreen() {
                         toastBackgroundColor = Color(0xFFBFDBFE)
                         showToast = true
 
+                        // 添加延迟以确保 Toast 和 UI 更新可见
+                        delay(300)
+
                         try {
                             val config = InferenceConfig.forGemma3N(context)
-                            InferenceEngine.resetInstance(context, config)
+                            val engine = InferenceEngine.resetInstance(context, config)
 
-                            modelState = ModelState.Ready
-                            toastMessage = "模型加载成功！"
-                            toastBackgroundColor = Color(0xFFDCFCE7)
+                            // 验证引擎是否真正初始化成功
+                            if (engine.isReady()) {
+                                modelState = ModelState.Ready
+                                toastMessage = "模型加载成功！"
+                                toastBackgroundColor = Color(0xFFDCFCE7)
+                            } else {
+                                throw IllegalStateException("推理引擎初始化失败")
+                            }
                         } catch (e: Exception) {
                             modelState = ModelState.Error(e.message ?: "Unknown error")
                             toastMessage = "模型加载失败: ${e.message}"
@@ -136,7 +144,8 @@ fun SettingsScreen() {
                 },
                 onOpenDirectory = {
                     showFileExplorer = true
-                }
+                },
+                isLoadingModel = isLoadingModel
             )
         }
 
