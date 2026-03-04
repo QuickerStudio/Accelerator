@@ -10,6 +10,7 @@ import android.content.Intent
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.english.accelerator.MainActivity
 import com.english.accelerator.R
@@ -30,6 +31,8 @@ class DownloadService : Service() {
     private var currentProgress: Float = 0f
     private var currentSpeed: Long = 0L
     private var isDownloading = false
+
+    private var wakeLock: PowerManager.WakeLock? = null
 
     companion object {
         private const val NOTIFICATION_ID = 1001
@@ -82,6 +85,7 @@ class DownloadService : Service() {
         super.onCreate()
         dManager = DManager(this)
         createNotificationChannel()
+        acquireWakeLock()
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -92,8 +96,49 @@ class DownloadService : Service() {
             ACTION_PAUSE_DOWNLOAD -> pauseDownload()
             ACTION_RESUME_DOWNLOAD -> resumeDownload()
             ACTION_CANCEL_DOWNLOAD -> cancelDownload()
+            null -> {
+                // 服务被系统杀死后重启，检查是否有未完成的下载
+                checkAndResumeDownload()
+            }
         }
         return START_STICKY
+    }
+
+    private fun checkAndResumeDownload() {
+        // 检查是否有未完成的下载任务
+        val state = dManager?.getFullState()
+        if (state != null && state.configState?.isPaused == false &&
+            state.fileSize < state.expectedSize && state.expectedSize > 0) {
+            // 有未完成的下载，自动恢复
+            resumeDownload()
+        }
+    }
+
+    private fun acquireWakeLock() {
+        try {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "EnglishAccelerator::DownloadWakeLock"
+            ).apply {
+                acquire(10 * 60 * 60 * 1000L) // 10小时超时，防止永久持有
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            wakeLock?.let {
+                if (it.isHeld) {
+                    it.release()
+                }
+            }
+            wakeLock = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun startDownload() {
@@ -113,11 +158,13 @@ class DownloadService : Service() {
             }?.onSuccess {
                 isDownloading = false
                 updateNotification("下载完成", 1f)
+                releaseWakeLock()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }?.onFailure { error ->
                 isDownloading = false
                 updateNotification("下载失败: ${error.message}", currentProgress)
+                releaseWakeLock()
                 delay(3000)
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
@@ -129,12 +176,14 @@ class DownloadService : Service() {
         dManager?.pauseDownload()
         isDownloading = false
         updateNotification("已暂停", currentProgress)
+        releaseWakeLock()
     }
 
     private fun resumeDownload() {
         if (isDownloading) return
 
         isDownloading = true
+        acquireWakeLock()
         dManager?.resumeDownload()
 
         downloadJob = serviceScope.launch {
@@ -164,6 +213,7 @@ class DownloadService : Service() {
         dManager?.cancelDownload()
         downloadJob?.cancel()
         isDownloading = false
+        releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -173,10 +223,11 @@ class DownloadService : Service() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "显示模型下载进度"
                 setShowBadge(false)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
 
             val notificationManager = getSystemService(NotificationManager::class.java)
@@ -199,7 +250,9 @@ class DownloadService : Service() {
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
         if (progress > 0f) {
             builder.setProgress(100, (progress * 100).toInt(), false)
@@ -233,6 +286,7 @@ class DownloadService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        releaseWakeLock()
         downloadJob?.cancel()
         serviceScope.cancel()
     }
