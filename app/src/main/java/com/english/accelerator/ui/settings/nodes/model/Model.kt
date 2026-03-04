@@ -51,7 +51,8 @@ fun formatSpeed(bytesPerSecond: Long): String {
 fun ModelDownloadCard(
     onLoadModel: () -> Unit,
     onOpenDirectory: () -> Unit,
-    isLoadingModel: Boolean = false
+    isLoadingModel: Boolean = false,
+    isModelLoaded: Boolean = false
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -270,29 +271,43 @@ fun ModelDownloadCard(
                         // 加载模型按钮
                         Button(
                             onClick = onLoadModel,
-                            enabled = !isLoadingModel,
+                            enabled = !isLoadingModel && !isModelLoaded,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF8B5CF6),
+                                containerColor = if (isModelLoaded) Color(0xFF10B981) else Color(0xFF8B5CF6),
                                 disabledContainerColor = Color(0xFFE2E8F0)
                             ),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            if (isLoadingModel) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
-                                    color = Color(0xFF94A3B8)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "加载模型",
-                                    modifier = Modifier.size(18.dp)
-                                )
+                            when {
+                                isLoadingModel -> {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp,
+                                        color = Color(0xFF94A3B8)
+                                    )
+                                }
+                                isModelLoaded -> {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = "已加载",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                else -> {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "加载模型",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isLoadingModel) "加载中..." else "加载模型",
+                                text = when {
+                                    isLoadingModel -> "加载中..."
+                                    isModelLoaded -> "已加载"
+                                    else -> "加载模型"
+                                },
                                 fontSize = 14.sp
                             )
                         }

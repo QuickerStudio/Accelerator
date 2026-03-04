@@ -145,7 +145,8 @@ fun SettingsScreen() {
                 onOpenDirectory = {
                     showFileExplorer = true
                 },
-                isLoadingModel = isLoadingModel
+                isLoadingModel = isLoadingModel,
+                isModelLoaded = modelState is ModelState.Ready
             )
         }
 
