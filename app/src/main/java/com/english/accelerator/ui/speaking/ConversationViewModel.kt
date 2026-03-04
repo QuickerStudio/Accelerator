@@ -141,7 +141,7 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
     }
 
     /**
-     * Send a user message and get AI response
+     * Send a user message and get AI response with streaming
      */
     fun sendMessage(userInput: String) {
         if (userInput.isBlank()) return
@@ -177,12 +177,30 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                 val runtime = Runtime.getRuntime()
                 val memoryBefore = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
 
-                // Generate AI response using AgentService
+                // Create a placeholder message for streaming
+                val streamingMessageId = UUID.randomUUID().toString()
+                val streamingMessage = Message(
+                    id = streamingMessageId,
+                    content = "",
+                    isFromUser = false
+                )
+                _messages.value = _messages.value + streamingMessage
+
+                // Generate AI response using AgentService with streaming
                 inferenceJob = launch {
-                    val result = agentService.generate(
+                    val result = agentService.generateStreaming(
                         userInput = userInput,
                         context = context
-                    )
+                    ) { partialResult, done ->
+                        // Update the streaming message with partial result
+                        _messages.value = _messages.value.map { msg ->
+                            if (msg.id == streamingMessageId) {
+                                msg.copy(content = partialResult)
+                            } else {
+                                msg
+                            }
+                        }
+                    }
 
                     val endTime = System.currentTimeMillis()
                     val memoryAfter = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
@@ -201,13 +219,17 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                                 memoryUsedMB = memoryUsed
                             )
 
-                            // Add AI response to UI with stats
-                            val aiMessage = Message(
-                                content = response,
-                                isFromUser = false,
-                                inferenceStats = stats
-                            )
-                            _messages.value = _messages.value + aiMessage
+                            // Update the final message with stats
+                            _messages.value = _messages.value.map { msg ->
+                                if (msg.id == streamingMessageId) {
+                                    msg.copy(
+                                        content = response,
+                                        inferenceStats = stats
+                                    )
+                                } else {
+                                    msg
+                                }
+                            }
 
                             // Save AI response to history
                             historyManager.addMessage(
@@ -219,12 +241,14 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                                     "${stats.tokensPerSecond} tokens/s, ${stats.memoryUsedMB}MB memory")
                         },
                         onFailure = { error ->
-                            // Add error message to UI
-                            val errorMessage = Message(
-                                content = "抱歉，发生了错误：${error.message}",
-                                isFromUser = false
-                            )
-                            _messages.value = _messages.value + errorMessage
+                            // Replace streaming message with error message
+                            _messages.value = _messages.value.map { msg ->
+                                if (msg.id == streamingMessageId) {
+                                    msg.copy(content = "抱歉，发生了错误：${error.message}")
+                                } else {
+                                    msg
+                                }
+                            }
 
                             AppLogger.error(TAG, "Failed to generate AI response", error)
                         }

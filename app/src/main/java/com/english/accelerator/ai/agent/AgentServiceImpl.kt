@@ -83,6 +83,39 @@ class AgentServiceImpl(
     }
 
     /**
+     * Generate response with streaming support
+     * @param userInput User's input message
+     * @param context Conversation history
+     * @param onPartialResult Callback for each generated token chunk
+     * @return Result containing the complete response
+     */
+    suspend fun generateStreaming(
+        userInput: String,
+        context: List<Message>,
+        onPartialResult: (String, Boolean) -> Unit
+    ): Result<String> = withContext(Dispatchers.Default) {
+        try {
+            val systemPrompt = getCurrentPrompt()
+            val messages = buildContext(systemPrompt, context, userInput)
+            val promptString = buildPromptString(messages)
+
+            // Use InferenceEngine for async streaming inference
+            val rawResponse = inferenceEngine.generateAsync(promptString) { partialResult, done ->
+                // Clean partial result and pass to callback
+                val cleaned = cleanResponse(partialResult)
+                onPartialResult(cleaned, done)
+            }
+
+            // Clean up final response
+            val cleanedResponse = cleanResponse(rawResponse)
+
+            Result.success(cleanedResponse)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Clean up model response by removing special tokens and stop sequences
      */
     private fun cleanResponse(response: String): String {

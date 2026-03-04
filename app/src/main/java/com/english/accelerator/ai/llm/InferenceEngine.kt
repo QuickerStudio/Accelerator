@@ -4,10 +4,14 @@ import android.content.Context
 import com.english.accelerator.utils.AppLogger
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
+import com.google.mediapipe.tasks.genai.llminference.ProgressListener
 import java.io.File
 import kotlin.math.max
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Unified LLM inference engine for offline use
@@ -58,6 +62,60 @@ class InferenceEngine private constructor(
     }
 
     /**
+     * Async streaming inference - generates response token by token
+     * Thread-safe: uses mutex to prevent concurrent calls
+     * @param prompt The input prompt
+     * @param onPartialResult Callback for each generated token chunk
+     * @return The complete generated response
+     */
+    suspend fun generateAsync(
+        prompt: String,
+        onPartialResult: (String, Boolean) -> Unit
+    ): String = suspendCancellableCoroutine { continuation ->
+        inferenceMutex.tryLock().let { acquired ->
+            if (!acquired) {
+                continuation.resumeWithException(
+                    IllegalStateException("Another inference is already in progress")
+                )
+                return@suspendCancellableCoroutine
+            }
+
+            try {
+                val progressListener = ProgressListener<String> { partialResult, done ->
+                    onPartialResult(partialResult, done)
+                }
+
+                val future = llmInference.generateResponseAsync(prompt, progressListener)
+
+                future.addListener({
+                    try {
+                        val result = future.get() ?: ""
+                        inferenceMutex.unlock()
+                        continuation.resume(result)
+                    } catch (e: Exception) {
+                        inferenceMutex.unlock()
+                        AppLogger.error(TAG, "Failed to generate async response: ${e.message}", e)
+                        continuation.resumeWithException(e)
+                    }
+                }, { it.run() })
+
+                continuation.invokeOnCancellation {
+                    future.cancel(true)
+                    if (inferenceMutex.isLocked) {
+                        inferenceMutex.unlock()
+                    }
+                }
+            } catch (e: Exception) {
+                if (inferenceMutex.isLocked) {
+                    inferenceMutex.unlock()
+                }
+                AppLogger.error(TAG, "Failed to start async inference: ${e.message}", e)
+                continuation.resumeWithException(e)
+            }
+        }
+    }
+
+    /**
      * Estimate remaining tokens in context
      */
     fun estimateTokensRemaining(context: String): Int {
@@ -83,7 +141,7 @@ class InferenceEngine private constructor(
 
         try {
             llmInference = LlmInference.createFromOptions(context, inferenceOptions)
-            AppLogger.info(TAG, "LLM inference engine created successfully")
+            AppLogger.info(TAG, "LLM inference engine created successfully with maxTokens=${config.maxTokens}")
         } catch (e: Exception) {
             AppLogger.error(TAG, "Failed to create LLM inference engine: ${e.message}", e)
             throw ModelLoadFailException()
