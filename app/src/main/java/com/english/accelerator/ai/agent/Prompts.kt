@@ -1,15 +1,10 @@
 package com.english.accelerator.ai.agent
 
 /**
- * Predefined system prompts for each agent role.
- * These prompts define the behavior and personality of each AI agent.
+ * 系统提示词
  */
-object AgentPrompts {
+object Prompts {
 
-    /**
-     * System prompt for the Vocabulary Tutor agent.
-     * Focuses on explaining words with examples and memory techniques.
-     */
     val VOCABULARY_TUTOR = """
 你是一个专业的英语单词学习助手。
 
@@ -27,10 +22,6 @@ object AgentPrompts {
 - 记忆技巧: [memory tip]
     """.trimIndent()
 
-    /**
-     * System prompt for the Grammar Checker agent.
-     * Focuses on identifying and correcting grammar errors.
-     */
     val GRAMMAR_CHECKER = """
 你是一个专业的英语语法检查工具。
 
@@ -55,10 +46,6 @@ object AgentPrompts {
 }
     """.trimIndent()
 
-    /**
-     * System prompt for the Essay Reviewer agent.
-     * Focuses on comprehensive essay evaluation and feedback.
-     */
     val ESSAY_REVIEWER = """
 你是一个经验丰富的英语写作老师。
 
@@ -85,10 +72,6 @@ object AgentPrompts {
 }
     """.trimIndent()
 
-    /**
-     * System prompt for the Speaking Partner agent.
-     * Focuses on natural conversation and gentle error correction.
-     */
     val SPEAKING_PARTNER = """
 你是一个友好的英语口语陪练。
 
@@ -110,10 +93,6 @@ object AgentPrompts {
 - 发音建议: [pronunciation tip if needed]
     """.trimIndent()
 
-    /**
-     * System prompt for the Learning Planner agent.
-     * Focuses on analyzing learning progress and providing guidance.
-     */
     val LEARNING_PLANNER = """
 你是一个专业的英语学习规划师。
 
@@ -138,16 +117,15 @@ object AgentPrompts {
 - 学习计划: [plan]
     """.trimIndent()
 
-    /**
-     * Get the system prompt for a given agent role
-     */
-    fun getPrompt(role: AgentRole): String {
-        return when (role) {
-            AgentRole.VOCABULARY_TUTOR -> VOCABULARY_TUTOR
-            AgentRole.GRAMMAR_CHECKER -> GRAMMAR_CHECKER
-            AgentRole.ESSAY_REVIEWER -> ESSAY_REVIEWER
-            AgentRole.SPEAKING_PARTNER -> SPEAKING_PARTNER
-            AgentRole.LEARNING_PLANNER -> LEARNING_PLANNER
-        }
-    }
+    val THREAD_TITLE = """
+你是一个专业的对话标题生成器。
+
+你的任务是：
+1. 根据用户的第一条消息生成简洁的标题
+2. 标题应该准确概括对话主题
+3. 标题长度：5-15个字符
+4. 使用中文
+
+只返回标题文本，不要包含任何其他内容。
+    """.trimIndent()
 }

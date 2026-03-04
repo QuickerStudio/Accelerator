@@ -1,33 +1,117 @@
 package com.english.accelerator.ai.agent
 
+import android.content.Context
+import com.english.accelerator.ai.agent.tools.MessageTool
+import com.english.accelerator.ai.agent.tools.ReadTool
+import com.english.accelerator.ai.agent.tools.UpdateTitleTool
+import com.english.accelerator.ai.agent.tools.WriteTool
+import com.english.accelerator.ai.history.HistoryManager
+import com.english.accelerator.ai.session.SessionManager
+import com.english.accelerator.utils.AppLogger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 /**
- * Service for managing AI agent roles and generating responses.
- * Supports switching between different agent personalities via system prompts.
- * Only supports streaming inference for real-time response generation.
+ * Agent 服务 - UI 交互层接口
+ *
+ * 职责：
+ * - 管理会话和历史记录
+ * - 协调 Agent 和 Tools
+ * - 处理线程切换
+ * - 执行工具调用
  */
-interface AgentService {
-    /**
-     * Get the current active agent role
-     */
-    fun getCurrentAgent(): AgentRole
+class AgentService(private val context: Context) {
+
+    private val TAG = "AgentService"
+    private val agent = MainAgent(context)
+    private val sessionManager = SessionManager.getInstance()
+    private val historyManager = HistoryManager.getInstance()
+
+    // Tools
+    private val readTool = ReadTool()
+    private val writeTool = WriteTool()
+    private val updateTitleTool = UpdateTitleTool(sessionManager)
+    private val messageTool = MessageTool(historyManager)
 
     /**
-     * Switch to a different agent role
+     * 生成响应 - 主要方法
      */
-    suspend fun switchAgent(agent: AgentRole): Result<Unit>
+    suspend fun generateResponse(
+        sessionId: String,
+        userInput: String,
+        systemPrompt: String,
+        onPartialResult: (String, Boolean) -> Unit
+    ): Result<String> = withContext(Dispatchers.Default) {
+        try {
+            // 获取历史记录
+            val history = historyManager.getLastMessages(sessionId, 10)
+
+            // 保存用户消息
+            messageTool.saveUserMessage(sessionId, userInput)
+
+            // 执行推理
+            val result = agent.execute(
+                systemPrompt = systemPrompt,
+                history = history,
+                userInput = userInput,
+                onPartialResult = onPartialResult
+            )
+
+            // 保存 AI 响应
+            result.onSuccess { response ->
+                messageTool.saveAssistantMessage(sessionId, response)
+            }
+
+            result
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to generate response: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 
     /**
-     * Get the current system prompt being used
+     * 生成对话标题
      */
-    fun getCurrentPrompt(): String
+    suspend fun generateTitle(
+        sessionId: String,
+        firstMessage: String
+    ): Result<String> = withContext(Dispatchers.Default) {
+        try {
+            var title = ""
+            val result = agent.execute(
+                systemPrompt = Prompts.THREAD_TITLE,
+                history = emptyList(),
+                userInput = firstMessage,
+                onPartialResult = { partial, _ -> title = partial }
+            )
+
+            result.onSuccess {
+                updateTitleTool.updateTitle(sessionId, title)
+            }
+
+            result
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to generate title: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 
     /**
-     * Update the custom system prompt
+     * 读取数据 - 工具调用
      */
-    suspend fun updateCustomPrompt(prompt: String): Result<Unit>
+    suspend fun readData(key: String): Result<String> = withContext(Dispatchers.IO) {
+        readTool.execute(key)
+    }
 
     /**
-     * Reset to the preset system prompt for the current agent
+     * 写入数据 - 工具调用
      */
-    suspend fun resetToPreset(): Result<Unit>
+    suspend fun writeData(key: String, value: String): Result<Unit> = withContext(Dispatchers.IO) {
+        writeTool.execute(key, value)
+    }
+
+    /**
+     * 检查服务是否就绪
+     */
+    fun isReady(): Boolean = agent.isReady()
 }

@@ -2,7 +2,6 @@ package com.english.accelerator.ai.llm
 
 import android.content.Context
 import com.english.accelerator.utils.AppLogger
-import com.google.common.util.concurrent.ListenableFuture
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.ProgressListener
 import java.io.File
@@ -11,7 +10,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 /**
  * Configuration for LLM inference engine
@@ -19,86 +17,51 @@ import kotlin.coroutines.resumeWithException
 data class InferenceConfig(
     val modelPath: String,
     val maxTokens: Int = 2048,
-    val decodeTokenOffset: Int = 256,
-    val temperature: Float = 0.3f,
-    val topK: Int = 40,
-    val topP: Float = 0.95f
+    val decodeTokenOffset: Int = 256
 ) {
     companion object {
-        /**
-         * Create config for Gemma 3N E2B INT4 model
-         */
         fun forGemma3N(context: Context): InferenceConfig {
             val modelPath = File(context.filesDir, "models/gemma-3n-e2b-it-int4.litertlm").absolutePath
             return InferenceConfig(
                 modelPath = modelPath,
                 maxTokens = 2048,
-                decodeTokenOffset = 256,
-                temperature = 0.3f,
-                topK = 40,
-                topP = 0.95f
+                decodeTokenOffset = 256
             )
         }
     }
 }
 
 /**
- * Unified LLM inference engine for offline use
- * Based on official MediaPipe LLM inference architecture (Engine + Session)
+ * LLM 推理引擎 - 专注核心功能
  *
- * Provides streaming inference for all use cases
+ * 职责：
+ * - 模型加载和初始化
+ * - 异步流式推理
+ * - Token 计数
+ * - 线程安全
  */
 class InferenceEngine private constructor(
     private val context: Context,
     private val config: InferenceConfig
 ) {
     private lateinit var llmInference: LlmInference
-    private val TAG: String = InferenceEngine::class.qualifiedName ?: "InferenceEngine"
-
-    // Mutex to prevent concurrent inference calls
+    private val TAG = "InferenceEngine"
     private val inferenceMutex = Mutex()
 
     init {
         if (!modelExists()) {
-            throw IllegalArgumentException("Model not found at path: ${config.modelPath}")
+            throw ModelLoadFailException("Model not found at: ${config.modelPath}")
         }
-
         createEngine()
     }
 
     /**
-     * Close and release resources
-     */
-    fun close() {
-        llmInference.close()
-    }
-
-    /**
-     * Sync inference - the only inference method
-     * Thread-safe: uses mutex to prevent concurrent calls
-     */
-    suspend fun generateSync(prompt: String): String {
-        return inferenceMutex.withLock {
-            try {
-                llmInference.generateResponse(prompt) ?: ""
-            } catch (e: Exception) {
-                AppLogger.error(TAG, "Failed to generate response: ${e.message}", e)
-                throw e
-            }
-        }
-    }
-
-    /**
-     * Async streaming inference - generates response token by token
-     * Thread-safe: uses mutex to prevent concurrent calls
-     * @param prompt The input prompt
-     * @param onPartialResult Callback for each generated token chunk (partialResult, done)
-     * @return The complete generated response
+     * 异步流式推理 - 唯一的推理方法
      */
     suspend fun generateAsync(
         prompt: String,
         onPartialResult: (String, Boolean) -> Unit
-    ): String = inferenceMutex.withLock {
+    ): Result<String> = inferenceMutex.withLock {
         suspendCancellableCoroutine { continuation ->
             try {
                 var isCompleted = false
@@ -106,11 +69,7 @@ class InferenceEngine private constructor(
                 val progressListener = ProgressListener<String> { partialResult, done ->
                     try {
                         onPartialResult(partialResult, done)
-
-                        // Mark as completed when done=true
-                        if (done) {
-                            isCompleted = true
-                        }
+                        if (done) isCompleted = true
                     } catch (e: Exception) {
                         AppLogger.error(TAG, "Error in progress listener: ${e.message}", e)
                     }
@@ -122,15 +81,14 @@ class InferenceEngine private constructor(
                     try {
                         val result = future.get() ?: ""
 
-                        // Ensure we call the callback one final time with done=true
                         if (!isCompleted) {
                             onPartialResult(result, true)
                         }
 
-                        continuation.resume(result)
+                        continuation.resume(Result.success(result))
                     } catch (e: Exception) {
-                        AppLogger.error(TAG, "Failed to generate async response: ${e.message}", e)
-                        continuation.resumeWithException(e)
+                        AppLogger.error(TAG, "Async generation failed: ${e.message}", e)
+                        continuation.resume(Result.failure(e))
                     }
                 }, { it.run() })
 
@@ -139,27 +97,34 @@ class InferenceEngine private constructor(
                 }
             } catch (e: Exception) {
                 AppLogger.error(TAG, "Failed to start async inference: ${e.message}", e)
-                continuation.resumeWithException(e)
+                continuation.resume(Result.failure(e))
             }
         }
     }
 
     /**
-     * Estimate remaining tokens in context
+     * 估算剩余 token 数量
      */
-    fun estimateTokensRemaining(context: String): Int {
-        if (context.isEmpty()) return -1
+    fun estimateTokensRemaining(prompt: String): Int {
+        if (prompt.isEmpty()) return config.maxTokens
 
-        val sizeOfAllMessages = llmInference.sizeInTokens(context)
-        val remainingTokens = config.maxTokens - sizeOfAllMessages - config.decodeTokenOffset
+        val usedTokens = llmInference.sizeInTokens(prompt)
+        val remainingTokens = config.maxTokens - usedTokens - config.decodeTokenOffset
         return max(0, remainingTokens)
     }
 
     /**
-     * Check if model is loaded and ready
+     * 检查引擎是否就绪
      */
-    fun isReady(): Boolean {
-        return ::llmInference.isInitialized
+    fun isReady(): Boolean = ::llmInference.isInitialized
+
+    /**
+     * 关闭并释放资源
+     */
+    fun close() {
+        if (::llmInference.isInitialized) {
+            llmInference.close()
+        }
     }
 
     private fun createEngine() {
@@ -170,16 +135,14 @@ class InferenceEngine private constructor(
 
         try {
             llmInference = LlmInference.createFromOptions(context, inferenceOptions)
-            AppLogger.info(TAG, "LLM inference engine created successfully with maxTokens=${config.maxTokens}")
+            AppLogger.info(TAG, "InferenceEngine initialized: maxTokens=${config.maxTokens}")
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to create LLM inference engine: ${e.message}", e)
-            throw ModelLoadFailException()
+            AppLogger.error(TAG, "Failed to create engine: ${e.message}", e)
+            throw ModelLoadFailException("Failed to load model")
         }
     }
 
-    private fun modelExists(): Boolean {
-        return File(config.modelPath).exists()
-    }
+    private fun modelExists(): Boolean = File(config.modelPath).exists()
 
     companion object {
         @Volatile
@@ -198,14 +161,4 @@ class InferenceEngine private constructor(
     }
 }
 
-class ModelLoadFailException : Exception("Failed to load model, please try again")
-
-/**
- * Model state for UI observation
- */
-sealed class ModelState {
-    object Idle : ModelState()
-    object Loading : ModelState()
-    object Ready : ModelState()
-    data class Error(val message: String) : ModelState()
-}
+class ModelLoadFailException(message: String) : Exception(message)
