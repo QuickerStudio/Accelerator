@@ -338,19 +338,5 @@ fun ModelDownloadCard(
                 }
             }
         }
-
-        // 副标题提示：断点续传支持状态
-        if (!isDownloaded && supportsRange != null) {
-            Text(
-                text = if (supportsRange == true) {
-                    "✓ 支持断点续传"
-                } else {
-                    "⚠ 不支持断点续传，暂停会重新下载"
-                },
-                fontSize = 12.sp,
-                color = if (supportsRange == true) Color(0xFF10B981) else Color(0xFFF59E0B),
-                modifier = Modifier.padding(start = 4.dp)
-            )
-        }
     }
 }
