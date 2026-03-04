@@ -87,7 +87,7 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 val session = sessionManager.createSession(
-                    title = "对话 ${System.currentTimeMillis()}",
+                    title = "对话",
                     type = Session.Type.CONVERSATION
                 )
                 _currentSession.value = session
