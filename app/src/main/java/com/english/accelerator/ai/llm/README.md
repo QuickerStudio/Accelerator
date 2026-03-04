@@ -1,21 +1,25 @@
-# LLM Inference Module
+# LLM Module (Deprecated)
 
-基于 Google MediaPipe 官方示例的 LLM 推理模块，提供稳定可靠的大语言模型推理能力。
+⚠️ **This package is deprecated. Use `ai/core/` and `ai/service/` instead.**
 
-## 架构概述
+The LLM inference functionality has been refactored into a cleaner architecture:
 
-本模块采用官方推荐的两层架构：
+## New Architecture
 
 ```
-InferenceModel (引擎层)
-    ├── LlmInference (MediaPipe 引擎)
-    └── LlmInferenceSession (会话管理)
-         ├── 温度、TopK、TopP 参数
-         └── 上下文和 Token 管理
-
-ChatViewModel (业务层)
-    ├── UiState (消息队列)
-    └── 异步推理控制
+com.english.accelerator.ai/
+├── core/                          # Core inference engine
+│   ├── InferenceEngine.kt         # Unified engine (Engine + Session)
+│   └── InferenceConfig.kt         # Model configuration
+│
+├── service/                       # Business services
+│   ├── ChatService.kt             # Async streaming chat
+│   ├── GrammarService.kt          # Grammar checking
+│   └── WritingService.kt          # Writing improvement
+│
+└── prompt/                        # Prompt templates
+    ├── GrammarPrompts.kt
+    └── WritingPrompts.kt
 ```
 
 ## 核心组件
