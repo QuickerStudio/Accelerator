@@ -20,6 +20,7 @@ import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.vocabulary.nodes.CardStack
+import com.english.accelerator.ui.vocabulary.nodes.BookmarkNode
 import com.english.accelerator.utils.AppLogger
 import com.english.accelerator.utils.WordLoader
 import kotlinx.coroutines.flow.MutableStateFlow

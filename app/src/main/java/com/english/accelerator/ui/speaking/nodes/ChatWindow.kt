@@ -20,9 +20,7 @@ import com.english.accelerator.ui.speaking.models.Message
  * 对话主窗口节点
  */
 class ChatWindow(
-    private val messages: List<Message>,
-    private val agentBubble: Node,
-    private val userBubble: Node
+    private val messages: List<Message>
 ) : Node {
     override val id = "chat_window"
 
@@ -46,9 +44,9 @@ class ChatWindow(
         ) {
             items(messages.filter { it.content.isNotEmpty() }) { message ->
                 if (message.isFromUser) {
-                    userBubble.Render()
+                    UserBubble(message).Render()
                 } else {
-                    agentBubble.Render()
+                    AgentBubble(message).Render()
                 }
             }
         }

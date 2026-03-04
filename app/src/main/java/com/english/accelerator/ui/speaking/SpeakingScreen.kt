@@ -24,6 +24,8 @@ import com.english.accelerator.ai.session.Session
 import com.english.accelerator.ai.session.SessionManager
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.speaking.nodes.*
+import com.english.accelerator.ui.speaking.models.Message
+import com.english.accelerator.ui.speaking.models.InferenceStats
 import com.english.accelerator.utils.AppLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,27 +33,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
-
-/**
- * 消息数据模型
- */
-data class Message(
-    val id: String = UUID.randomUUID().toString(),
-    val content: String,
-    val isFromUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis(),
-    val inferenceStats: InferenceStats? = null
-)
-
-data class InferenceStats(
-    val startTime: Long,
-    val endTime: Long,
-    val tokensGenerated: Int,
-    val memoryUsedMB: Long
-) {
-    val durationSeconds: Float get() = (endTime - startTime) / 1000f
-    val tokensPerSecond: Float get() = if (durationSeconds > 0) tokensGenerated / durationSeconds else 0f
-}
 
 /**
  * SpeakingScreen - 节点管理器
@@ -163,14 +144,7 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
         ) { padding ->
             Box(modifier = Modifier.padding(padding)) {
                 ChatWindow(
-                    messages = messages,
-                    onMessageRender = { message ->
-                        if (message.isFromUser) {
-                            UserBubble(message).Render()
-                        } else {
-                            AgentBubble(message).Render()
-                        }
-                    }
+                    messages = messages
                 ).Render()
             }
         }
@@ -301,7 +275,11 @@ class SpeakingVM(private val context: Context) : ViewModel() {
 
         viewModelScope.launch {
             try {
-                val userMsg = Message(content = input, isFromUser = true)
+                val userMsg = Message(
+                    id = UUID.randomUUID().toString(),
+                    content = input,
+                    isFromUser = true
+                )
                 _messages.value = _messages.value + userMsg
 
                 val startTime = System.currentTimeMillis()

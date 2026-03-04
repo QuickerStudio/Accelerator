@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.english.accelerator.ai.llm.GrammarSuggestion
 import com.english.accelerator.data.EssayCollectionManager
 import com.english.accelerator.ui.components.VocabularyTopBar
 import com.english.accelerator.ui.sidebar.Sidebar
@@ -208,10 +207,6 @@ fun WritingScreen(
                         onDownloadModel = {
                             // 下载功能已移除，跳转到设置页面
                             onNavigateToSettings()
-                        },
-                        onApplySuggestion = { suggestion ->
-                            // 应用建议到内容
-                            content = content.replace(suggestion.original, suggestion.corrected)
                         },
                         modifier = Modifier
                             .weight(0.4f)
@@ -516,7 +511,6 @@ private fun AiAssistPanel(
     onCheckGrammar: () -> Unit,
     onGetSuggestions: () -> Unit,
     onDownloadModel: () -> Unit,
-    onApplySuggestion: (GrammarSuggestion) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -656,83 +650,5 @@ private fun DownloadProgress(progress: Float) {
             fontSize = 14.sp,
             color = Color(0xFF64748B)
         )
-    }
-}
-
-@Composable
-private fun SuggestionCard(
-    suggestion: GrammarSuggestion,
-    onApply: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF8FAFC)
-        ),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (suggestion.original.isNotEmpty()) {
-                // 显示原文和修正
-                Text(
-                    text = "原文:",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B)
-                )
-                Text(
-                    text = suggestion.original,
-                    fontSize = 14.sp,
-                    color = Color(0xFFEF4444)
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDownward,
-                    contentDescription = null,
-                    tint = Color(0xFF8B5CF6),
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = "建议:",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B)
-                )
-                Text(
-                    text = suggestion.corrected,
-                    fontSize = 14.sp,
-                    color = Color(0xFF10B981)
-                )
-            } else {
-                // 只显示建议
-                Text(
-                    text = suggestion.corrected,
-                    fontSize = 14.sp,
-                    color = Color(0xFF1E293B)
-                )
-            }
-
-            Text(
-                text = suggestion.reason,
-                fontSize = 12.sp,
-                color = Color(0xFF64748B),
-                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-            )
-
-            if (suggestion.original.isNotEmpty()) {
-                Button(
-                    onClick = onApply,
-                    modifier = Modifier.align(Alignment.End),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF10B981)
-                    ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text("应用", fontSize = 12.sp)
-                }
-            }
-        }
     }
 }
