@@ -237,13 +237,6 @@ fun SpeakingScreen(
                 items(messages) { message ->
                     MessageBubble(message = message)
                 }
-
-                // Loading indicator
-                if (isLoading) {
-                    item {
-                        LoadingBubble()
-                    }
-                }
             }
         }
 
