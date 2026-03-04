@@ -1,5 +1,51 @@
 # CHANGELOG
 
+## [v2.0.0] - 2026-03-05
+
+### 🎨 架构重构 - 插件式节点架构
+
+#### UI 模块重构
+- **重构所有 UI 模块为插件式节点架构**
+  - speaking: 节点管理器 + nodes/（AgentBubble, UserBubble, ChatWindow, InputBox, NavBar, History）
+  - vocabulary: 节点管理器 + nodes/（CardStack, WordCardNode, BookmarkNode）
+  - writing: 节点管理器 + nodes/（EssayPanel, EssayList, Keyboard）
+  - sidebar: 节点管理器 + nodes/（DragDrop, Editor）
+  - settings: 节点管理器 + nodes/（按功能分类：about, learning, data, model, perms）
+
+- **统一架构模式**
+  - 每个模块只有一个根组件（节点管理器）
+  - 所有子组件都是可替换的节点
+  - 节点独立、解耦、可插拔
+
+#### AI 推理架构简化
+- **简化 InferenceEngine.kt**
+  - 删除同步推理，只保留异步流式推理
+  - 专注核心功能：模型加载、异步推理、Token 计数
+  - 移除复杂的辅助方法和包装层
+
+- **创建新的 Agent 架构**
+  - MainAgent.kt - 主 Agent
+  - AgentService.kt - 统一服务层
+  - Prompts.kt - 系统提示词
+  - tools/ - 工具层（ReadTool, WriteTool, MessageTool, UpdateTitleTool）
+
+- **删除冗余文件**
+  - 删除 agent 目录旧文件（AgentConfig, AgentPrompts, AgentServiceImpl, Message, PromptMode, ThreadTitleAgent）
+  - 删除 llm 目录冗余文件（InferenceConfig, InferenceService, InferenceTool, Prompts）
+  - 合并 InferenceConfig 到 InferenceEngine.kt
+
+### 📚 文档更新
+- 为所有 UI 模块添加 README.md
+- 更新 settings README 为新架构
+- 清晰说明节点管理器和插件式架构
+
+### 🧹 代码清理
+- 删除过时的 AI 测试文件
+- 删除 mediapipe 示例目录
+- 简化命名方式
+
+---
+
 ## [v0.5.0] - 2026-03-02
 
 ### 对话界面完成 🎉
