@@ -93,9 +93,6 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
                 _currentSession.value = session
                 _messages.value = emptyList()
 
-                // Add welcome message
-                addWelcomeMessage()
-
                 AppLogger.info(TAG, "Created new session: ${session.id}")
             } catch (e: Exception) {
                 AppLogger.error(TAG, "Failed to create new session", e)
@@ -309,7 +306,6 @@ class ConversationViewModel(private val context: Context) : ViewModel() {
             try {
                 historyManager.clearHistory(sessionId)
                 _messages.value = emptyList()
-                addWelcomeMessage()
                 AppLogger.info(TAG, "Cleared conversation for session: $sessionId")
             } catch (e: Exception) {
                 AppLogger.error(TAG, "Failed to clear conversation", e)
