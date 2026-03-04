@@ -60,6 +60,7 @@ fun ModelDownloadCard(
     var downloadSpeed by remember { mutableStateOf(0L) }
     var lastSpeedUpdateTime by remember { mutableStateOf(0L) }
     var currentRoute by remember { mutableStateOf(dManager.getCurrentRouteName()) }
+    var supportsRange by remember { mutableStateOf(true) } // 默认假设支持
 
     // 从配置文件获取下载状态，而不是从 DEngine
     var isDownloading by remember { mutableStateOf(false) }
@@ -89,6 +90,13 @@ fun ModelDownloadCard(
             if (configState != null) {
                 isPaused = configState.isPaused
                 isDownloading = !configState.isPaused && !configState.isComplete && downloadStatus == DStatus.PARTIAL
+            }
+
+            // 检查当前线路是否支持断点续传
+            val routes = dManager.getDownloadRoutes()
+            val currentRouteInfo = routes.find { it.name == currentRoute }
+            if (currentRouteInfo != null && currentRouteInfo.rangeChecked) {
+                supportsRange = currentRouteInfo.supportsRange
             }
         }
     }
@@ -173,48 +181,52 @@ fun ModelDownloadCard(
     }
 
     // 单行布局：标题 + 进度/网速 + 线路切换按钮 + 下载控制按钮
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // 左侧：动画标题 + 进度/网速
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = currentTitle,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF8B5CF6)
-            )
-
-            // 显示进度百分比和网速（下载中或暂停时）
-            if (isDownloading || isPaused) {
+            // 左侧：动画标题 + 进度/网速
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = String.format("%.3f%%", downloadProgress * 100),
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B)
+                    text = currentTitle,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF8B5CF6)
                 )
 
-                if (isDownloading && downloadSpeed > 0) {
+                // 显示进度百分比和网速（下载中或暂停时）
+                if (isDownloading || isPaused) {
                     Text(
-                        text = formatSpeed(downloadSpeed),
+                        text = String.format("%.3f%%", downloadProgress * 100),
                         fontSize = 14.sp,
-                        color = Color(0xFF10B981)
+                        color = Color(0xFF64748B)
                     )
+
+                    if (isDownloading && downloadSpeed > 0) {
+                        Text(
+                            text = formatSpeed(downloadSpeed),
+                            fontSize = 14.sp,
+                            color = Color(0xFF10B981)
+                        )
+                    }
                 }
             }
-        }
 
-        // 右侧：线路切换按钮 + 下载控制按钮
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+            // 右侧：线路切换按钮 + 下载控制按钮
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             // 线路切换按钮（下载完成后隐藏）
             if (!isDownloaded) {
                 TextButton(
@@ -313,6 +325,20 @@ fun ModelDownloadCard(
                     }
                 }
             }
+        }
+
+        // 副标题提示：断点续传支持状态
+        if (!isDownloaded) {
+            Text(
+                text = if (supportsRange) {
+                    "✓ 支持断点续传"
+                } else {
+                    "⚠ 不支持断点续传，暂停会重新下载"
+                },
+                fontSize = 12.sp,
+                color = if (supportsRange) Color(0xFF10B981) else Color(0xFFF59E0B),
+                modifier = Modifier.padding(start = 4.dp)
+            )
         }
     }
 }
