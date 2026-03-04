@@ -3,6 +3,7 @@ package com.english.accelerator
 import android.app.Application
 import com.english.accelerator.utils.AppLogger
 import com.english.accelerator.utils.AutoBackupManager
+import com.english.accelerator.utils.DataStateTracker
 import com.english.accelerator.utils.DConfig
 import com.english.accelerator.ai.model.ModelConfig
 import com.english.accelerator.ai.session.SessionManager
