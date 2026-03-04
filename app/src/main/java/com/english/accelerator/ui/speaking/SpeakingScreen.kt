@@ -336,7 +336,9 @@ fun MessageBubble(message: Message) {
         }
 
         Column(
-            modifier = Modifier.widthIn(max = 280.dp),
+            modifier = Modifier
+                .widthIn(min = 48.dp, max = 280.dp)
+                .wrapContentWidth(),
             horizontalAlignment = if (message.isFromUser) Alignment.End else Alignment.Start
         ) {
             // Message bubble
