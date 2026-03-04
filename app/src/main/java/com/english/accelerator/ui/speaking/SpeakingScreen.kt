@@ -87,9 +87,13 @@ fun SpeakingScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val messages = remember { mutableStateListOf<Message>() }
+
+    // Use ViewModel for state management
+    val viewModel = remember { ConversationViewModel(context) }
+    val messages by viewModel.messages.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
     var inputText by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     var showSidebar by remember { mutableStateOf(false) }
     var isContinuousMode by remember { mutableStateOf(false) }
@@ -121,18 +125,6 @@ fun SpeakingScreen(
 
     val scope = rememberCoroutineScope()
 
-    // 初始化欢迎消息
-    LaunchedEffect(Unit) {
-        if (messages.isEmpty()) {
-            messages.add(
-                Message(
-                    content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
-                    isFromUser = false
-                )
-            )
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
@@ -146,15 +138,8 @@ fun SpeakingScreen(
                     actions = {
                         // New conversation thread
                         IconButton(onClick = {
-                            // 清空当前对话，开始新线程
-                            messages.clear()
-                            // 添加欢迎消息
-                            messages.add(
-                                Message(
-                                    content = "Hello! I'm your English conversation partner. Let's practice together! What would you like to talk about today?",
-                                    isFromUser = false
-                                )
-                            )
+                            // Use ViewModel to create new session
+                            viewModel.createNewSession()
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -191,70 +176,16 @@ fun SpeakingScreen(
                         onInputChange = { inputText = it },
                         onSend = {
                             if (inputText.isNotBlank()) {
-                                // 添加用户消息
                                 val userMessage = inputText
-                                messages.add(Message(content = userMessage, isFromUser = true))
                                 inputText = ""
                                 focusManager.clearFocus()
 
-                                // 滚动到底部
+                                // Use ViewModel to send message
+                                viewModel.sendMessage(userMessage)
+
+                                // Scroll to bottom
                                 scope.launch {
                                     listState.animateScrollToItem(messages.size)
-                                }
-
-                                // 生成 AI 响应
-                                isLoading = true
-                                scope.launch {
-                                    try {
-                                        // 检查推理引擎是否已初始化
-                                        val config = com.english.accelerator.ai.llm.InferenceConfig.forGemma3N(context)
-                                        val engine = try {
-                                            com.english.accelerator.ai.llm.InferenceEngine.getInstance(context, config)
-                                        } catch (e: Exception) {
-                                            null
-                                        }
-
-                                        if (engine == null || !engine.isReady()) {
-                                            messages.add(
-                                                Message(
-                                                    content = "AI 提示服务未启用，请前往设置页面下载并加载模型。",
-                                                    isFromUser = false
-                                                )
-                                            )
-                                        } else {
-                                            // 构建对话上下文
-                                            val conversationHistory = messages.takeLast(10).joinToString("\n") { msg ->
-                                                if (msg.isFromUser) "User: ${msg.content}" else "Assistant: ${msg.content}"
-                                            }
-
-                                            val prompt = """You are a friendly English conversation partner. Help the user practice English naturally.
-
-Previous conversation:
-$conversationHistory
-
-User: $userMessage
-
-Respond naturally and conversationally. Keep responses concise (2-3 sentences). If you notice grammar mistakes, gently correct them."""
-
-                                            // 调用推理引擎
-                                            val response = engine.generateSync(prompt)
-                                            val parsedResponse = parseConversationResponse(response)
-
-                                            messages.add(Message(content = parsedResponse, isFromUser = false))
-                                        }
-
-                                        // 滚动到底部
-                                        listState.animateScrollToItem(messages.size)
-                                    } catch (e: Exception) {
-                                        messages.add(
-                                            Message(
-                                                content = "抱歉，发生了错误：${e.message}",
-                                                isFromUser = false
-                                            )
-                                        )
-                                    } finally {
-                                        isLoading = false
-                                    }
                                 }
                             }
                         },
