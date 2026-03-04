@@ -61,27 +61,6 @@ class AgentServiceImpl(
         }
     }
 
-    override suspend fun generate(
-        userInput: String,
-        context: List<Message>
-    ): Result<String> = withContext(Dispatchers.Default) {
-        try {
-            val systemPrompt = getCurrentPrompt()
-            val messages = buildContext(systemPrompt, context, userInput)
-            val promptString = buildPromptString(messages)
-
-            // Use InferenceEngine for sync inference
-            val rawResponse = inferenceEngine.generateSync(promptString)
-
-            // Clean up response by removing special tokens and stop sequences
-            val cleanedResponse = cleanResponse(rawResponse)
-
-            Result.success(cleanedResponse)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     /**
      * Generate response with streaming support
      * @param userInput User's input message

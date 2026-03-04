@@ -3,6 +3,7 @@ package com.english.accelerator.ai.agent
 /**
  * Service for managing AI agent roles and generating responses.
  * Supports switching between different agent personalities via system prompts.
+ * Only supports streaming inference for real-time response generation.
  */
 interface AgentService {
     /**
@@ -29,14 +30,4 @@ interface AgentService {
      * Reset to the preset system prompt for the current agent
      */
     suspend fun resetToPreset(): Result<Unit>
-
-    /**
-     * Generate a response using the current agent
-     * @param userInput The user's input message
-     * @param context Previous conversation messages for context
-     */
-    suspend fun generate(
-        userInput: String,
-        context: List<Message> = emptyList()
-    ): Result<String>
 }
