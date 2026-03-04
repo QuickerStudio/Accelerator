@@ -1,18 +1,23 @@
 package com.english.accelerator.ai.agent
 
-import com.english.accelerator.ai.model.GemmaInferenceManager
-import com.english.accelerator.ai.inference.InferenceResult
-import com.english.accelerator.ai.inference.SuggestionType
+import android.content.Context
+import com.english.accelerator.ai.llm.InferenceEngine
+import com.english.accelerator.ai.llm.InferenceConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
  * Implementation of AgentService that manages AI agent roles and generates responses.
- * Uses GemmaInferenceManager for LLM inference with different system prompts.
+ * Uses InferenceEngine (official MediaPipe architecture) for LLM inference with different system prompts.
  */
 class AgentServiceImpl(
-    private val inferenceManager: GemmaInferenceManager
+    private val context: Context
 ) : AgentService {
+
+    private val inferenceEngine: InferenceEngine by lazy {
+        val config = InferenceConfig.forGemma3N(context)
+        InferenceEngine.getInstance(context, config)
+    }
 
     private var currentAgent: AgentRole = AgentRole.VOCABULARY_TUTOR
     private var promptMode: PromptMode = PromptMode.PRESET
@@ -65,8 +70,8 @@ class AgentServiceImpl(
             val messages = buildContext(systemPrompt, context, userInput)
             val promptString = buildPromptString(messages)
 
-            // Use inference manager to generate response
-            val response = inferenceManager.generateResponse(promptString)
+            // Use InferenceEngine for sync inference
+            val response = inferenceEngine.generateSync(promptString)
 
             Result.success(response)
         } catch (e: Exception) {
@@ -123,19 +128,5 @@ class AgentServiceImpl(
      */
     private fun getPresetPrompt(role: AgentRole): String {
         return AgentPrompts.getPrompt(role)
-    }
-
-    /**
-     * Generate response using the inference manager
-     */
-    private suspend fun GemmaInferenceManager.generateResponse(prompt: String): String {
-        // For now, use the existing generateSuggestions method
-        // This will be refined when we integrate properly
-        val result = generateSuggestions(prompt, SuggestionType.CONVERSATION_PRACTICE)
-        return when (result) {
-            is InferenceResult.Success -> result.rawResponse
-            is InferenceResult.Error -> throw Exception(result.message)
-            InferenceResult.Loading -> throw Exception("Inference is still loading")
-        }
     }
 }
