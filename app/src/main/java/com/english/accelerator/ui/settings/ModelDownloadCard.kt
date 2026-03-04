@@ -77,12 +77,16 @@ fun ModelDownloadCard(
                 downloadProgress = state.fileSize.toFloat() / state.expectedSize.toFloat()
             }
             downloadStatus = dManager.getDStatus()
+        }
+    }
 
-            // 从配置文件同步状态
-            val configState = state.configState
+    // 单独的状态同步（从配置文件读取按钮状态）
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(500)
+            val configState = dManager.getFullState().configState
             if (configState != null) {
                 isPaused = configState.isPaused
-                // 如果文件在增长且未暂停，说明正在下载
                 isDownloading = !configState.isPaused && !configState.isComplete && downloadStatus == DStatus.PARTIAL
             }
         }
