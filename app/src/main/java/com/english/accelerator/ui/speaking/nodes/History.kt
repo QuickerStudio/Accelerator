@@ -1,6 +1,7 @@
 package com.english.accelerator.ui.speaking.nodes
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.english.accelerator.ai.history.HistoryManager
@@ -104,7 +106,72 @@ class History(
         conversation: Conversation,
         onClick: (Conversation) -> Unit
     ) {
-        // 简化版卡片实现
-        Text(conversation.title)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick(conversation) },
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 2.dp
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = conversation.title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "${conversation.messageCount} 条消息",
+                        fontSize = 12.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+
+                Text(
+                    text = conversation.preview,
+                    fontSize = 14.sp,
+                    color = Color(0xFF64748B),
+                    maxLines = 2
+                )
+
+                Text(
+                    text = formatTimestamp(conversation.timestamp),
+                    fontSize = 12.sp,
+                    color = Color(0xFF94A3B8)
+                )
+            }
+        }
+    }
+
+    private fun formatTimestamp(timestamp: Long): String {
+        val now = System.currentTimeMillis()
+        val diff = now - timestamp
+
+        return when {
+            diff < 60_000 -> "刚刚"
+            diff < 3600_000 -> "${diff / 60_000} 分钟前"
+            diff < 86400_000 -> "${diff / 3600_000} 小时前"
+            diff < 604800_000 -> "${diff / 86400_000} 天前"
+            else -> {
+                val date = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault())
+                    .format(java.util.Date(timestamp))
+                date
+            }
+        }
     }
 }

@@ -18,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.english.accelerator.utils.rememberScreenshotCapture
 
 /**
  * 输入框节点
@@ -29,13 +31,27 @@ class InputBox(
     private val text: String,
     private val onTextChange: (String) -> Unit,
     private val onSend: () -> Unit,
-    private val onCamera: () -> Unit
+    private val onCamera: () -> Unit,
+    private val onShowToast: (String, Color) -> Unit = { _, _ -> }
 ) {
     val id = "input_box"
 
     @Composable
     fun Render() {
+        val context = LocalContext.current
         val focusManager = LocalFocusManager.current
+
+        // 截图功能
+        val captureScreenshot = rememberScreenshotCapture(
+            cropRatio = 3f / 4f,
+            onSuccess = { file ->
+                onCamera()
+                onShowToast("截图已保存", Color(0xFF10B981))
+            },
+            onError = { error ->
+                onShowToast(error, Color(0xFFEF4444))
+            }
+        )
 
         Box(
             modifier = Modifier
@@ -79,7 +95,7 @@ class InputBox(
                     )
 
                     IconButton(
-                        onClick = onCamera,
+                        onClick = { captureScreenshot() },
                         modifier = Modifier
                             .size(36.dp)
                             .align(Alignment.CenterStart)

@@ -25,7 +25,11 @@ class BookmarkNode(private val onBackClick: () -> Unit) {
     fun Render() {
         val bookmarkedWords = BookmarkManager.getBookmarkedWords()
 
-        Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -60,6 +64,9 @@ class BookmarkNode(private val onBackClick: () -> Unit) {
                 }
             } else {
                 LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {

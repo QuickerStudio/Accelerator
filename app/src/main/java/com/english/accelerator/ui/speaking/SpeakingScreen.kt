@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +23,7 @@ import com.english.accelerator.ai.agent.Prompts
 import com.english.accelerator.ai.history.HistoryManager
 import com.english.accelerator.ai.session.Session
 import com.english.accelerator.ai.session.SessionManager
+import com.english.accelerator.ui.components.CustomToast
 import com.english.accelerator.ui.sidebar.Sidebar
 import com.english.accelerator.ui.speaking.nodes.*
 import com.english.accelerator.utils.AppLogger
@@ -85,6 +87,10 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
     var inputText by remember { mutableStateOf("") }
     var showSidebar by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
+
+    var toastMessage by remember { mutableStateOf("") }
+    var toastBackgroundColor by remember { mutableStateOf(Color.White) }
+    var showToast by remember { mutableStateOf(false) }
 
     // 节点管理器
     val nodeManager = remember { NodeManager() }
@@ -164,7 +170,12 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
                                 vm.send(msg)
                             }
                         },
-                        onCamera = { }
+                        onCamera = { },
+                        onShowToast = { message, color ->
+                            toastMessage = message
+                            toastBackgroundColor = color
+                            showToast = true
+                        }
                     ).Render()
 
                     Spacer(modifier = Modifier.height(45.dp))
@@ -176,6 +187,16 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
                 ChatWindow(
                     messages = messages
                 ).Render()
+
+                CustomToast(
+                    message = toastMessage,
+                    visible = showToast,
+                    onDismiss = { showToast = false },
+                    backgroundColor = toastBackgroundColor,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 20.dp)
+                )
             }
         }
 
@@ -198,7 +219,10 @@ fun SpeakingScreen(onNavigateToSettings: () -> Unit = {}) {
         if (showHistory) {
             History(
                 onBackClick = { showHistory = false },
-                onConversationClick = { showHistory = false }
+                onConversationClick = { conversation ->
+                    vm.switchToSession(conversation.id)
+                    showHistory = false
+                }
             ).Render()
         }
     }
@@ -276,6 +300,21 @@ class SpeakingVM(private val context: Context) : ViewModel() {
                 _messages.value = emptyList()
             } catch (e: Exception) {
                 AppLogger.error(TAG, "Create session failed", e)
+            }
+        }
+    }
+
+    fun switchToSession(sessionId: String) {
+        viewModelScope.launch {
+            try {
+                inferenceJob?.cancel()
+                val session = sessionManager.getSession(sessionId)
+                if (session != null) {
+                    _currentSession.value = session
+                    loadHistory(sessionId)
+                }
+            } catch (e: Exception) {
+                AppLogger.error(TAG, "Switch session failed", e)
             }
         }
     }
