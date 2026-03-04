@@ -16,3 +16,4 @@ local.properties
 
 # ECDICT 词库数据（太大，不纳入版本控制）
 .Claude/ECDICT/
+.Claude/mediapipe-samples-main
