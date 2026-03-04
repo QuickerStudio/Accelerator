@@ -1,17 +1,40 @@
-# Settings UI 架构规范
+# Settings Module
 
-## 架构原则
+设置模块 - 插件式节点架构（按功能分类）
 
-Settings 模块采用**容器-组件**架构模式，遵循单一职责原则和组件化设计。
+## 架构
+
+```
+settings/
+├── SettingsScreen.kt       # 节点管理器（根组件）
+└── nodes/                  # 按功能分类的节点
+    ├── about/              # 关于功能
+    │   └── About.kt
+    ├── learning/           # 学习功能
+    │   ├── Goals.kt
+    │   ├── Plan.kt
+    │   ├── Stats.kt
+    │   ├── Settings.kt
+    │   └── AutoRead.kt
+    ├── data/               # 数据管理功能
+    │   ├── DataMgmt.kt
+    │   └── FilePicker.kt
+    ├── model/              # 模型功能
+    │   └── Model.kt
+    └── perms/              # 权限功能
+        ├── Perms.kt
+        └── TimePicker.kt
+```
 
 ### 核心理念
 
 ```
-SettingsScreen.kt (容器)
-├── ModelDownloadCard.kt (原子组件)
-├── LearningSettingsCard.kt (原子组件)
-├── AboutCard.kt (原子组件)
-└── ... (更多原子组件)
+SettingsScreen.kt (节点管理器)
+├── nodes/about/ (关于功能节点)
+├── nodes/learning/ (学习功能节点)
+├── nodes/data/ (数据管理节点)
+├── nodes/model/ (模型管理节点)
+└── nodes/perms/ (权限管理节点)
 ```
 
 ## 文件职责
