@@ -139,11 +139,6 @@ class History(
                             color = Color(0xFF1E293B),
                             modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            text = "${conversation.messageCount} 条消息",
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B)
-                        )
                     }
 
                     Text(
@@ -153,11 +148,22 @@ class History(
                         maxLines = 2
                     )
 
-                    Text(
-                        text = formatTimestamp(conversation.timestamp),
-                        fontSize = 12.sp,
-                        color = Color(0xFF94A3B8)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${conversation.messageCount} 条消息",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+                        Text(
+                            text = formatTimestamp(conversation.timestamp),
+                            fontSize = 12.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+                    }
                 }
 
                 IconButton(
