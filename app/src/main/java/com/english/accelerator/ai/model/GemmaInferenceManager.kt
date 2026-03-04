@@ -1,6 +1,7 @@
 package com.english.accelerator.ai.model
 
 import android.content.Context
+import android.app.ActivityManager
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.english.accelerator.ai.inference.InferenceResult
 import com.english.accelerator.ai.inference.GrammarSuggestion
@@ -85,15 +86,20 @@ class GemmaInferenceManager private constructor(
 
     /**
      * Check if device has sufficient memory for gemma-3n-E2B-it-litert-lm
+     * MediaPipe uses native memory, not JVM heap, so we check system memory
      */
     private fun checkMemoryAvailability(): Boolean {
-        val runtime = Runtime.getRuntime()
-        val maxMemory = runtime.maxMemory()
-        val usedMemory = runtime.totalMemory() - runtime.freeMemory()
-        val availableMemory = maxMemory - usedMemory
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val memoryInfo = android.app.ActivityManager.MemoryInfo()
+        activityManager.getMemoryInfo(memoryInfo)
 
-        // Require at least 3.5GB free for Gemma 3n E2B
-        return availableMemory > 3_500_000_000L
+        val availableMemoryMB = memoryInfo.availMem / (1024 * 1024)
+        val totalMemoryMB = memoryInfo.totalMem / (1024 * 1024)
+
+        AppLogger.info(TAG, "System memory - Available: ${availableMemoryMB}MB, Total: ${totalMemoryMB}MB")
+
+        // Require at least 4GB available system memory for Gemma 3n E2B
+        return availableMemoryMB > 4096
     }
 
     /**
@@ -118,6 +124,9 @@ class GemmaInferenceManager private constructor(
     suspend fun initialize() = withContext(Dispatchers.IO) {
         try {
             AppLogger.info(TAG, "Starting model initialization")
+            AppLogger.info(TAG, "Model file path: ${modelFile.absolutePath}")
+            AppLogger.info(TAG, "Model file exists: ${modelFile.exists()}")
+            AppLogger.info(TAG, "Model file size: ${modelFile.length()} bytes")
 
             if (!isModelDownloaded()) {
                 val error = "Model not downloaded"
@@ -129,7 +138,7 @@ class GemmaInferenceManager private constructor(
 
             // Check memory availability
             if (!checkMemoryAvailability()) {
-                val error = "内存不足。请关闭其他应用后重试。"
+                val error = "内存不足。可用系统内存少于4GB，请关闭其他应用后重试。"
                 AppLogger.error(TAG, "Insufficient memory for model initialization")
                 _modelState.value = ModelState.Error(error)
                 modelConfig.markInitializationFailed(error)
@@ -145,7 +154,9 @@ class GemmaInferenceManager private constructor(
                 .setRandomSeed(0)
                 .build()
 
-            AppLogger.info(TAG, "Creating LLM inference instance")
+            AppLogger.info(TAG, "Creating LLM inference instance with MediaPipe")
+            AppLogger.info(TAG, "This may take 1-2 minutes for first-time initialization...")
+
             llmInference = LlmInference.createFromOptions(context, options)
             _modelState.value = ModelState.Ready
 
@@ -155,6 +166,7 @@ class GemmaInferenceManager private constructor(
         } catch (e: Exception) {
             val error = "Failed to initialize model: ${e.message}"
             AppLogger.error(TAG, error)
+            AppLogger.error(TAG, "Exception type: ${e.javaClass.name}")
             AppLogger.error(TAG, "Stack trace: ${e.stackTraceToString()}")
             _modelState.value = ModelState.Error(error)
             modelConfig.markInitializationFailed(error)
