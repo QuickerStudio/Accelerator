@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -106,10 +107,11 @@ class History(
         conversation: Conversation,
         onClick: (Conversation) -> Unit
     ) {
+        val sessionManager = remember { SessionManager.getInstance() }
+        val historyManager = remember { HistoryManager.getInstance() }
+
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClick(conversation) },
+            modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = Color.White
             ),
@@ -117,43 +119,63 @@ class History(
                 defaultElevation = 2.dp
             )
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onClick(conversation) }
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = conversation.title,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${conversation.messageCount} 条消息",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
                     Text(
-                        text = conversation.title,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B),
-                        modifier = Modifier.weight(1f)
+                        text = conversation.preview,
+                        fontSize = 14.sp,
+                        color = Color(0xFF64748B),
+                        maxLines = 2
                     )
+
                     Text(
-                        text = "${conversation.messageCount} 条消息",
+                        text = formatTimestamp(conversation.timestamp),
                         fontSize = 12.sp,
-                        color = Color(0xFF64748B)
+                        color = Color(0xFF94A3B8)
                     )
                 }
 
-                Text(
-                    text = conversation.preview,
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B),
-                    maxLines = 2
-                )
-
-                Text(
-                    text = formatTimestamp(conversation.timestamp),
-                    fontSize = 12.sp,
-                    color = Color(0xFF94A3B8)
-                )
+                IconButton(
+                    onClick = {
+                        sessionManager.deleteSession(conversation.id)
+                        historyManager.deleteHistory(conversation.id)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "删除对话",
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
