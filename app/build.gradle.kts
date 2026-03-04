@@ -56,6 +56,9 @@ dependencies {
     // MediaPipe LLM Inference for Gemma
     implementation("com.google.mediapipe:tasks-genai:0.10.32")
 
+    // Markdown rendering for Compose
+    implementation("com.github.jeziellago:compose-markdown:0.5.4")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
