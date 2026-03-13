@@ -40,7 +40,7 @@ cd Accelerator
 
 Copyright © 2026 Quicker Studio
 
-本项目采用 CC BY-NC-ND 4.0 许可证授权（署名-非商业性使用-禁止演绎）
+本项目采用 CC BY-NC-ND 4.0 许可证授权（署名-非商业性使用-禁止演绎）因为有很多莫名其妙的bug
 
 版权归原作者 Quicker Studio 所有，禁止商业使用和修改。
 
